@@ -40,7 +40,7 @@ npm install
 ### 2. Create a Supabase project (free tier)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the SQL Editor, run the migrations in `packages/database/migrations/` **in order** (0001 → 0005). Each is idempotent-per-run SQL that builds on the previous one — schema, RLS policies, triggers, and search indexes for every phase (profiles, posts, messaging, opportunities/dashboards, admin).
+2. In the SQL Editor, run the migrations in `packages/database/migrations/` **in order** (0001 → 0007). Each builds on the previous one — schema, RLS policies, triggers, and search indexes for every phase (profiles, posts, messaging, opportunities/dashboards, admin, stories, message reactions).
 3. Under **Authentication → Providers**, enable Email and configure Google / GitHub OAuth if desired.
 4. Under **Authentication → URL Configuration**, add `http://localhost:3000/auth/callback` (and your production URL) as a redirect URL.
 5. To try the company/college/mentor dashboards or the admin panel, manually set a test user's `account_type` (and `admin`'s specifically for `/admin`) in the `profiles` table via the Supabase table editor — there's no self-serve way to become an admin, by design.
@@ -91,5 +91,6 @@ CI (`.github/workflows/ci.yml`) runs lint, type-check, format-check, unit tests,
 - **Phase 3**: Realtime messaging, notifications, rule-based content moderation, reports + moderator queue.
 - **Phase 4**: Company/college/mentor dashboards, job/internship/competition/event/scholarship postings + applications, talent search, candidate bookmarks, mentor session booking + reviews, org verification requests.
 - **Phase 5**: Admin panel (stats, users, posts, verifications), PostHog analytics, Ollama-backed AI suggestions (caption/bio/tags), sitemap/robots, CI, unit + e2e tests.
+- **Phase 6**: Instagram-style visual redesign (dark-by-default, gradient tokens, glassmorphism, skeleton loaders, micro-animations, icon sidebar + mobile bottom nav app shell), 24h Stories (poll/question/quiz/emoji-slider stickers, seen list), Reels (vertical autoplay video feed), and richer DMs (message reactions, voice notes, group chats).
 
-**Deliberately out of scope** for this free-tier build: payment/revenue features, a full CMS/feature-flag system, and AI-based NSFW/abuse detection (the moderation package is rule-based; swapping in an Ollama vision/text classifier is a natural extension of `packages/moderation`).
+**Deliberately out of scope** for this free-tier build: payment/revenue features, a full CMS/feature-flag system, AI-based NSFW/abuse detection (the moderation package is rule-based; swapping in an Ollama vision/text classifier is a natural extension of `packages/moderation`), and live voice/video calling or HLS adaptive streaming (no free-tier-friendly infrastructure for either at any real scale).
