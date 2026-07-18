@@ -1,4 +1,4 @@
-import type { AccountType, AvailabilityStatus } from "./database";
+import type { AccountType, AvailabilityStatus, PostMediaItem, PostStatus, PostType } from "./database";
 
 export interface SkillTag {
   name: string;
@@ -49,4 +49,49 @@ export interface AuthUser {
   email: string | null;
   phone: string | null;
   emailVerified: boolean;
+}
+
+export interface AuthorSummary {
+  id: string;
+  username: string;
+  fullName: string;
+  avatarUrl: string | null;
+  accountType: AccountType;
+  isVerified: boolean;
+}
+
+export interface Post {
+  id: string;
+  author: AuthorSummary;
+  type: PostType;
+  caption: string | null;
+  codeLanguage: string | null;
+  codeSnippet: string | null;
+  skillCategory: string | null;
+  tags: string[];
+  location: string | null;
+  thumbnailUrl: string | null;
+  media: PostMediaItem[];
+  githubUrl: string | null;
+  projectUrl: string | null;
+  status: PostStatus;
+  scheduledAt: string | null;
+  likeCount: number;
+  commentCount: number;
+  saveCount: number;
+  isLiked: boolean;
+  isSaved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  author: AuthorSummary;
+  parentCommentId: string | null;
+  body: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

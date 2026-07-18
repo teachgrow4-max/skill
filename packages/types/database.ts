@@ -42,6 +42,7 @@ export interface ProfileRow {
   coins: number;
   level: number;
   onboarding_completed: boolean;
+  search_vector: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -87,6 +88,73 @@ export interface FollowRow {
   created_at: string;
 }
 
+export type PostType =
+  | "text"
+  | "image"
+  | "carousel"
+  | "video"
+  | "pdf"
+  | "code"
+  | "github_link"
+  | "project_link";
+
+export type PostStatus = "draft" | "scheduled" | "published";
+
+export interface PostMediaItem {
+  url: string;
+  type: "image" | "video" | "pdf";
+  width?: number;
+  height?: number;
+  publicId?: string;
+}
+
+export interface PostRow {
+  id: string;
+  author_id: string;
+  type: PostType;
+  caption: string | null;
+  code_language: string | null;
+  code_snippet: string | null;
+  skill_category: string | null;
+  tags: string[];
+  location: string | null;
+  thumbnail_url: string | null;
+  media: PostMediaItem[];
+  github_url: string | null;
+  project_url: string | null;
+  status: PostStatus;
+  scheduled_at: string | null;
+  like_count: number;
+  comment_count: number;
+  save_count: number;
+  search_vector: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PostLikeRow {
+  post_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface PostCommentRow {
+  id: string;
+  post_id: string;
+  author_id: string;
+  parent_comment_id: string | null;
+  body: string;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PostSaveRow {
+  post_id: string;
+  user_id: string;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -120,6 +188,30 @@ export type Database = {
         Update: Partial<FollowRow>;
         Relationships: [];
       };
+      posts: {
+        Row: PostRow;
+        Insert: Partial<PostRow> & { author_id: string };
+        Update: Partial<PostRow>;
+        Relationships: [];
+      };
+      post_likes: {
+        Row: PostLikeRow;
+        Insert: PostLikeRow;
+        Update: Partial<PostLikeRow>;
+        Relationships: [];
+      };
+      post_comments: {
+        Row: PostCommentRow;
+        Insert: Partial<PostCommentRow> & { post_id: string; author_id: string; body: string };
+        Update: Partial<PostCommentRow>;
+        Relationships: [];
+      };
+      post_saves: {
+        Row: PostSaveRow;
+        Insert: PostSaveRow;
+        Update: Partial<PostSaveRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -127,6 +219,8 @@ export type Database = {
       account_type: AccountType;
       availability_status: AvailabilityStatus;
       proficiency_level: ProfileSkillRow["proficiency"];
+      post_type: PostType;
+      post_status: PostStatus;
     };
     CompositeTypes: Record<string, never>;
   };

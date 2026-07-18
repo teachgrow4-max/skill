@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@skilltego/u
 import { initials } from "@skilltego/utils";
 import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/features/profile/components/follow-button";
+import { getProfilePostsAction } from "@/features/posts/actions";
+import { PostCard } from "@/features/posts/components/post-card";
 
 const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   student: "Student",
@@ -63,6 +65,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const profile = toProfile(profileRow, skills);
   const isOwnProfile = user?.id === profile.id;
+  const { posts } = await getProfilePostsAction(profile.id, null);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -151,6 +154,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           )}
         </div>
       </div>
+
+      {posts.length > 0 && (
+        <div className="mt-6 grid gap-4">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} isLoggedIn={Boolean(user)} currentUserId={user?.id ?? null} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -50,3 +50,9 @@ export async function getFollowingCount(client: Client, profileId: string): Prom
   if (error) throw error;
   return count ?? 0;
 }
+
+export async function getFollowingIds(client: Client, followerId: string): Promise<string[]> {
+  const { data, error } = await client.from("follows").select("following_id").eq("follower_id", followerId);
+  if (error) throw error;
+  return data.map((row) => row.following_id);
+}

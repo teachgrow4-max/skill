@@ -19,6 +19,13 @@ export const marketingNav = [
   { title: "Contact", href: "/contact" },
 ] as const;
 
+export const appNav = [
+  { title: "Feed", href: "/feed" },
+  { title: "Explore", href: "/explore" },
+  { title: "Search", href: "/search" },
+  { title: "Bookmarks", href: "/bookmarks" },
+] as const;
+
 export const footerNav = {
   product: [
     { title: "Features", href: "/features" },

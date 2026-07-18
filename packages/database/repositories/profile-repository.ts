@@ -20,6 +20,13 @@ export async function getProfileById(client: Client, id: string): Promise<Profil
   return data;
 }
 
+export async function getProfilesByIds(client: Client, ids: string[]): Promise<ProfileRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await client.from("profiles").select("*").in("id", [...new Set(ids)]);
+  if (error) throw error;
+  return data;
+}
+
 export async function isUsernameAvailable(client: Client, username: string): Promise<boolean> {
   const { data, error } = await client
     .from("profiles")

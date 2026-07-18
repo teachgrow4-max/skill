@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getProfileById } from "@skilltego/database";
-import { siteConfig, marketingNav } from "@skilltego/config";
+import { siteConfig, marketingNav, appNav } from "@skilltego/config";
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +23,7 @@ export async function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
-          {marketingNav.map((item) => (
+          {(profile ? appNav : marketingNav).map((item) => (
             <Link key={item.href} href={item.href} className="hover:text-foreground">
               {item.title}
             </Link>
