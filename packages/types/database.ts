@@ -87,34 +87,47 @@ export interface FollowRow {
   created_at: string;
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
         Row: ProfileRow;
         Insert: Partial<ProfileRow> & { id: string; username: string; full_name: string };
         Update: Partial<ProfileRow>;
+        Relationships: [];
       };
       profile_skills: {
         Row: ProfileSkillRow;
         Insert: Partial<ProfileSkillRow> & { profile_id: string; skill_name: string; category: string };
         Update: Partial<ProfileSkillRow>;
+        Relationships: [];
       };
       profile_education: {
         Row: ProfileEducationRow;
         Insert: Partial<ProfileEducationRow> & { profile_id: string; institution: string };
         Update: Partial<ProfileEducationRow>;
+        Relationships: [];
       };
       profile_experience: {
         Row: ProfileExperienceRow;
         Insert: Partial<ProfileExperienceRow> & { profile_id: string; organization: string; role: string };
         Update: Partial<ProfileExperienceRow>;
+        Relationships: [];
       };
       follows: {
         Row: FollowRow;
         Insert: FollowRow;
         Update: Partial<FollowRow>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      account_type: AccountType;
+      availability_status: AvailabilityStatus;
+      proficiency_level: ProfileSkillRow["proficiency"];
+    };
+    CompositeTypes: Record<string, never>;
   };
-}
+};

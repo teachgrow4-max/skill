@@ -1,0 +1,18 @@
+{
+  "name": "@skilltego/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./clients/browser": "./clients/browser.ts",
+    "./clients/server": "./clients/server.ts",
+    "./clients/admin": "./clients/admin.ts"
+  },
+  "dependencies": {
+    "@skilltego/types": "*",
+    "@supabase/ssr": "0.5.2",
+    "@supabase/supabase-js": "2.50.0"
+  }
+}

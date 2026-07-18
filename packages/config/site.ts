@@ -23,21 +23,15 @@ export const footerNav = {
   product: [
     { title: "Features", href: "/features" },
     { title: "Pricing", href: "/pricing" },
-    { title: "Explore", href: "/explore" },
   ],
   company: [
     { title: "About", href: "/about" },
-    { title: "Careers", href: "/careers" },
-    { title: "Blog", href: "/blog" },
+    { title: "FAQ", href: "/faq" },
     { title: "Contact", href: "/contact" },
   ],
   legal: [
     { title: "Privacy Policy", href: "/privacy" },
     { title: "Terms of Service", href: "/terms" },
     { title: "Community Guidelines", href: "/community-guidelines" },
-  ],
-  support: [
-    { title: "Help Center", href: "/help" },
-    { title: "FAQ", href: "/faq" },
   ],
 } as const;
