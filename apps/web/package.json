@@ -18,6 +18,7 @@
     "@skilltego/database": "*",
     "@skilltego/auth": "*",
     "@skilltego/ui": "*",
+    "@skilltego/moderation": "*",
     "@supabase/supabase-js": "2.50.0",
     "@supabase/ssr": "0.5.2",
     "react-hook-form": "^7.54.2",

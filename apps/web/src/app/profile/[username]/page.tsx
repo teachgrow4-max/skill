@@ -17,6 +17,8 @@ import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/features/profile/components/follow-button";
 import { getProfilePostsAction } from "@/features/posts/actions";
 import { PostCard } from "@/features/posts/components/post-card";
+import { MessageButton } from "@/features/messaging/components/message-button";
+import { ReportButton } from "@/features/reports/components/report-button";
 
 const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   student: "Student",
@@ -88,12 +90,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 <Link href="/profile/edit">Edit profile</Link>
               </Button>
             ) : (
-              <FollowButton
-                targetProfileId={profile.id}
-                targetUsername={profile.username}
-                initialIsFollowing={viewerIsFollowing}
-                isLoggedIn={Boolean(user)}
-              />
+              <div className="flex gap-2">
+                <MessageButton targetUserId={profile.id} isLoggedIn={Boolean(user)} />
+                <FollowButton
+                  targetProfileId={profile.id}
+                  targetUsername={profile.username}
+                  initialIsFollowing={viewerIsFollowing}
+                  isLoggedIn={Boolean(user)}
+                />
+              </div>
             )}
           </div>
 
@@ -101,7 +106,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <h1 className="text-2xl font-bold">{profile.fullName}</h1>
             {profile.isVerified && <BadgeCheck className="size-5 text-primary" aria-label="Verified" />}
           </div>
-          <p className="text-muted-foreground">@{profile.username}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground">@{profile.username}</p>
+            {!isOwnProfile && (
+              <ReportButton targetType="profile" targetId={profile.id} isLoggedIn={Boolean(user)} />
+            )}
+          </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{ACCOUNT_TYPE_LABEL[profile.accountType] ?? profile.accountType}</Badge>

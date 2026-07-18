@@ -23,6 +23,7 @@ export const appNav = [
   { title: "Feed", href: "/feed" },
   { title: "Explore", href: "/explore" },
   { title: "Search", href: "/search" },
+  { title: "Messages", href: "/messages" },
   { title: "Bookmarks", href: "/bookmarks" },
 ] as const;
 

@@ -1,4 +1,15 @@
-import type { AccountType, AvailabilityStatus, PostMediaItem, PostStatus, PostType } from "./database";
+import type {
+  AccountType,
+  AvailabilityStatus,
+  MessageAttachment,
+  NotificationType,
+  PostMediaItem,
+  PostStatus,
+  PostType,
+  ReportReason,
+  ReportStatus,
+  ReportTargetType,
+} from "./database";
 
 export interface SkillTag {
   name: string;
@@ -94,4 +105,46 @@ export interface Comment {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  sender: AuthorSummary;
+  body: string | null;
+  attachment: MessageAttachment | null;
+  isEdited: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  isGroup: boolean;
+  title: string | null;
+  participants: AuthorSummary[];
+  lastMessage: Message | null;
+  unreadCount: number;
+}
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  actor: AuthorSummary;
+  entityType: string | null;
+  entityId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  details: string | null;
+  status: ReportStatus;
+  createdAt: string;
 }

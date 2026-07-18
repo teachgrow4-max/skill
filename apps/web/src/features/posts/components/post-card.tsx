@@ -8,6 +8,7 @@ import { BadgeCheck, ExternalLink, FileText, Github, MessageCircle, MoreHorizont
 import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
 import { initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
+import { ReportButton } from "@/features/reports/components/report-button";
 import { deletePostAction } from "../actions";
 import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
@@ -51,13 +52,13 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
           </div>
         </Link>
 
-        {isOwner && (
-          <div className="relative">
-            <button type="button" onClick={() => setMenuOpen((v) => !v)} className="text-muted-foreground hover:text-foreground">
-              <MoreHorizontal className="size-4" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-6 z-10 rounded-md border border-border bg-popover p-1 shadow-md">
+        <div className="relative">
+          <button type="button" onClick={() => setMenuOpen((v) => !v)} className="text-muted-foreground hover:text-foreground">
+            <MoreHorizontal className="size-4" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-6 z-10 min-w-40 rounded-md border border-border bg-popover p-2 shadow-md">
+              {isOwner ? (
                 <button
                   type="button"
                   onClick={handleDelete}
@@ -66,10 +67,12 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
                   <Trash2 className="size-3.5" />
                   Delete
                 </button>
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <ReportButton targetType="post" targetId={post.id} isLoggedIn={isLoggedIn} />
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {post.caption && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{post.caption}</p>}

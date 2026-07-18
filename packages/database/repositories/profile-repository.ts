@@ -27,6 +27,12 @@ export async function getProfilesByIds(client: Client, ids: string[]): Promise<P
   return data;
 }
 
+export async function isModerator(client: Client, userId: string): Promise<boolean> {
+  const { data, error } = await client.from("profiles").select("account_type").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.account_type === "admin" || data?.account_type === "moderator";
+}
+
 export async function isUsernameAvailable(client: Client, username: string): Promise<boolean> {
   const { data, error } = await client
     .from("profiles")

@@ -3,7 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@skilltego/database";
 import { publicEnv } from "@/lib/env.public";
 
-const PROTECTED_PREFIXES = ["/profile/edit", "/onboarding", "/settings", "/feed", "/bookmarks"];
+const PROTECTED_PREFIXES = [
+  "/profile/edit",
+  "/onboarding",
+  "/settings",
+  "/feed",
+  "/bookmarks",
+  "/messages",
+  "/moderation",
+];
 const AUTH_ONLY_PREFIXES = ["/login", "/signup", "/forgot-password"];
 
 export async function updateSession(request: NextRequest) {

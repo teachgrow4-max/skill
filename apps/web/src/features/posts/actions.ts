@@ -20,6 +20,7 @@ import {
   unlikePost,
   unsavePost,
 } from "@skilltego/database";
+import { moderateText } from "@skilltego/moderation";
 import { createClient } from "@/lib/supabase/server";
 import { commentSchema, createPostSchema, type CreatePostInput } from "./schema";
 import { hydrateComments, hydratePosts } from "./service";
@@ -77,6 +78,13 @@ export async function createPostAction(input: CreatePostInput): Promise<ActionRe
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid post." };
   }
   const values = parsed.data;
+
+  if (values.caption) {
+    const moderation = moderateText(values.caption);
+    if (!moderation.allowed) {
+      return { success: false, error: moderation.reasons[0] };
+    }
+  }
 
   const supabase = await createClient();
   const {
@@ -180,6 +188,11 @@ export async function addCommentAction(
   const parsed = commentSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid comment." };
+  }
+
+  const moderation = moderateText(parsed.data.body);
+  if (!moderation.allowed) {
+    return { success: false, error: moderation.reasons[0] };
   }
 
   const supabase = await createClient();

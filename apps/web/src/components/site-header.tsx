@@ -4,6 +4,7 @@ import { siteConfig, marketingNav, appNav } from "@skilltego/config";
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import { createClient } from "@/lib/supabase/server";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { ThemeToggle } from "./theme-toggle";
 import { LogoutButton } from "./logout-button";
 
@@ -34,6 +35,7 @@ export async function SiteHeader() {
           <ThemeToggle />
           {profile ? (
             <>
+              <NotificationBell />
               <Button asChild variant="ghost" size="icon" className="rounded-full">
                 <Link href={`/profile/${profile.username}`} aria-label="Your profile">
                   <Avatar className="size-8">

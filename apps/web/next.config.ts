@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     "@skilltego/database",
     "@skilltego/auth",
     "@skilltego/ui",
+    "@skilltego/moderation",
   ],
   images: {
     remotePatterns: [
