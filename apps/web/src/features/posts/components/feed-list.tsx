@@ -59,7 +59,9 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
             onClick={() => setMode(tab.mode)}
             className={cn(
               "flex-1 rounded-full py-2 text-sm font-medium transition-colors",
-              mode === tab.mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent/50",
+              mode === tab.mode
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent/50",
             )}
           >
             {tab.label}

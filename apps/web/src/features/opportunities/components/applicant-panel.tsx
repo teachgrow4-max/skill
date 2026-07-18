@@ -40,12 +40,18 @@ export function ApplicantPanel({ opportunityId }: { opportunityId: string }) {
         <div key={application.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
           <Link href={`/profile/${application.applicant.username}`}>
             <Avatar className="size-9">
-              <AvatarImage src={application.applicant.avatarUrl ?? undefined} alt={application.applicant.fullName} />
+              <AvatarImage
+                src={application.applicant.avatarUrl ?? undefined}
+                alt={application.applicant.fullName}
+              />
               <AvatarFallback>{initials(application.applicant.fullName)}</AvatarFallback>
             </Avatar>
           </Link>
           <div className="min-w-0 flex-1">
-            <Link href={`/profile/${application.applicant.username}`} className="text-sm font-medium hover:underline">
+            <Link
+              href={`/profile/${application.applicant.username}`}
+              className="text-sm font-medium hover:underline"
+            >
               {application.applicant.fullName}
             </Link>
             <p className="truncate text-xs text-muted-foreground">

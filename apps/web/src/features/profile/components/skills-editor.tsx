@@ -23,7 +23,10 @@ export function SkillsEditor({ control, register, errors }: SkillsEditorProps) {
       )}
 
       {fields.map((field, index) => (
-        <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_auto] items-start gap-2 rounded-lg border border-border p-3">
+        <div
+          key={field.id}
+          className="grid grid-cols-[1fr_1fr_1fr_auto] items-start gap-2 rounded-lg border border-border p-3"
+        >
           <div className="grid gap-1">
             <Input placeholder="Skill name" {...register(`skills.${index}.skillName` as const)} />
             {errors.skills?.[index]?.skillName && (
@@ -58,7 +61,13 @@ export function SkillsEditor({ control, register, errors }: SkillsEditorProps) {
             ))}
           </select>
 
-          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} aria-label="Remove skill">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => remove(index)}
+            aria-label="Remove skill"
+          >
             <X className="size-4" />
           </Button>
         </div>

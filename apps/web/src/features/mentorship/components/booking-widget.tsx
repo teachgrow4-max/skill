@@ -6,7 +6,15 @@ import { Button } from "@skilltego/ui";
 import type { MentorAvailabilitySlot } from "@skilltego/types";
 import { bookSessionAction } from "../actions";
 
-export function BookingWidget({ mentorId, slots, isLoggedIn }: { mentorId: string; slots: MentorAvailabilitySlot[]; isLoggedIn: boolean }) {
+export function BookingWidget({
+  mentorId,
+  slots,
+  isLoggedIn,
+}: {
+  mentorId: string;
+  slots: MentorAvailabilitySlot[];
+  isLoggedIn: boolean;
+}) {
   const router = useRouter();
   const [bookingId, setBookingId] = React.useState<string | null>(null);
   const [bookedIds, setBookedIds] = React.useState<Set<string>>(new Set());
@@ -33,9 +41,13 @@ export function BookingWidget({ mentorId, slots, isLoggedIn }: { mentorId: strin
   return (
     <div className="grid gap-2">
       {available.map((slot) => (
-        <div key={slot.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+        <div
+          key={slot.id}
+          className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
+        >
           <span>
-            {new Date(slot.startTime).toLocaleDateString()} · {new Date(slot.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {new Date(slot.startTime).toLocaleDateString()} ·{" "}
+            {new Date(slot.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
           <Button size="sm" disabled={bookingId === slot.id} onClick={() => handleBook(slot)}>
             {bookingId === slot.id ? "Booking…" : "Book"}

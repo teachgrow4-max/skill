@@ -29,11 +29,21 @@ export function ReviewForm({ sessionId, mentorId }: { sessionId: string; mentorI
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((value) => (
           <button key={value} type="button" onClick={() => setRating(value)}>
-            <Star className={cn("size-4", value <= rating ? "fill-current text-warning" : "text-muted-foreground")} />
+            <Star
+              className={cn(
+                "size-4",
+                value <= rating ? "fill-current text-warning" : "text-muted-foreground",
+              )}
+            />
           </button>
         ))}
       </div>
-      <Textarea placeholder="How was the session?" rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
+      <Textarea
+        placeholder="How was the session?"
+        rows={2}
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+      />
       <Button size="sm" className="w-fit" disabled={rating === 0 || submitting} onClick={handleSubmit}>
         Submit review
       </Button>

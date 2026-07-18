@@ -40,7 +40,9 @@ export function OpportunitiesBrowser({ initialOpportunities }: { initialOpportun
             onClick={() => handleFilterChange(index)}
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-              filterIndex === index ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent",
+              filterIndex === index
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:bg-accent",
             )}
           >
             {filter.label}

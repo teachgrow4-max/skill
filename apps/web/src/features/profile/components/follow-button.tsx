@@ -12,7 +12,12 @@ interface FollowButtonProps {
   isLoggedIn: boolean;
 }
 
-export function FollowButton({ targetProfileId, targetUsername, initialIsFollowing, isLoggedIn }: FollowButtonProps) {
+export function FollowButton({
+  targetProfileId,
+  targetUsername,
+  initialIsFollowing,
+  isLoggedIn,
+}: FollowButtonProps) {
   const router = useRouter();
   const [following, setFollowing] = React.useState(initialIsFollowing);
   const [pending, setPending] = React.useState(false);

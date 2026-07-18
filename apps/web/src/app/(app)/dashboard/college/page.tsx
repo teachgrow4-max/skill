@@ -45,7 +45,9 @@ export default async function CollegeDashboardPage() {
 
       <section>
         <h2 className="mb-2 text-lg font-semibold">Discover students</h2>
-        <p className="mb-2 text-sm text-muted-foreground">Search by skill to find students to invite or spotlight.</p>
+        <p className="mb-2 text-sm text-muted-foreground">
+          Search by skill to find students to invite or spotlight.
+        </p>
         <TalentSearch />
       </section>
 

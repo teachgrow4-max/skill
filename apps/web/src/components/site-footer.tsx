@@ -22,7 +22,13 @@ export function SiteFooter() {
   );
 }
 
-function FooterColumn({ title, links }: { title: string; links: readonly { title: string; href: string }[] }) {
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: readonly { title: string; href: string }[];
+}) {
   return (
     <div>
       <p className="text-sm font-semibold">{title}</p>

@@ -11,7 +11,8 @@ const FEATURES = [
   },
   {
     title: "Discovery, not just search",
-    description: "Companies, colleges, and mentors find you by skill and category, not just by job title or degree.",
+    description:
+      "Companies, colleges, and mentors find you by skill and category, not just by job title or degree.",
   },
   {
     title: "Follow & build your network",
@@ -19,15 +20,18 @@ const FEATURES = [
   },
   {
     title: "Company & college dashboards",
-    description: "Organizations get dedicated tools to search talent, post opportunities, and manage outreach.",
+    description:
+      "Organizations get dedicated tools to search talent, post opportunities, and manage outreach.",
   },
   {
     title: "Mentor matching",
-    description: "Mentors offer guidance and sessions directly to the people who need it, based on shared skills.",
+    description:
+      "Mentors offer guidance and sessions directly to the people who need it, based on shared skills.",
   },
   {
     title: "Privacy by design",
-    description: "You control what's visible on your profile, and every account is protected by Supabase-backed auth and row-level security.",
+    description:
+      "You control what's visible on your profile, and every account is protected by Supabase-backed auth and row-level security.",
   },
 ];
 

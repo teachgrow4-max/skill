@@ -22,7 +22,10 @@ export async function getProfileById(client: Client, id: string): Promise<Profil
 
 export async function getProfilesByIds(client: Client, ids: string[]): Promise<ProfileRow[]> {
   if (ids.length === 0) return [];
-  const { data, error } = await client.from("profiles").select("*").in("id", [...new Set(ids)]);
+  const { data, error } = await client
+    .from("profiles")
+    .select("*")
+    .in("id", [...new Set(ids)]);
   if (error) throw error;
   return data;
 }
@@ -31,6 +34,12 @@ export async function isModerator(client: Client, userId: string): Promise<boole
   const { data, error } = await client.from("profiles").select("account_type").eq("id", userId).maybeSingle();
   if (error) throw error;
   return data?.account_type === "admin" || data?.account_type === "moderator";
+}
+
+export async function isAdmin(client: Client, userId: string): Promise<boolean> {
+  const { data, error } = await client.from("profiles").select("account_type").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.account_type === "admin";
 }
 
 export async function isUsernameAvailable(client: Client, username: string): Promise<boolean> {
@@ -63,12 +72,7 @@ export async function updateProfile(
   id: string,
   patch: Database["public"]["Tables"]["profiles"]["Update"],
 ): Promise<ProfileRow> {
-  const { data, error } = await client
-    .from("profiles")
-    .update(patch)
-    .eq("id", id)
-    .select("*")
-    .single();
+  const { data, error } = await client.from("profiles").update(patch).eq("id", id).select("*").single();
 
   if (error) throw error;
   return data;

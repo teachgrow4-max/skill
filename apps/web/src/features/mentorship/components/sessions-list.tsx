@@ -15,7 +15,13 @@ const STATUS_VARIANT: Record<SessionStatus, "outline" | "secondary" | "success" 
   cancelled: "destructive",
 };
 
-export function SessionsList({ sessions: initialSessions, role }: { sessions: MentorSession[]; role: "mentor" | "student" }) {
+export function SessionsList({
+  sessions: initialSessions,
+  role,
+}: {
+  sessions: MentorSession[];
+  role: "mentor" | "student";
+}) {
   const [sessions, setSessions] = React.useState(initialSessions);
 
   async function handleStatusChange(sessionId: string, status: SessionStatus) {
@@ -58,7 +64,11 @@ export function SessionsList({ sessions: initialSessions, role }: { sessions: Me
                 <Button size="sm" onClick={() => handleStatusChange(session.id, "confirmed")}>
                   Confirm
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => handleStatusChange(session.id, "cancelled")}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleStatusChange(session.id, "cancelled")}
+                >
                   Decline
                 </Button>
               </div>

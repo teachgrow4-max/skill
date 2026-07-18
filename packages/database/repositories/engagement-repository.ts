@@ -25,7 +25,11 @@ export async function isPostLiked(client: Client, postId: string, userId: string
   return data !== null;
 }
 
-export async function getLikedPostIds(client: Client, postIds: string[], userId: string): Promise<Set<string>> {
+export async function getLikedPostIds(
+  client: Client,
+  postIds: string[],
+  userId: string,
+): Promise<Set<string>> {
   if (postIds.length === 0) return new Set();
 
   const { data, error } = await client
@@ -48,7 +52,11 @@ export async function unsavePost(client: Client, postId: string, userId: string)
   if (error) throw error;
 }
 
-export async function getSavedPostIds(client: Client, postIds: string[], userId: string): Promise<Set<string>> {
+export async function getSavedPostIds(
+  client: Client,
+  postIds: string[],
+  userId: string,
+): Promise<Set<string>> {
   if (postIds.length === 0) return new Set();
 
   const { data, error } = await client

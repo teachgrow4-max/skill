@@ -29,8 +29,8 @@ export function Hero() {
 
         <FadeIn delay={0.2}>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            Upload what you can do. Get discovered by companies, mentors, and colleges — whether you code, dance,
-            coach, design, teach, or build. No résumé required to get started.
+            Upload what you can do. Get discovered by companies, mentors, and colleges — whether you code,
+            dance, coach, design, teach, or build. No résumé required to get started.
           </p>
         </FadeIn>
 

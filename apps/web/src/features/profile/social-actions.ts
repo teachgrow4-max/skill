@@ -10,7 +10,10 @@ export interface ToggleFollowResult {
   error?: string;
 }
 
-export async function toggleFollowAction(targetProfileId: string, targetUsername: string): Promise<ToggleFollowResult> {
+export async function toggleFollowAction(
+  targetProfileId: string,
+  targetUsername: string,
+): Promise<ToggleFollowResult> {
   const supabase = await createClient();
   const {
     data: { user },

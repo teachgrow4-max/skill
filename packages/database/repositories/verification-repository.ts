@@ -12,7 +12,10 @@ export async function createVerificationRequest(
   return data;
 }
 
-export async function getVerificationRequestsForProfile(client: Client, profileId: string): Promise<VerificationRequestRow[]> {
+export async function getVerificationRequestsForProfile(
+  client: Client,
+  profileId: string,
+): Promise<VerificationRequestRow[]> {
   const { data, error } = await client
     .from("verification_requests")
     .select("*")

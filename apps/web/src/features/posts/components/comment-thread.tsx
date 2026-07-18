@@ -51,7 +51,9 @@ export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange
   async function handleDelete(commentId: string, authorId: string) {
     const result = await deleteCommentAction(commentId, authorId);
     if (result.success) {
-      setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, isDeleted: true, body: "[deleted]" } : c)));
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, isDeleted: true, body: "[deleted]" } : c)),
+      );
     }
   }
 
@@ -73,12 +75,18 @@ export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange
                 <Link href={`/profile/${comment.author.username}`} className="font-medium hover:underline">
                   {comment.author.fullName}
                 </Link>{" "}
-                <span className={comment.isDeleted ? "italic text-muted-foreground" : ""}>{comment.body}</span>
+                <span className={comment.isDeleted ? "italic text-muted-foreground" : ""}>
+                  {comment.body}
+                </span>
               </div>
               <div className="mt-1 flex items-center gap-3 px-1 text-xs text-muted-foreground">
                 <span>{formatRelativeTime(comment.createdAt)}</span>
                 {currentUserId === comment.author.id && !comment.isDeleted && (
-                  <button type="button" onClick={() => handleDelete(comment.id, comment.author.id)} className="hover:text-destructive">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(comment.id, comment.author.id)}
+                    className="hover:text-destructive"
+                  >
                     Delete
                   </button>
                 )}

@@ -137,7 +137,10 @@ export async function deletePostAction(postId: string): Promise<ActionResult> {
   }
 }
 
-export async function toggleLikeAction(postId: string, isCurrentlyLiked: boolean): Promise<ActionResult<{ isLiked: boolean }>> {
+export async function toggleLikeAction(
+  postId: string,
+  isCurrentlyLiked: boolean,
+): Promise<ActionResult<{ isLiked: boolean }>> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -156,7 +159,10 @@ export async function toggleLikeAction(postId: string, isCurrentlyLiked: boolean
   }
 }
 
-export async function toggleSaveAction(postId: string, isCurrentlySaved: boolean): Promise<ActionResult<{ isSaved: boolean }>> {
+export async function toggleSaveAction(
+  postId: string,
+  isCurrentlySaved: boolean,
+): Promise<ActionResult<{ isSaved: boolean }>> {
   const supabase = await createClient();
   const {
     data: { user },

@@ -12,7 +12,10 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import type { Notification } from "@skilltego/types";
 
-export async function getNotificationsAction(): Promise<{ notifications: Notification[]; unreadCount: number }> {
+export async function getNotificationsAction(): Promise<{
+  notifications: Notification[];
+  unreadCount: number;
+}> {
   const supabase = await createClient();
   const {
     data: { user },

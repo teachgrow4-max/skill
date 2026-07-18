@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfileById } from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
-import { getMentorAvailabilityAction, getMentorReviewsAction, getMySessionsAction } from "@/features/mentorship/actions";
+import {
+  getMentorAvailabilityAction,
+  getMentorReviewsAction,
+  getMySessionsAction,
+} from "@/features/mentorship/actions";
 import { AvailabilityManager } from "@/features/mentorship/components/availability-manager";
 import { SessionsList } from "@/features/mentorship/components/sessions-list";
 import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";

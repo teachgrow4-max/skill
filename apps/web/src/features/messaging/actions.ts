@@ -30,7 +30,9 @@ export async function getConversationsAction(): Promise<Conversation[]> {
   return hydrateConversations(supabase, ids, user.id);
 }
 
-export async function startConversationAction(otherUserId: string): Promise<ActionResult<{ conversationId: string }>> {
+export async function startConversationAction(
+  otherUserId: string,
+): Promise<ActionResult<{ conversationId: string }>> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -42,11 +44,17 @@ export async function startConversationAction(otherUserId: string): Promise<Acti
     const conversationId = await getOrCreateDirectConversation(supabase, user.id, otherUserId);
     return { success: true, data: { conversationId } };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Could not start conversation." };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Could not start conversation.",
+    };
   }
 }
 
-export async function getMessagesAction(conversationId: string, cursor: string | null): Promise<{ messages: Message[]; nextCursor: string | null }> {
+export async function getMessagesAction(
+  conversationId: string,
+  cursor: string | null,
+): Promise<{ messages: Message[]; nextCursor: string | null }> {
   const supabase = await createClient();
   const page = await getMessages(supabase, conversationId, cursor);
   const messages = await hydrateMessages(supabase, page.messages);
@@ -55,7 +63,10 @@ export async function getMessagesAction(conversationId: string, cursor: string |
 
 export async function sendMessageAction(
   conversationId: string,
-  input: { body?: string; attachment?: { url: string; type: "image" | "video" | "audio" | "pdf"; publicId?: string } | null },
+  input: {
+    body?: string;
+    attachment?: { url: string; type: "image" | "video" | "audio" | "pdf"; publicId?: string } | null;
+  },
 ): Promise<ActionResult<{ message: Message }>> {
   const parsed = sendMessageSchema.safeParse(input);
   if (!parsed.success) {

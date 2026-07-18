@@ -39,8 +39,8 @@ export default function CommunityGuidelinesPage() {
     <div className="mx-auto max-w-3xl px-4 py-20">
       <h1 className="text-4xl font-bold">Community Guidelines</h1>
       <p className="mt-3 text-muted-foreground">
-        These guidelines keep {siteConfig.name} a trustworthy place to showcase real skills. Violations may result
-        in content removal, warnings, or account suspension.
+        These guidelines keep {siteConfig.name} a trustworthy place to showcase real skills. Violations may
+        result in content removal, warnings, or account suspension.
       </p>
 
       <div className="mt-10 grid gap-8">

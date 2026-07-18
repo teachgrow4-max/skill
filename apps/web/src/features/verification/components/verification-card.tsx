@@ -6,7 +6,13 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from "
 import type { VerificationRequestRow } from "@skilltego/types";
 import { submitVerificationRequestAction } from "../actions";
 
-export function VerificationCard({ isVerified, latestRequest }: { isVerified: boolean; latestRequest: VerificationRequestRow | null }) {
+export function VerificationCard({
+  isVerified,
+  latestRequest,
+}: {
+  isVerified: boolean;
+  latestRequest: VerificationRequestRow | null;
+}) {
   const [organizationName, setOrganizationName] = React.useState("");
   const [proofUrl, setProofUrl] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
@@ -53,7 +59,9 @@ export function VerificationCard({ isVerified, latestRequest }: { isVerified: bo
       </CardHeader>
       <CardContent>
         {latestRequest?.status === "rejected" && (
-          <p className="mb-2 text-xs text-destructive">Your last request wasn&apos;t approved. You can submit a new one.</p>
+          <p className="mb-2 text-xs text-destructive">
+            Your last request wasn&apos;t approved. You can submit a new one.
+          </p>
         )}
         <form onSubmit={handleSubmit} className="grid gap-2">
           <Input

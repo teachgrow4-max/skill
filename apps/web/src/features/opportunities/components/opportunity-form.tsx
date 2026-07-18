@@ -60,7 +60,10 @@ export function OpportunityForm({ allowedKinds, onCreated }: OpportunityFormProp
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="glass grid gap-3 rounded-xl p-4">
-      <select className="h-10 rounded-md border border-input bg-background px-2 text-sm" {...register("kind")}>
+      <select
+        className="h-10 rounded-md border border-input bg-background px-2 text-sm"
+        {...register("kind")}
+      >
         {allowedKinds.map((kind) => (
           <option key={kind} value={kind}>
             {KIND_LABELS[kind]}
@@ -72,7 +75,10 @@ export function OpportunityForm({ allowedKinds, onCreated }: OpportunityFormProp
       <Textarea placeholder="Description" rows={4} {...register("description")} />
 
       <div className="grid grid-cols-2 gap-2">
-        <select className="h-10 rounded-md border border-input bg-background px-2 text-sm" {...register("skillCategory")}>
+        <select
+          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
+          {...register("skillCategory")}
+        >
           <option value="">Skill category</option>
           {skillCategories.map((category) => (
             <optgroup key={category.slug} label={category.name}>
@@ -96,7 +102,11 @@ export function OpportunityForm({ allowedKinds, onCreated }: OpportunityFormProp
             defaultValue={field.value.join(", ")}
             onBlur={(e) =>
               field.onChange(
-                e.target.value.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 15),
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .slice(0, 15),
               )
             }
           />

@@ -32,7 +32,9 @@ export function VerifyEmailPanel({ email }: { email: string | null }) {
           {status === "sending" ? "Sending…" : status === "sent" ? "Email sent" : "Resend email"}
         </Button>
       )}
-      {status === "error" && <p className="text-xs text-destructive">Couldn&apos;t resend right now — try again shortly.</p>}
+      {status === "error" && (
+        <p className="text-xs text-destructive">Couldn&apos;t resend right now — try again shortly.</p>
+      )}
 
       <Link href="/login" className="text-sm font-medium text-primary hover:underline">
         Back to login

@@ -22,7 +22,9 @@ export default async function MessagesPage() {
       <div className="grid gap-2">
         {conversations.map((conversation) => {
           const other = conversation.participants[0];
-          const title = conversation.isGroup ? conversation.title ?? "Group chat" : other?.fullName ?? "Unknown";
+          const title = conversation.isGroup
+            ? (conversation.title ?? "Group chat")
+            : (other?.fullName ?? "Unknown");
 
           return (
             <Link
@@ -44,7 +46,8 @@ export default async function MessagesPage() {
                   )}
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
-                  {conversation.lastMessage?.body ?? (conversation.lastMessage?.attachment ? "Sent an attachment" : "No messages yet")}
+                  {conversation.lastMessage?.body ??
+                    (conversation.lastMessage?.attachment ? "Sent an attachment" : "No messages yet")}
                 </p>
               </div>
               {conversation.unreadCount > 0 && <Badge className="shrink-0">New</Badge>}

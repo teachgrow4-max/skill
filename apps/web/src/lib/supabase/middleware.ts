@@ -13,6 +13,7 @@ const PROTECTED_PREFIXES = [
   "/moderation",
   "/dashboard",
   "/sessions",
+  "/admin",
 ];
 const AUTH_ONLY_PREFIXES = ["/login", "/signup", "/forgot-password"];
 

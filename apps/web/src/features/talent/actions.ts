@@ -24,7 +24,10 @@ export async function searchTalentAction(skillQuery: string): Promise<ProfileRow
   return searchProfilesBySkill(supabase, `%${trimmed}%`);
 }
 
-export async function toggleCandidateBookmarkAction(candidateId: string, isCurrentlyBookmarked: boolean): Promise<ActionResult<{ isBookmarked: boolean }>> {
+export async function toggleCandidateBookmarkAction(
+  candidateId: string,
+  isCurrentlyBookmarked: boolean,
+): Promise<ActionResult<{ isBookmarked: boolean }>> {
   const supabase = await createClient();
   const {
     data: { user },

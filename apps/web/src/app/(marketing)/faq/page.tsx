@@ -6,7 +6,8 @@ export const metadata: Metadata = { title: "FAQ" };
 const FAQS = [
   {
     question: "Who can join Skilltego?",
-    answer: "Anyone aged 13 or older — students, professionals, artists, athletes, teachers, creators, entrepreneurs, freelancers, recruiters, companies, and colleges.",
+    answer:
+      "Anyone aged 13 or older — students, professionals, artists, athletes, teachers, creators, entrepreneurs, freelancers, recruiters, companies, and colleges.",
   },
   {
     question: "Is Skilltego free?",
@@ -14,11 +15,13 @@ const FAQS = [
   },
   {
     question: "How is Skilltego different from a job board or LinkedIn?",
-    answer: "Skilltego is organized around skills, not job titles or degrees. You build a skill profile, and companies, colleges, and mentors discover you by what you can do.",
+    answer:
+      "Skilltego is organized around skills, not job titles or degrees. You build a skill profile, and companies, colleges, and mentors discover you by what you can do.",
   },
   {
     question: "How do I sign up?",
-    answer: "Create an account with email, Google, or GitHub, then build your profile by adding your skills, bio, and location.",
+    answer:
+      "Create an account with email, Google, or GitHub, then build your profile by adding your skills, bio, and location.",
   },
   {
     question: "Can I change my username later?",
@@ -26,7 +29,8 @@ const FAQS = [
   },
   {
     question: "How do companies and colleges find talent?",
-    answer: "Through skill-based search and category browsing, plus dedicated dashboards for posting opportunities.",
+    answer:
+      "Through skill-based search and category browsing, plus dedicated dashboards for posting opportunities.",
   },
 ];
 

@@ -30,7 +30,12 @@ export function TalentSearch() {
     <div className="grid gap-3">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by skill (e.g. React, Photography)…" className="pl-9" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by skill (e.g. React, Photography)…"
+          className="pl-9"
+        />
       </div>
 
       {loading && (
@@ -39,7 +44,9 @@ export function TalentSearch() {
         </div>
       )}
 
-      {!loading && results && results.length === 0 && <p className="text-sm text-muted-foreground">No matches.</p>}
+      {!loading && results && results.length === 0 && (
+        <p className="text-sm text-muted-foreground">No matches.</p>
+      )}
 
       {!loading && results && (
         <div className="grid gap-2">

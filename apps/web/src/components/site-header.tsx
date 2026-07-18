@@ -15,11 +15,19 @@ export async function SiteHeader() {
   } = await supabase.auth.getUser();
 
   const profile = user ? await getProfileById(supabase, user.id) : null;
-  const showDashboard = profile && (DASHBOARD_ACCOUNT_TYPES as readonly string[]).includes(profile.account_type);
+  const showDashboard =
+    profile && (DASHBOARD_ACCOUNT_TYPES as readonly string[]).includes(profile.account_type);
+  const showModeration =
+    profile && (profile.account_type === "admin" || profile.account_type === "moderator");
+  const showAdmin = profile?.account_type === "admin";
+
   const navItems = profile
-    ? showDashboard
-      ? [...appNav, { title: "Dashboard", href: "/dashboard" }]
-      : appNav
+    ? [
+        ...appNav,
+        ...(showDashboard ? [{ title: "Dashboard", href: "/dashboard" }] : []),
+        ...(showModeration ? [{ title: "Moderation", href: "/moderation" }] : []),
+        ...(showAdmin ? [{ title: "Admin", href: "/admin" }] : []),
+      ]
     : marketingNav;
 
   return (

@@ -29,9 +29,7 @@ export function LoginForm() {
 
     if (error) {
       setFormError(
-        error.message === "Invalid login credentials"
-          ? "Incorrect email or password."
-          : error.message,
+        error.message === "Invalid login credentials" ? "Incorrect email or password." : error.message,
       );
       return;
     }

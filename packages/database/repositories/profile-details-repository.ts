@@ -1,10 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  Database,
-  ProfileEducationRow,
-  ProfileExperienceRow,
-  ProfileSkillRow,
-} from "@skilltego/types";
+import type { Database, ProfileEducationRow, ProfileExperienceRow, ProfileSkillRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -50,7 +45,10 @@ export async function getProfileEducation(client: Client, profileId: string): Pr
   return data;
 }
 
-export async function getProfileExperience(client: Client, profileId: string): Promise<ProfileExperienceRow[]> {
+export async function getProfileExperience(
+  client: Client,
+  profileId: string,
+): Promise<ProfileExperienceRow[]> {
   const { data, error } = await client
     .from("profile_experience")
     .select("*")

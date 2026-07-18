@@ -11,13 +11,17 @@ export interface CloudinaryUploadResult {
 
 export class CloudinaryNotConfiguredError extends Error {
   constructor() {
-    super("Media upload isn't configured yet. Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to enable it.");
+    super(
+      "Media upload isn't configured yet. Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to enable it.",
+    );
     this.name = "CloudinaryNotConfiguredError";
   }
 }
 
 export function isCloudinaryConfigured(): boolean {
-  return Boolean(publicEnv.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && publicEnv.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+  return Boolean(
+    publicEnv.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && publicEnv.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+  );
 }
 
 /**

@@ -1,7 +1,13 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getProfilesByIds, toAuthorSummary, toMentorReview, toMentorSession } from "@skilltego/database";
-import type { Database, MentorReview, MentorReviewRow, MentorSession, MentorSessionRow } from "@skilltego/types";
+import type {
+  Database,
+  MentorReview,
+  MentorReviewRow,
+  MentorSession,
+  MentorSessionRow,
+} from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -24,5 +30,7 @@ export async function hydrateReviews(client: Client, rows: MentorReviewRow[]): P
   const profiles = await getProfilesByIds(client, studentIds);
   const profileMap = new Map(profiles.map((p) => [p.id, toAuthorSummary(p)]));
 
-  return rows.filter((row) => profileMap.has(row.student_id)).map((row) => toMentorReview(row, profileMap.get(row.student_id)!));
+  return rows
+    .filter((row) => profileMap.has(row.student_id))
+    .map((row) => toMentorReview(row, profileMap.get(row.student_id)!));
 }

@@ -4,7 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, ExternalLink, FileText, Github, MessageCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  BadgeCheck,
+  ExternalLink,
+  FileText,
+  Github,
+  MessageCircle,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
 import { initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
@@ -53,7 +61,11 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
         </Link>
 
         <div className="relative">
-          <button type="button" onClick={() => setMenuOpen((v) => !v)} className="text-muted-foreground hover:text-foreground">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="text-muted-foreground hover:text-foreground"
+          >
             <MoreHorizontal className="size-4" />
           </button>
           {menuOpen && (
@@ -111,13 +123,23 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
       {post.media.length > 0 && (
         <div className={`mt-3 grid gap-1 ${post.media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
           {post.media.map((item, i) => (
-            <div key={item.publicId ?? item.url} className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-              {item.type === "image" && <Image src={item.url} alt="" fill className="object-cover" unoptimized={i > 3} />}
+            <div
+              key={item.publicId ?? item.url}
+              className="relative aspect-video overflow-hidden rounded-lg bg-muted"
+            >
+              {item.type === "image" && (
+                <Image src={item.url} alt="" fill className="object-cover" unoptimized={i > 3} />
+              )}
               {item.type === "video" && (
                 <video src={item.url} controls className="h-full w-full object-cover" />
               )}
               {item.type === "pdf" && (
-                <a href={item.url} target="_blank" rel="noreferrer noopener" className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground"
+                >
                   <FileText className="size-8" />
                   <span className="text-xs">View PDF</span>
                 </a>
@@ -139,8 +161,17 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
       )}
 
       <div className="mt-4 flex items-center gap-5">
-        <LikeButton postId={post.id} initialIsLiked={post.isLiked} initialCount={post.likeCount} isLoggedIn={isLoggedIn} />
-        <button type="button" onClick={() => setShowComments((v) => !v)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <LikeButton
+          postId={post.id}
+          initialIsLiked={post.isLiked}
+          initialCount={post.likeCount}
+          isLoggedIn={isLoggedIn}
+        />
+        <button
+          type="button"
+          onClick={() => setShowComments((v) => !v)}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
           <MessageCircle className="size-4" />
           {commentCount > 0 && commentCount}
         </button>

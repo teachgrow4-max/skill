@@ -3,7 +3,11 @@ import type { Database, NotificationRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
-export async function getNotifications(client: Client, userId: string, limit = 30): Promise<NotificationRow[]> {
+export async function getNotifications(
+  client: Client,
+  userId: string,
+  limit = 30,
+): Promise<NotificationRow[]> {
   const { data, error } = await client
     .from("notifications")
     .select("*")
@@ -32,6 +36,10 @@ export async function markNotificationRead(client: Client, notificationId: strin
 }
 
 export async function markAllNotificationsRead(client: Client, userId: string): Promise<void> {
-  const { error } = await client.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("is_read", false);
+  const { error } = await client
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("user_id", userId)
+    .eq("is_read", false);
   if (error) throw error;
 }

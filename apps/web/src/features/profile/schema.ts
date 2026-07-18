@@ -8,12 +8,7 @@ export const skillInputSchema = z.object({
 });
 
 export const profileFormSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(3, "At least 3 characters")
-    .max(30, "At most 30 characters"),
+  username: z.string().trim().toLowerCase().min(3, "At least 3 characters").max(30, "At most 30 characters"),
   fullName: z.string().trim().min(2, "Enter your full name").max(100),
   accountType: z.enum(["student", "professional", "mentor", "company", "college"]),
   bio: z.string().trim().max(500, "Keep it under 500 characters").optional().or(z.literal("")),

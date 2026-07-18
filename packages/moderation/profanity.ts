@@ -30,5 +30,7 @@ export function containsProfanity(text: string): boolean {
 }
 
 export function censorProfanity(text: string): string {
-  return text.replace(new RegExp(`\\b(${BLOCKED_TERMS.join("|")})\\b`, "gi"), (match) => "*".repeat(match.length));
+  return text.replace(new RegExp(`\\b(${BLOCKED_TERMS.join("|")})\\b`, "gi"), (match) =>
+    "*".repeat(match.length),
+  );
 }

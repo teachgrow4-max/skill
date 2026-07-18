@@ -14,6 +14,7 @@ export * from "./repositories/opportunity-repository";
 export * from "./repositories/bookmark-repository";
 export * from "./repositories/verification-repository";
 export * from "./repositories/mentor-repository";
+export * from "./repositories/admin-repository";
 export * from "./mappers/profile-mapper";
 export * from "./mappers/post-mapper";
 export * from "./mappers/messaging-mapper";

@@ -4,11 +4,17 @@ import type { Database, ProfileRow } from "@skilltego/types";
 type Client = SupabaseClient<Database>;
 
 export async function bookmarkCandidate(client: Client, ownerId: string, candidateId: string): Promise<void> {
-  const { error } = await client.from("candidate_bookmarks").insert({ owner_id: ownerId, candidate_id: candidateId });
+  const { error } = await client
+    .from("candidate_bookmarks")
+    .insert({ owner_id: ownerId, candidate_id: candidateId });
   if (error) throw error;
 }
 
-export async function unbookmarkCandidate(client: Client, ownerId: string, candidateId: string): Promise<void> {
+export async function unbookmarkCandidate(
+  client: Client,
+  ownerId: string,
+  candidateId: string,
+): Promise<void> {
   const { error } = await client
     .from("candidate_bookmarks")
     .delete()
@@ -17,7 +23,11 @@ export async function unbookmarkCandidate(client: Client, ownerId: string, candi
   if (error) throw error;
 }
 
-export async function isCandidateBookmarked(client: Client, ownerId: string, candidateId: string): Promise<boolean> {
+export async function isCandidateBookmarked(
+  client: Client,
+  ownerId: string,
+  candidateId: string,
+): Promise<boolean> {
   const { data, error } = await client
     .from("candidate_bookmarks")
     .select("owner_id")
@@ -39,7 +49,10 @@ export async function getBookmarkedCandidates(client: Client, ownerId: string): 
   const ids = bookmarks.map((row) => row.candidate_id);
   if (ids.length === 0) return [];
 
-  const { data: candidates, error: candidatesError } = await client.from("profiles").select("*").in("id", ids);
+  const { data: candidates, error: candidatesError } = await client
+    .from("profiles")
+    .select("*")
+    .in("id", ids);
   if (candidatesError) throw candidatesError;
 
   const order = new Map(ids.map((id, index) => [id, index]));

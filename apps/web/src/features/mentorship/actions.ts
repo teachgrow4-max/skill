@@ -30,7 +30,10 @@ const slotSchema = z.object({
   endTime: z.string().datetime().or(z.string().min(1)),
 });
 
-export async function addAvailabilitySlotAction(input: { startTime: string; endTime: string }): Promise<ActionResult> {
+export async function addAvailabilitySlotAction(input: {
+  startTime: string;
+  endTime: string;
+}): Promise<ActionResult> {
   const parsed = slotSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Invalid time range." };
   if (new Date(parsed.data.endTime) <= new Date(parsed.data.startTime)) {
@@ -71,7 +74,11 @@ export async function getMentorAvailabilityAction(mentorId: string): Promise<Men
   return rows.filter((row) => !row.is_booked).map(toAvailabilitySlot);
 }
 
-export async function bookSessionAction(mentorId: string, slotId: string, scheduledAt: string): Promise<ActionResult> {
+export async function bookSessionAction(
+  mentorId: string,
+  slotId: string,
+  scheduledAt: string,
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -101,11 +108,17 @@ export async function getMySessionsAction(role: "mentor" | "student"): Promise<M
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const rows = role === "mentor" ? await getSessionsForMentor(supabase, user.id) : await getSessionsForStudent(supabase, user.id);
+  const rows =
+    role === "mentor"
+      ? await getSessionsForMentor(supabase, user.id)
+      : await getSessionsForStudent(supabase, user.id);
   return hydrateSessions(supabase, rows);
 }
 
-export async function updateSessionStatusAction(sessionId: string, status: SessionStatus): Promise<ActionResult> {
+export async function updateSessionStatusAction(
+  sessionId: string,
+  status: SessionStatus,
+): Promise<ActionResult> {
   const supabase = await createClient();
   try {
     await updateSessionStatus(supabase, sessionId, status);
@@ -115,7 +128,12 @@ export async function updateSessionStatusAction(sessionId: string, status: Sessi
   }
 }
 
-export async function submitMentorReviewAction(sessionId: string, mentorId: string, rating: number, comment: string): Promise<ActionResult> {
+export async function submitMentorReviewAction(
+  sessionId: string,
+  mentorId: string,
+  rating: number,
+  comment: string,
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -136,9 +154,14 @@ export async function submitMentorReviewAction(sessionId: string, mentorId: stri
   }
 }
 
-export async function getMentorReviewsAction(mentorId: string): Promise<{ reviews: MentorReview[]; average: number; count: number }> {
+export async function getMentorReviewsAction(
+  mentorId: string,
+): Promise<{ reviews: MentorReview[]; average: number; count: number }> {
   const supabase = await createClient();
-  const [rows, stats] = await Promise.all([getMentorReviews(supabase, mentorId), getMentorAverageRating(supabase, mentorId)]);
+  const [rows, stats] = await Promise.all([
+    getMentorReviews(supabase, mentorId),
+    getMentorAverageRating(supabase, mentorId),
+  ]);
   const reviews = await hydrateReviews(supabase, rows);
   return { reviews, average: stats.average, count: stats.count };
 }

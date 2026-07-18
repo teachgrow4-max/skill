@@ -1,4 +1,12 @@
-import type { AuthorSummary, MentorAvailabilityRow, MentorAvailabilitySlot, MentorReview, MentorReviewRow, MentorSession, MentorSessionRow } from "@skilltego/types";
+import type {
+  AuthorSummary,
+  MentorAvailabilityRow,
+  MentorAvailabilitySlot,
+  MentorReview,
+  MentorReviewRow,
+  MentorSession,
+  MentorSessionRow,
+} from "@skilltego/types";
 
 export function toAvailabilitySlot(row: MentorAvailabilityRow): MentorAvailabilitySlot {
   return {
@@ -10,7 +18,11 @@ export function toAvailabilitySlot(row: MentorAvailabilityRow): MentorAvailabili
   };
 }
 
-export function toMentorSession(row: MentorSessionRow, mentor: AuthorSummary, student: AuthorSummary): MentorSession {
+export function toMentorSession(
+  row: MentorSessionRow,
+  mentor: AuthorSummary,
+  student: AuthorSummary,
+): MentorSession {
   return {
     id: row.id,
     mentor,

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signUpSchema, signUpWithEmail, type SignUpInput } from "@skilltego/auth";
 import { Button, Input, Label } from "@skilltego/ui";
 import { createClient } from "@/lib/supabase/browser";
+import { trackEvent } from "@/providers/posthog-provider";
 import { OAuthButtons } from "./oauth-buttons";
 
 export function SignupForm() {
@@ -33,9 +34,15 @@ export function SignupForm() {
     });
 
     if (error) {
-      setFormError(error.message === "User already registered" ? "An account with this email already exists." : error.message);
+      setFormError(
+        error.message === "User already registered"
+          ? "An account with this email already exists."
+          : error.message,
+      );
       return;
     }
+
+    trackEvent("user_signed_up", { method: "email" });
 
     if (data.session) {
       router.push("/onboarding");
@@ -50,7 +57,9 @@ export function SignupForm() {
     <div className="grid gap-6">
       <div className="grid gap-1.5 text-center">
         <h1 className="text-xl font-semibold">Create your account</h1>
-        <p className="text-sm text-muted-foreground">Every skill deserves an opportunity. Let&apos;s find yours.</p>
+        <p className="text-sm text-muted-foreground">
+          Every skill deserves an opportunity. Let&apos;s find yours.
+        </p>
       </div>
 
       <OAuthButtons redirectTo="/onboarding" />
@@ -88,7 +97,12 @@ export function SignupForm() {
 
         <div className="grid gap-1.5">
           <Label htmlFor="confirmPassword">Confirm password</Label>
-          <Input id="confirmPassword" type="password" autoComplete="new-password" {...register("confirmPassword")} />
+          <Input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            {...register("confirmPassword")}
+          />
           {errors.confirmPassword && (
             <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
           )}

@@ -63,7 +63,10 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
       {value.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {value.map((item, index) => (
-            <div key={item.publicId ?? item.url} className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted">
+            <div
+              key={item.publicId ?? item.url}
+              className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
+            >
               {item.type === "image" ? (
                 <Image src={item.url} alt="" fill className="object-cover" />
               ) : item.type === "video" ? (
@@ -89,7 +92,14 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
       )}
 
       {value.length < maxItems && (
-        <Button type="button" variant="outline" size="sm" className="w-fit" disabled={uploading} onClick={() => inputRef.current?.click()}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-fit"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
           {uploading ? "Uploading…" : "Upload media"}
         </Button>

@@ -1,6 +1,12 @@
 "use server";
 
-import { createReport, getPendingReports, getProfilesByIds, isModerator, updateReportStatus } from "@skilltego/database";
+import {
+  createReport,
+  getPendingReports,
+  getProfilesByIds,
+  isModerator,
+  updateReportStatus,
+} from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
 import { reportSchema, type ReportInput } from "./schema";
 import type { ProfileRow, ReportRow, ReportStatus } from "@skilltego/types";
@@ -40,7 +46,10 @@ export interface ReportWithReporter extends ReportRow {
   reporter: ProfileRow | null;
 }
 
-export async function getModerationQueueAction(): Promise<{ isModerator: boolean; reports: ReportWithReporter[] }> {
+export async function getModerationQueueAction(): Promise<{
+  isModerator: boolean;
+  reports: ReportWithReporter[];
+}> {
   const supabase = await createClient();
   const {
     data: { user },

@@ -17,8 +17,16 @@ export async function deleteAvailabilitySlot(client: Client, id: string): Promis
   if (error) throw error;
 }
 
-export async function getMentorAvailability(client: Client, mentorId: string, upcomingOnly = true): Promise<MentorAvailabilityRow[]> {
-  let query = client.from("mentor_availability").select("*").eq("mentor_id", mentorId).order("start_time", { ascending: true });
+export async function getMentorAvailability(
+  client: Client,
+  mentorId: string,
+  upcomingOnly = true,
+): Promise<MentorAvailabilityRow[]> {
+  let query = client
+    .from("mentor_availability")
+    .select("*")
+    .eq("mentor_id", mentorId)
+    .order("start_time", { ascending: true });
   if (upcomingOnly) query = query.gte("start_time", new Date().toISOString());
 
   const { data, error } = await query;
@@ -60,7 +68,11 @@ export async function getSessionsForStudent(client: Client, studentId: string): 
   return data;
 }
 
-export async function updateSessionStatus(client: Client, sessionId: string, status: MentorSessionRow["status"]): Promise<void> {
+export async function updateSessionStatus(
+  client: Client,
+  sessionId: string,
+  status: MentorSessionRow["status"],
+): Promise<void> {
   const { error } = await client.from("mentor_sessions").update({ status }).eq("id", sessionId);
   if (error) throw error;
 }
@@ -84,7 +96,10 @@ export async function getMentorReviews(client: Client, mentorId: string): Promis
   return data;
 }
 
-export async function getMentorAverageRating(client: Client, mentorId: string): Promise<{ average: number; count: number }> {
+export async function getMentorAverageRating(
+  client: Client,
+  mentorId: string,
+): Promise<{ average: number; count: number }> {
   const reviews = await getMentorReviews(client, mentorId);
   if (reviews.length === 0) return { average: 0, count: 0 };
   const total = reviews.reduce((sum, review) => sum + review.rating, 0);

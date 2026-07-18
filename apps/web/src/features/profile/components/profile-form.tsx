@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Label, Textarea } from "@skilltego/ui";
 import type { Profile } from "@skilltego/types";
 import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
 import { ACCOUNT_TYPE_OPTIONS, profileFormSchema, type ProfileFormValues } from "../schema";
 import { saveProfileAction } from "../actions";
 import { useUsernameAvailability } from "../hooks/use-username-availability";
@@ -28,6 +29,7 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -108,7 +110,9 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
           <span className="text-sm text-muted-foreground">skilltego.com/</span>
           <Input id="username" {...register("username")} className="flex-1" />
         </div>
-        {usernameStatus === "checking" && <p className="text-xs text-muted-foreground">Checking availability…</p>}
+        {usernameStatus === "checking" && (
+          <p className="text-xs text-muted-foreground">Checking availability…</p>
+        )}
         {usernameStatus === "available" && <p className="text-xs text-success">Username is available</p>}
         {usernameStatus === "taken" && <p className="text-xs text-destructive">Username is already taken</p>}
         {usernameStatus === "invalid" && (
@@ -136,6 +140,19 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
         <Label htmlFor="bio">Bio</Label>
         <Textarea id="bio" rows={4} placeholder="Tell people what you're great at" {...register("bio")} />
         {errors.bio && <p className="text-xs text-destructive">{errors.bio.message}</p>}
+        <AiSuggestButton
+          label="Suggest a bio"
+          system="You write short, warm, first-person social profile bios (max 3 sentences, under 300 characters) for a skill-showcase platform called Skilltego. No hashtags, no quotes, no markdown — just the bio text."
+          getPrompt={() => {
+            const skills = getValues("skills")
+              .map((s) => s.skillName)
+              .filter(Boolean);
+            return `Write a bio for ${getValues("fullName") || "someone"}, a ${getValues("accountType")}${
+              skills.length > 0 ? ` skilled in ${skills.join(", ")}` : ""
+            }.`;
+          }}
+          onResult={(text) => setValue("bio", text.slice(0, 500), { shouldDirty: true })}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -163,7 +180,12 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
         <Label htmlFor="resume">Resume</Label>
         {resumeUrl ? (
           <div className="flex items-center gap-2 text-sm">
-            <a href={resumeUrl} target="_blank" rel="noreferrer noopener" className="text-primary hover:underline">
+            <a
+              href={resumeUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-primary hover:underline"
+            >
               View current resume
             </a>
             <label htmlFor="resume" className="cursor-pointer text-xs text-muted-foreground hover:underline">
@@ -178,7 +200,13 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
             {uploadingResume ? "Uploading…" : "Upload resume (PDF)"}
           </label>
         )}
-        <input id="resume" type="file" accept="application/pdf" className="hidden" onChange={handleResumeUpload} />
+        <input
+          id="resume"
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={handleResumeUpload}
+        />
       </div>
 
       <div className="grid gap-1.5">

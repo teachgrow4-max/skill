@@ -13,7 +13,11 @@ import type { Comment, Database, Post, PostCommentRow, PostRow } from "@skillteg
 type Client = SupabaseClient<Database>;
 
 /** Batch-fetches authors and like/save flags for a page of posts — avoids N+1 queries. */
-export async function hydratePosts(client: Client, postRows: PostRow[], viewerId: string | null): Promise<Post[]> {
+export async function hydratePosts(
+  client: Client,
+  postRows: PostRow[],
+  viewerId: string | null,
+): Promise<Post[]> {
   if (postRows.length === 0) return [];
 
   const authorIds = postRows.map((row) => row.author_id);
@@ -44,5 +48,7 @@ export async function hydrateComments(client: Client, rows: PostCommentRow[]): P
   const authors = await getProfilesByIds(client, authorIds);
   const authorMap = new Map(authors.map((author) => [author.id, toAuthorSummary(author)]));
 
-  return rows.filter((row) => authorMap.has(row.author_id)).map((row) => toComment(row, authorMap.get(row.author_id)!));
+  return rows
+    .filter((row) => authorMap.has(row.author_id))
+    .map((row) => toComment(row, authorMap.get(row.author_id)!));
 }

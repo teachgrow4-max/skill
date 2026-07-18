@@ -5,13 +5,7 @@
  */
 
 export type AccountType =
-  | "student"
-  | "professional"
-  | "mentor"
-  | "company"
-  | "college"
-  | "admin"
-  | "moderator";
+  "student" | "professional" | "mentor" | "company" | "college" | "admin" | "moderator";
 
 export type AvailabilityStatus = "available" | "open_to_offers" | "not_available";
 
@@ -90,14 +84,7 @@ export interface FollowRow {
 }
 
 export type PostType =
-  | "text"
-  | "image"
-  | "carousel"
-  | "video"
-  | "pdf"
-  | "code"
-  | "github_link"
-  | "project_link";
+  "text" | "image" | "carousel" | "video" | "pdf" | "code" | "github_link" | "project_link";
 
 export type PostStatus = "draft" | "scheduled" | "published";
 
@@ -205,7 +192,8 @@ export interface NotificationRow {
 }
 
 export type ReportTargetType = "post" | "comment" | "profile" | "message";
-export type ReportReason = "spam" | "harassment" | "inappropriate_content" | "fake_account" | "impersonation" | "other";
+export type ReportReason =
+  "spam" | "harassment" | "inappropriate_content" | "fake_account" | "impersonation" | "other";
 export type ReportStatus = "pending" | "reviewed" | "actioned" | "dismissed";
 
 export interface ReportRow {
@@ -402,7 +390,12 @@ export type Database = {
       };
       opportunities: {
         Row: OpportunityRow;
-        Insert: Partial<OpportunityRow> & { author_id: string; kind: OpportunityKind; title: string; description: string };
+        Insert: Partial<OpportunityRow> & {
+          author_id: string;
+          kind: OpportunityKind;
+          title: string;
+          description: string;
+        };
         Update: Partial<OpportunityRow>;
         Relationships: [];
       };
@@ -438,7 +431,12 @@ export type Database = {
       };
       mentor_reviews: {
         Row: MentorReviewRow;
-        Insert: Partial<MentorReviewRow> & { session_id: string; mentor_id: string; student_id: string; rating: number };
+        Insert: Partial<MentorReviewRow> & {
+          session_id: string;
+          mentor_id: string;
+          student_id: string;
+          rating: number;
+        };
         Update: Partial<MentorReviewRow>;
         Relationships: [];
       };

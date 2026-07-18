@@ -14,7 +14,14 @@ interface ApplyButtonProps {
   actionLabel: string;
 }
 
-export function ApplyButton({ opportunityId, isLoggedIn, hasApplied, isOwner, isClosed, actionLabel }: ApplyButtonProps) {
+export function ApplyButton({
+  opportunityId,
+  isLoggedIn,
+  hasApplied,
+  isOwner,
+  isClosed,
+  actionLabel,
+}: ApplyButtonProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [coverNote, setCoverNote] = React.useState("");

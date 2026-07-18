@@ -39,7 +39,11 @@ export function ReportButton({ targetType, targetId, isLoggedIn }: ReportButtonP
 
   if (!open) {
     return (
-      <button type="button" onClick={handleOpen} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+      >
         <Flag className="size-3" />
         Report
       </button>
@@ -47,7 +51,11 @@ export function ReportButton({ targetType, targetId, isLoggedIn }: ReportButtonP
   }
 
   if (done) {
-    return <p className="text-xs text-muted-foreground">Report submitted. Thanks for helping keep Skilltego safe.</p>;
+    return (
+      <p className="text-xs text-muted-foreground">
+        Report submitted. Thanks for helping keep Skilltego safe.
+      </p>
+    );
   }
 
   return (

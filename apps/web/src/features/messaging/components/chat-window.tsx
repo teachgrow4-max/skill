@@ -15,7 +15,12 @@ interface ChatWindowProps {
   initialMessages: Message[];
 }
 
-export function ChatWindow({ conversationId, currentUserId, participants, initialMessages }: ChatWindowProps) {
+export function ChatWindow({
+  conversationId,
+  currentUserId,
+  participants,
+  initialMessages,
+}: ChatWindowProps) {
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [body, setBody] = React.useState("");
   const [sending, setSending] = React.useState(false);
@@ -37,7 +42,12 @@ export function ChatWindow({ conversationId, currentUserId, participants, initia
       .channel(`messages:${conversationId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
         (payload) => {
           const row = payload.new as {
             id: string;
@@ -55,17 +65,24 @@ export function ChatWindow({ conversationId, currentUserId, participants, initia
           const sender = participantMap.get(row.sender_id);
           if (!sender) return;
 
-          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, {
-            id: row.id,
-            conversationId,
-            sender,
-            body: row.body,
-            attachment: row.attachment,
-            isEdited: row.is_edited,
-            isDeleted: row.is_deleted,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-          }]));
+          setMessages((prev) =>
+            prev.some((m) => m.id === row.id)
+              ? prev
+              : [
+                  ...prev,
+                  {
+                    id: row.id,
+                    conversationId,
+                    sender,
+                    body: row.body,
+                    attachment: row.attachment,
+                    isEdited: row.is_edited,
+                    isDeleted: row.is_deleted,
+                    createdAt: row.created_at,
+                    updatedAt: row.updated_at,
+                  },
+                ],
+          );
 
           markConversationReadAction(conversationId);
         },
@@ -108,9 +125,20 @@ export function ChatWindow({ conversationId, currentUserId, participants, initia
                 <AvatarImage src={message.sender.avatarUrl ?? undefined} alt={message.sender.fullName} />
                 <AvatarFallback className="text-[10px]">{initials(message.sender.fullName)}</AvatarFallback>
               </Avatar>
-              <div className={cn("max-w-[75%] rounded-2xl px-3.5 py-2 text-sm", isMine ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                {message.isDeleted ? <span className="italic text-muted-foreground">Message deleted</span> : message.body}
-                <div className={cn("mt-0.5 text-[10px] opacity-70")}>{formatRelativeTime(message.createdAt)}</div>
+              <div
+                className={cn(
+                  "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",
+                  isMine ? "bg-primary text-primary-foreground" : "bg-muted",
+                )}
+              >
+                {message.isDeleted ? (
+                  <span className="italic text-muted-foreground">Message deleted</span>
+                ) : (
+                  message.body
+                )}
+                <div className={cn("mt-0.5 text-[10px] opacity-70")}>
+                  {formatRelativeTime(message.createdAt)}
+                </div>
               </div>
             </div>
           );
@@ -119,7 +147,12 @@ export function ChatWindow({ conversationId, currentUserId, participants, initia
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border pt-3">
-        <Input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Message…" maxLength={4000} />
+        <Input
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Message…"
+          maxLength={4000}
+        />
         <Button type="submit" size="icon" disabled={sending || !body.trim()} aria-label="Send">
           <Send className="size-4" />
         </Button>

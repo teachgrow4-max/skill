@@ -81,9 +81,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="glass overflow-hidden rounded-2xl">
         <div className="relative h-32 bg-gradient-to-r from-primary/40 to-secondary/40 sm:h-44">
-          {profile.coverUrl && (
-            <Image src={profile.coverUrl} alt="" fill className="object-cover" priority />
-          )}
+          {profile.coverUrl && <Image src={profile.coverUrl} alt="" fill className="object-cover" priority />}
         </div>
 
         <div className="px-6 pb-6">
@@ -122,7 +120,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{ACCOUNT_TYPE_LABEL[profile.accountType] ?? profile.accountType}</Badge>
+            <Badge variant="secondary">
+              {ACCOUNT_TYPE_LABEL[profile.accountType] ?? profile.accountType}
+            </Badge>
             <Badge variant="outline">Level {profile.level}</Badge>
             <Badge variant="outline">{profile.xp} XP</Badge>
           </div>

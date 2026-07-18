@@ -5,7 +5,9 @@ type Client = SupabaseClient<Database>;
 
 export async function followUser(client: Client, followerId: string, followingId: string): Promise<void> {
   if (followerId === followingId) throw new Error("Cannot follow yourself");
-  const { error } = await client.from("follows").insert({ follower_id: followerId, following_id: followingId });
+  const { error } = await client
+    .from("follows")
+    .insert({ follower_id: followerId, following_id: followingId });
   if (error) throw error;
 }
 

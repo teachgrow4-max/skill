@@ -11,7 +11,11 @@ export interface MessagePage {
 const MESSAGE_PAGE_SIZE = 30;
 
 /** Finds an existing 1:1 conversation between two users, or creates one. */
-export async function getOrCreateDirectConversation(client: Client, userId: string, otherUserId: string): Promise<string> {
+export async function getOrCreateDirectConversation(
+  client: Client,
+  userId: string,
+  otherUserId: string,
+): Promise<string> {
   const { data: mine, error: mineError } = await client
     .from("conversation_participants")
     .select("conversation_id")
@@ -60,7 +64,10 @@ export async function getOrCreateDirectConversation(client: Client, userId: stri
 }
 
 export async function getUserConversationIds(client: Client, userId: string): Promise<string[]> {
-  const { data, error } = await client.from("conversation_participants").select("conversation_id").eq("user_id", userId);
+  const { data, error } = await client
+    .from("conversation_participants")
+    .select("conversation_id")
+    .eq("user_id", userId);
   if (error) throw error;
   return data.map((row) => row.conversation_id);
 }
@@ -72,7 +79,10 @@ export async function getConversationsByIds(client: Client, ids: string[]): Prom
   return data;
 }
 
-export async function getConversationParticipantIds(client: Client, conversationId: string): Promise<string[]> {
+export async function getConversationParticipantIds(
+  client: Client,
+  conversationId: string,
+): Promise<string[]> {
   const { data, error } = await client
     .from("conversation_participants")
     .select("user_id")
@@ -102,7 +112,10 @@ export async function getParticipantsForConversations(
   return map;
 }
 
-export async function getLastMessages(client: Client, conversationIds: string[]): Promise<Map<string, MessageRow>> {
+export async function getLastMessages(
+  client: Client,
+  conversationIds: string[],
+): Promise<Map<string, MessageRow>> {
   if (conversationIds.length === 0) return new Map();
 
   const { data, error } = await client
@@ -119,7 +132,11 @@ export async function getLastMessages(client: Client, conversationIds: string[])
   return map;
 }
 
-export async function getLastReadAt(client: Client, conversationId: string, userId: string): Promise<string | null> {
+export async function getLastReadAt(
+  client: Client,
+  conversationId: string,
+  userId: string,
+): Promise<string | null> {
   const { data, error } = await client
     .from("conversation_participants")
     .select("last_read_at")
@@ -130,7 +147,11 @@ export async function getLastReadAt(client: Client, conversationId: string, user
   return data?.last_read_at ?? null;
 }
 
-export async function getUnreadCount(client: Client, conversationId: string, userId: string): Promise<number> {
+export async function getUnreadCount(
+  client: Client,
+  conversationId: string,
+  userId: string,
+): Promise<number> {
   const lastReadAt = await getLastReadAt(client, conversationId, userId);
   const { count, error } = await client
     .from("messages")
@@ -142,7 +163,11 @@ export async function getUnreadCount(client: Client, conversationId: string, use
   return count ?? 0;
 }
 
-export async function markConversationRead(client: Client, conversationId: string, userId: string): Promise<void> {
+export async function markConversationRead(
+  client: Client,
+  conversationId: string,
+  userId: string,
+): Promise<void> {
   const { error } = await client
     .from("conversation_participants")
     .update({ last_read_at: new Date().toISOString() })
@@ -151,7 +176,11 @@ export async function markConversationRead(client: Client, conversationId: strin
   if (error) throw error;
 }
 
-export async function getMessages(client: Client, conversationId: string, cursor: string | null): Promise<MessagePage> {
+export async function getMessages(
+  client: Client,
+  conversationId: string,
+  cursor: string | null,
+): Promise<MessagePage> {
   let query = client
     .from("messages")
     .select("*")

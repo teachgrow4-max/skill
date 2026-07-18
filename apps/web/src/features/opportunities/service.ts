@@ -8,11 +8,21 @@ import {
   toOpportunity,
   toOpportunityApplication,
 } from "@skilltego/database";
-import type { Database, Opportunity, OpportunityApplication, OpportunityApplicationRow, OpportunityRow } from "@skilltego/types";
+import type {
+  Database,
+  Opportunity,
+  OpportunityApplication,
+  OpportunityApplicationRow,
+  OpportunityRow,
+} from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
-export async function hydrateOpportunities(client: Client, rows: OpportunityRow[], viewerId: string | null): Promise<Opportunity[]> {
+export async function hydrateOpportunities(
+  client: Client,
+  rows: OpportunityRow[],
+  viewerId: string | null,
+): Promise<Opportunity[]> {
   if (rows.length === 0) return [];
 
   const authorIds = rows.map((row) => row.author_id);
@@ -21,7 +31,9 @@ export async function hydrateOpportunities(client: Client, rows: OpportunityRow[
   const [authors, counts, appliedIds] = await Promise.all([
     getProfilesByIds(client, authorIds),
     getApplicationCounts(client, opportunityIds),
-    viewerId ? getAppliedOpportunityIds(client, opportunityIds, viewerId) : Promise.resolve(new Set<string>()),
+    viewerId
+      ? getAppliedOpportunityIds(client, opportunityIds, viewerId)
+      : Promise.resolve(new Set<string>()),
   ]);
 
   const authorMap = new Map(authors.map((author) => [author.id, toAuthorSummary(author)]));
@@ -36,7 +48,10 @@ export async function hydrateOpportunities(client: Client, rows: OpportunityRow[
     );
 }
 
-export async function hydrateApplications(client: Client, rows: OpportunityApplicationRow[]): Promise<OpportunityApplication[]> {
+export async function hydrateApplications(
+  client: Client,
+  rows: OpportunityApplicationRow[],
+): Promise<OpportunityApplication[]> {
   if (rows.length === 0) return [];
 
   const applicantIds = rows.map((row) => row.applicant_id);

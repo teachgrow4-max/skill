@@ -6,7 +6,11 @@ import { Bell, Heart, MessageCircle, Reply, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Notification } from "@skilltego/types";
-import { getNotificationsAction, markAllNotificationsReadAction, markNotificationReadAction } from "../actions";
+import {
+  getNotificationsAction,
+  markAllNotificationsReadAction,
+  markNotificationReadAction,
+} from "../actions";
 
 const ICONS = {
   follow: UserPlus,
@@ -78,7 +82,14 @@ export function NotificationBell() {
 
   return (
     <div className="relative" ref={containerRef}>
-      <Button type="button" variant="ghost" size="icon" onClick={handleOpen} aria-label="Notifications" className="relative">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={handleOpen}
+        aria-label="Notifications"
+        className="relative"
+      >
         <Bell className="size-4" />
         {unreadCount > 0 && (
           <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
@@ -92,7 +103,11 @@ export function NotificationBell() {
           <div className="flex items-center justify-between border-b border-border p-3">
             <span className="text-sm font-semibold">Notifications</span>
             {unreadCount > 0 && (
-              <button type="button" onClick={handleMarkAllRead} className="text-xs text-primary hover:underline">
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="text-xs text-primary hover:underline"
+              >
                 Mark all read
               </button>
             )}
@@ -109,17 +124,26 @@ export function NotificationBell() {
                 key={notification.id}
                 href={targetHref(notification)}
                 onClick={() => handleClickNotification(notification)}
-                className={cn("flex items-start gap-2.5 border-b border-border p-3 text-sm hover:bg-accent/50", !notification.isRead && "bg-accent/20")}
+                className={cn(
+                  "flex items-start gap-2.5 border-b border-border p-3 text-sm hover:bg-accent/50",
+                  !notification.isRead && "bg-accent/20",
+                )}
               >
                 <Avatar className="size-8">
-                  <AvatarImage src={notification.actor.avatarUrl ?? undefined} alt={notification.actor.fullName} />
+                  <AvatarImage
+                    src={notification.actor.avatarUrl ?? undefined}
+                    alt={notification.actor.fullName}
+                  />
                   <AvatarFallback className="text-xs">{initials(notification.actor.fullName)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <p>
-                    <span className="font-medium">{notification.actor.fullName}</span> {LABELS[notification.type]}
+                    <span className="font-medium">{notification.actor.fullName}</span>{" "}
+                    {LABELS[notification.type]}
                   </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{formatRelativeTime(notification.createdAt)}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatRelativeTime(notification.createdAt)}
+                  </p>
                 </div>
                 <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
               </Link>

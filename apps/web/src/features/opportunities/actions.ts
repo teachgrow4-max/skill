@@ -15,7 +15,12 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { opportunitySchema, type OpportunityInput } from "./schema";
 import { hydrateApplications, hydrateOpportunities } from "./service";
-import type { ApplicationStatus, Opportunity, OpportunityApplication, OpportunityKind } from "@skilltego/types";
+import type {
+  ApplicationStatus,
+  Opportunity,
+  OpportunityApplication,
+  OpportunityKind,
+} from "@skilltego/types";
 
 export interface ActionResult<T = undefined> {
   success: boolean;
@@ -61,7 +66,9 @@ export async function getMyOpportunitiesAction(): Promise<Opportunity[]> {
   return hydrateOpportunities(supabase, rows, user.id);
 }
 
-export async function createOpportunityAction(input: OpportunityInput): Promise<ActionResult<{ id: string }>> {
+export async function createOpportunityAction(
+  input: OpportunityInput,
+): Promise<ActionResult<{ id: string }>> {
   const parsed = opportunitySchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid opportunity." };
@@ -93,7 +100,10 @@ export async function createOpportunityAction(input: OpportunityInput): Promise<
     revalidatePath("/opportunities");
     return { success: true, data: { id: opportunity.id } };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Could not create opportunity." };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Could not create opportunity.",
+    };
   }
 }
 
@@ -114,7 +124,10 @@ export async function deleteOpportunityAction(id: string): Promise<ActionResult>
     revalidatePath("/opportunities");
     return { success: true };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Could not delete opportunity." };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Could not delete opportunity.",
+    };
   }
 }
 
@@ -131,15 +144,23 @@ export async function closeOpportunityAction(id: string): Promise<ActionResult> 
   }
 
   try {
-    await updateOpportunity(supabase, id, { status: opportunity.status === "closed" ? "published" : "closed" });
+    await updateOpportunity(supabase, id, {
+      status: opportunity.status === "closed" ? "published" : "closed",
+    });
     revalidatePath("/opportunities");
     return { success: true };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Could not update opportunity." };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Could not update opportunity.",
+    };
   }
 }
 
-export async function applyToOpportunityAction(opportunityId: string, coverNote: string): Promise<ActionResult> {
+export async function applyToOpportunityAction(
+  opportunityId: string,
+  coverNote: string,
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -173,7 +194,10 @@ export async function getApplicantsAction(opportunityId: string): Promise<Opport
   return hydrateApplications(supabase, rows);
 }
 
-export async function updateApplicationStatusAction(applicationId: string, status: ApplicationStatus): Promise<ActionResult> {
+export async function updateApplicationStatusAction(
+  applicationId: string,
+  status: ApplicationStatus,
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -184,6 +208,9 @@ export async function updateApplicationStatusAction(applicationId: string, statu
     await updateApplicationStatus(supabase, applicationId, status);
     return { success: true };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Could not update application." };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Could not update application.",
+    };
   }
 }

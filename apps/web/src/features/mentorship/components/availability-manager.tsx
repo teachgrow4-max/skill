@@ -23,7 +23,10 @@ export function AvailabilityManager({ initialSlots }: { initialSlots: MentorAvai
       return;
     }
 
-    setSlots((prev) => [...prev, { id: crypto.randomUUID(), mentorId: "", startTime: start, endTime: end, isBooked: false }]);
+    setSlots((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), mentorId: "", startTime: start, endTime: end, isBooked: false },
+    ]);
     setStart("");
     setEnd("");
   }
@@ -53,11 +56,18 @@ export function AvailabilityManager({ initialSlots }: { initialSlots: MentorAvai
       <div className="grid gap-2">
         {slots.length === 0 && <p className="text-sm text-muted-foreground">No availability added yet.</p>}
         {slots.map((slot) => (
-          <div key={slot.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+          <div
+            key={slot.id}
+            className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
+          >
             <span>
               {new Date(slot.startTime).toLocaleString()} – {new Date(slot.endTime).toLocaleTimeString()}
             </span>
-            <button type="button" onClick={() => handleRemove(slot.id)} className="text-muted-foreground hover:text-destructive">
+            <button
+              type="button"
+              onClick={() => handleRemove(slot.id)}
+              className="text-muted-foreground hover:text-destructive"
+            >
               <Trash2 className="size-4" />
             </button>
           </div>

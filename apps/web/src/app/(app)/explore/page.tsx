@@ -21,13 +21,15 @@ export default async function ExplorePage() {
       <div>
         <h1 className="mb-3 text-lg font-semibold">Browse categories</h1>
         <div className="flex flex-wrap gap-2">
-          {skillCategories.flatMap((category) => category.subcategories).map((sub) => (
-            <Link key={sub} href={`/search?category=${encodeURIComponent(sub)}`}>
-              <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-                {sub}
-              </Badge>
-            </Link>
-          ))}
+          {skillCategories
+            .flatMap((category) => category.subcategories)
+            .map((sub) => (
+              <Link key={sub} href={`/search?category=${encodeURIComponent(sub)}`}>
+                <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+                  {sub}
+                </Badge>
+              </Link>
+            ))}
         </div>
       </div>
 

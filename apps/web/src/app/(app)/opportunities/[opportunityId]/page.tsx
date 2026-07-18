@@ -89,8 +89,9 @@ export default async function OpportunityPage({ params }: OpportunityPageProps) 
       )}
 
       <p className="text-xs text-muted-foreground">
-        {opportunity.applicationCount} {opportunity.kind === "event" || opportunity.kind === "competition" ? "registered" : "applied"} · Posted{" "}
-        {formatRelativeTime(opportunity.createdAt)}
+        {opportunity.applicationCount}{" "}
+        {opportunity.kind === "event" || opportunity.kind === "competition" ? "registered" : "applied"} ·
+        Posted {formatRelativeTime(opportunity.createdAt)}
       </p>
 
       <ApplyButton

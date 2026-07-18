@@ -9,7 +9,13 @@ import type { ProfileRow } from "@skilltego/types";
 import { MessageButton } from "@/features/messaging/components/message-button";
 import { toggleCandidateBookmarkAction } from "../actions";
 
-export function CandidateCard({ candidate, initialBookmarked = false }: { candidate: ProfileRow; initialBookmarked?: boolean }) {
+export function CandidateCard({
+  candidate,
+  initialBookmarked = false,
+}: {
+  candidate: ProfileRow;
+  initialBookmarked?: boolean;
+}) {
   const [bookmarked, setBookmarked] = React.useState(initialBookmarked);
   const [pending, setPending] = React.useState(false);
 

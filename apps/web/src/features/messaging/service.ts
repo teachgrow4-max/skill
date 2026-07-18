@@ -12,7 +12,11 @@ import type { Conversation, Database, MessageRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
-export async function hydrateConversations(client: Client, conversationIds: string[], currentUserId: string): Promise<Conversation[]> {
+export async function hydrateConversations(
+  client: Client,
+  conversationIds: string[],
+  currentUserId: string,
+): Promise<Conversation[]> {
   if (conversationIds.length === 0) return [];
 
   const [conversations, participantsMap, lastMessages] = await Promise.all([
@@ -39,7 +43,10 @@ export async function hydrateConversations(client: Client, conversationIds: stri
       : null;
 
     const unreadCount =
-      lastMessageRow && myRow && lastMessageRow.sender_id !== currentUserId && lastMessageRow.created_at > myRow.lastReadAt
+      lastMessageRow &&
+      myRow &&
+      lastMessageRow.sender_id !== currentUserId &&
+      lastMessageRow.created_at > myRow.lastReadAt
         ? 1
         : 0;
 

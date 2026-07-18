@@ -29,7 +29,12 @@ export const createPostSchema = z
     type: postTypeSchema,
     caption: z.string().trim().max(3000, "Keep it under 3000 characters").optional().or(z.literal("")),
     codeLanguage: z.string().trim().max(40).optional().or(z.literal("")),
-    codeSnippet: z.string().trim().max(20000, "Keep code snippets under 20,000 characters").optional().or(z.literal("")),
+    codeSnippet: z
+      .string()
+      .trim()
+      .max(20000, "Keep code snippets under 20,000 characters")
+      .optional()
+      .or(z.literal("")),
     skillCategory: z.string().trim().optional().or(z.literal("")),
     tags: z.array(z.string().trim().min(1).max(30)).max(10, "Up to 10 tags").default([]),
     location: z.string().trim().max(120).optional().or(z.literal("")),
@@ -41,13 +46,18 @@ export const createPostSchema = z
   })
   .superRefine((data, ctx) => {
     const requiresCaption = data.type === "text" && !data.caption;
-    const requiresMedia = ["image", "carousel", "video", "pdf"].includes(data.type) && data.media.length === 0;
+    const requiresMedia =
+      ["image", "carousel", "video", "pdf"].includes(data.type) && data.media.length === 0;
     const requiresCode = data.type === "code" && !data.codeSnippet;
     const requiresGithub = data.type === "github_link" && !data.githubUrl;
     const requiresProject = data.type === "project_link" && !data.projectUrl;
 
     if (requiresCaption) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Write something for this post", path: ["caption"] });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Write something for this post",
+        path: ["caption"],
+      });
     }
     if (requiresMedia) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Upload at least one file", path: ["media"] });

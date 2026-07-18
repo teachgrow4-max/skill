@@ -36,7 +36,9 @@ export function MyOpportunitiesList({ initialOpportunities }: { initialOpportuni
           <CardHeader>
             <div className="flex items-center justify-between">
               <Badge variant="secondary">{KIND_LABELS[opportunity.kind]}</Badge>
-              <Badge variant={opportunity.status === "closed" ? "outline" : "success"}>{opportunity.status}</Badge>
+              <Badge variant={opportunity.status === "closed" ? "outline" : "success"}>
+                {opportunity.status}
+              </Badge>
             </div>
             <CardTitle className="text-base">{opportunity.title}</CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -45,7 +47,11 @@ export function MyOpportunitiesList({ initialOpportunities }: { initialOpportuni
             </p>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => setExpandedId(expandedId === opportunity.id ? null : opportunity.id)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setExpandedId(expandedId === opportunity.id ? null : opportunity.id)}
+            >
               {expandedId === opportunity.id ? "Hide applicants" : "View applicants"}
             </Button>
             <Button size="sm" variant="outline" onClick={() => handleToggleClosed(opportunity.id)}>

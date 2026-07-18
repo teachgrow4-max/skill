@@ -1,4 +1,10 @@
-import type { AuthorSummary, Opportunity, OpportunityApplication, OpportunityApplicationRow, OpportunityRow } from "@skilltego/types";
+import type {
+  AuthorSummary,
+  Opportunity,
+  OpportunityApplication,
+  OpportunityApplicationRow,
+  OpportunityRow,
+} from "@skilltego/types";
 
 export function toOpportunity(
   row: OpportunityRow,

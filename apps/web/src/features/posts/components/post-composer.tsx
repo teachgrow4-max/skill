@@ -7,6 +7,8 @@ import { Code2, Github, Image as ImageIcon, Link as LinkIcon } from "lucide-reac
 import { Button, Input, Textarea } from "@skilltego/ui";
 import { skillCategories } from "@skilltego/config";
 import { cn } from "@skilltego/utils";
+import { trackEvent } from "@/providers/posthog-provider";
+import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
 import { createPostSchema, type CreatePostInput } from "../schema";
 import { createPostAction } from "../actions";
 import { MediaUploader } from "./media-uploader";
@@ -30,6 +32,8 @@ export function PostComposer() {
     watch,
     reset,
     setError,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<CreatePostInput>({
     defaultValues: {
@@ -79,6 +83,8 @@ export function PostComposer() {
       return;
     }
 
+    trackEvent("post_created", { type: parsed.data.type });
+
     reset();
     setExpanded(false);
     router.refresh();
@@ -110,7 +116,8 @@ export function PostComposer() {
                 onClick={() => field.onChange(mode.type)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
-                  (type === mode.type || (mode.type === "image" && !["code", "github_link", "project_link"].includes(type)))
+                  type === mode.type ||
+                    (mode.type === "image" && !["code", "github_link", "project_link"].includes(type))
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border text-muted-foreground hover:bg-accent",
                 )}
@@ -126,6 +133,15 @@ export function PostComposer() {
       <Textarea placeholder="What did you build, learn, or achieve?" rows={3} {...register("caption")} />
       {errors.caption && <p className="text-xs text-destructive">{errors.caption.message}</p>}
 
+      <AiSuggestButton
+        label="Suggest a caption"
+        system="You write short, engaging first-person social captions (2-3 sentences) for a skill-showcase platform called Skilltego. No hashtags, no quotes, no markdown — just the caption text."
+        getPrompt={() =>
+          `Write a caption for a ${getValues("type")} post${getValues("skillCategory") ? ` about ${getValues("skillCategory")}` : ""}. ${getValues("caption") ? `Build on this draft: "${getValues("caption")}"` : "Keep it general and inviting."}`
+        }
+        onResult={(text) => setValue("caption", text, { shouldDirty: true })}
+      />
+
       {!["code", "github_link", "project_link"].includes(type) && (
         <Controller
           name="media"
@@ -137,7 +153,12 @@ export function PostComposer() {
       {type === "code" && (
         <div className="grid gap-2">
           <Input placeholder="Language (e.g. TypeScript)" {...register("codeLanguage")} />
-          <Textarea placeholder="Paste your code snippet" rows={8} className="font-mono text-xs" {...register("codeSnippet")} />
+          <Textarea
+            placeholder="Paste your code snippet"
+            rows={8}
+            className="font-mono text-xs"
+            {...register("codeSnippet")}
+          />
           {errors.codeSnippet && <p className="text-xs text-destructive">{errors.codeSnippet.message}</p>}
         </div>
       )}
@@ -157,7 +178,10 @@ export function PostComposer() {
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <select className="h-10 rounded-md border border-input bg-background px-2 text-sm" {...register("skillCategory")}>
+        <select
+          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
+          {...register("skillCategory")}
+        >
           <option value="">Skill category</option>
           {skillCategories.map((category) => (
             <optgroup key={category.slug} label={category.name}>
@@ -177,6 +201,7 @@ export function PostComposer() {
         control={control}
         render={({ field }) => (
           <Input
+            key={field.value.join(",")}
             placeholder="Tags, comma separated"
             defaultValue={field.value.join(", ")}
             onBlur={(e) =>
@@ -190,6 +215,31 @@ export function PostComposer() {
             }
           />
         )}
+      />
+
+      <AiSuggestButton
+        label="Suggest tags"
+        system="You suggest 3-5 short, lowercase, single-word or hyphenated tags for a social post about a skill or project. Respond with only the tags, comma separated, nothing else."
+        getPrompt={() =>
+          `Suggest tags for this post: "${getValues("caption") || getValues("codeSnippet") || getValues("skillCategory") || "a skill showcase"}"`
+        }
+        disabled={!getValues("caption") && !getValues("codeSnippet") && !getValues("skillCategory")}
+        onResult={(text) =>
+          setValue(
+            "tags",
+            text
+              .split(",")
+              .map((t) =>
+                t
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-]/g, ""),
+              )
+              .filter(Boolean)
+              .slice(0, 10),
+            { shouldDirty: true },
+          )
+        }
       />
 
       {formError && <p className="text-sm text-destructive">{formError}</p>}

@@ -69,7 +69,10 @@ export async function listOpportunities(
   return { opportunities: data, hasMore: data.length === PAGE_SIZE };
 }
 
-export async function getApplicationCounts(client: Client, opportunityIds: string[]): Promise<Map<string, number>> {
+export async function getApplicationCounts(
+  client: Client,
+  opportunityIds: string[],
+): Promise<Map<string, number>> {
   if (opportunityIds.length === 0) return new Map();
 
   const { data, error } = await client
@@ -85,7 +88,11 @@ export async function getApplicationCounts(client: Client, opportunityIds: strin
   return counts;
 }
 
-export async function getAppliedOpportunityIds(client: Client, opportunityIds: string[], applicantId: string): Promise<Set<string>> {
+export async function getAppliedOpportunityIds(
+  client: Client,
+  opportunityIds: string[],
+  applicantId: string,
+): Promise<Set<string>> {
   if (opportunityIds.length === 0) return new Set();
 
   const { data, error } = await client
@@ -107,7 +114,10 @@ export async function applyToOpportunity(
   return data;
 }
 
-export async function getApplicationsForOpportunity(client: Client, opportunityId: string): Promise<OpportunityApplicationRow[]> {
+export async function getApplicationsForOpportunity(
+  client: Client,
+  opportunityId: string,
+): Promise<OpportunityApplicationRow[]> {
   const { data, error } = await client
     .from("opportunity_applications")
     .select("*")
