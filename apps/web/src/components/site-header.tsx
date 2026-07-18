@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getProfileById } from "@skilltego/database";
-import { siteConfig, marketingNav, appNav } from "@skilltego/config";
+import { siteConfig, marketingNav, appNav, DASHBOARD_ACCOUNT_TYPES } from "@skilltego/config";
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +15,12 @@ export async function SiteHeader() {
   } = await supabase.auth.getUser();
 
   const profile = user ? await getProfileById(supabase, user.id) : null;
+  const showDashboard = profile && (DASHBOARD_ACCOUNT_TYPES as readonly string[]).includes(profile.account_type);
+  const navItems = profile
+    ? showDashboard
+      ? [...appNav, { title: "Dashboard", href: "/dashboard" }]
+      : appNav
+    : marketingNav;
 
   return (
     <header className="glass sticky top-0 z-40 w-full border-b">
@@ -24,7 +30,7 @@ export async function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
-          {(profile ? appNav : marketingNav).map((item) => (
+          {navItems.map((item) => (
             <Link key={item.href} href={item.href} className="hover:text-foreground">
               {item.title}
             </Link>

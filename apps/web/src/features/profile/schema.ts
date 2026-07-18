@@ -26,6 +26,7 @@ export const profileFormSchema = z.object({
     .refine((v) => v === "" || /^https?:\/\/.+/.test(v), "Enter a full URL, e.g. https://example.com")
     .optional()
     .or(z.literal("")),
+  resumeUrl: z.string().trim().url().optional().or(z.literal("")),
   skills: z.array(skillInputSchema).max(20, "You can list up to 20 skills"),
 });
 

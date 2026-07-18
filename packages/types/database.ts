@@ -42,6 +42,7 @@ export interface ProfileRow {
   coins: number;
   level: number;
   onboarding_completed: boolean;
+  resume_url: string | null;
   search_vector: string | null;
   created_at: string;
   updated_at: string;
@@ -220,6 +221,93 @@ export interface ReportRow {
   created_at: string;
 }
 
+export type OpportunityKind = "job" | "internship" | "competition" | "event" | "scholarship";
+export type OpportunityStatus = "draft" | "published" | "closed";
+
+export interface OpportunityRow {
+  id: string;
+  author_id: string;
+  kind: OpportunityKind;
+  title: string;
+  description: string;
+  skill_category: string | null;
+  required_skills: string[];
+  location: string | null;
+  is_remote: boolean;
+  compensation: string | null;
+  deadline: string | null;
+  event_date: string | null;
+  status: OpportunityStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ApplicationStatus = "submitted" | "shortlisted" | "rejected" | "accepted";
+
+export interface OpportunityApplicationRow {
+  id: string;
+  opportunity_id: string;
+  applicant_id: string;
+  status: ApplicationStatus;
+  cover_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateBookmarkRow {
+  owner_id: string;
+  candidate_id: string;
+  created_at: string;
+}
+
+export type VerificationStatus = "pending" | "approved" | "rejected";
+
+export interface VerificationRequestRow {
+  id: string;
+  profile_id: string;
+  organization_name: string;
+  proof_url: string | null;
+  notes: string | null;
+  status: VerificationStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface MentorAvailabilityRow {
+  id: string;
+  mentor_id: string;
+  start_time: string;
+  end_time: string;
+  is_booked: boolean;
+  created_at: string;
+}
+
+export type SessionStatus = "requested" | "confirmed" | "completed" | "cancelled";
+
+export interface MentorSessionRow {
+  id: string;
+  mentor_id: string;
+  student_id: string;
+  availability_id: string | null;
+  scheduled_at: string;
+  duration_minutes: number;
+  status: SessionStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MentorReviewRow {
+  id: string;
+  session_id: string;
+  mentor_id: string;
+  student_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -312,6 +400,48 @@ export type Database = {
         Update: Partial<ReportRow>;
         Relationships: [];
       };
+      opportunities: {
+        Row: OpportunityRow;
+        Insert: Partial<OpportunityRow> & { author_id: string; kind: OpportunityKind; title: string; description: string };
+        Update: Partial<OpportunityRow>;
+        Relationships: [];
+      };
+      opportunity_applications: {
+        Row: OpportunityApplicationRow;
+        Insert: Partial<OpportunityApplicationRow> & { opportunity_id: string; applicant_id: string };
+        Update: Partial<OpportunityApplicationRow>;
+        Relationships: [];
+      };
+      candidate_bookmarks: {
+        Row: CandidateBookmarkRow;
+        Insert: CandidateBookmarkRow;
+        Update: Partial<CandidateBookmarkRow>;
+        Relationships: [];
+      };
+      verification_requests: {
+        Row: VerificationRequestRow;
+        Insert: Partial<VerificationRequestRow> & { profile_id: string; organization_name: string };
+        Update: Partial<VerificationRequestRow>;
+        Relationships: [];
+      };
+      mentor_availability: {
+        Row: MentorAvailabilityRow;
+        Insert: Partial<MentorAvailabilityRow> & { mentor_id: string; start_time: string; end_time: string };
+        Update: Partial<MentorAvailabilityRow>;
+        Relationships: [];
+      };
+      mentor_sessions: {
+        Row: MentorSessionRow;
+        Insert: Partial<MentorSessionRow> & { mentor_id: string; student_id: string; scheduled_at: string };
+        Update: Partial<MentorSessionRow>;
+        Relationships: [];
+      };
+      mentor_reviews: {
+        Row: MentorReviewRow;
+        Insert: Partial<MentorReviewRow> & { session_id: string; mentor_id: string; student_id: string; rating: number };
+        Update: Partial<MentorReviewRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -325,6 +455,11 @@ export type Database = {
       report_target_type: ReportTargetType;
       report_reason: ReportReason;
       report_status: ReportStatus;
+      opportunity_kind: OpportunityKind;
+      opportunity_status: OpportunityStatus;
+      application_status: ApplicationStatus;
+      verification_status: VerificationStatus;
+      session_status: SessionStatus;
     };
     CompositeTypes: Record<string, never>;
   };

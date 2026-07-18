@@ -16,6 +16,7 @@ export function toProfile(row: ProfileRow, skills: ProfileSkillRow[] = []): Prof
     college: row.college,
     company: row.company,
     website: row.website,
+    resumeUrl: row.resume_url,
     socials: (row.socials as SocialLinks | null) ?? {},
     languages: row.languages ?? [],
     availability: row.availability,

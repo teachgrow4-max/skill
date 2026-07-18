@@ -1,14 +1,18 @@
 import type {
   AccountType,
+  ApplicationStatus,
   AvailabilityStatus,
   MessageAttachment,
   NotificationType,
+  OpportunityKind,
+  OpportunityStatus,
   PostMediaItem,
   PostStatus,
   PostType,
   ReportReason,
   ReportStatus,
   ReportTargetType,
+  SessionStatus,
 } from "./database";
 
 export interface SkillTag {
@@ -42,6 +46,7 @@ export interface Profile {
   college: string | null;
   company: string | null;
   website: string | null;
+  resumeUrl: string | null;
   socials: SocialLinks;
   languages: string[];
   availability: AvailabilityStatus;
@@ -146,5 +151,62 @@ export interface Report {
   reason: ReportReason;
   details: string | null;
   status: ReportStatus;
+  createdAt: string;
+}
+
+export interface Opportunity {
+  id: string;
+  author: AuthorSummary;
+  kind: OpportunityKind;
+  title: string;
+  description: string;
+  skillCategory: string | null;
+  requiredSkills: string[];
+  location: string | null;
+  isRemote: boolean;
+  compensation: string | null;
+  deadline: string | null;
+  eventDate: string | null;
+  status: OpportunityStatus;
+  applicationCount: number;
+  hasApplied: boolean;
+  createdAt: string;
+}
+
+export interface OpportunityApplication {
+  id: string;
+  opportunityId: string;
+  applicant: AuthorSummary;
+  status: ApplicationStatus;
+  coverNote: string | null;
+  resumeUrl: string | null;
+  createdAt: string;
+}
+
+export interface MentorAvailabilitySlot {
+  id: string;
+  mentorId: string;
+  startTime: string;
+  endTime: string;
+  isBooked: boolean;
+}
+
+export interface MentorSession {
+  id: string;
+  mentor: AuthorSummary;
+  student: AuthorSummary;
+  scheduledAt: string;
+  durationMinutes: number;
+  status: SessionStatus;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface MentorReview {
+  id: string;
+  sessionId: string;
+  student: AuthorSummary;
+  rating: number;
+  comment: string | null;
   createdAt: string;
 }

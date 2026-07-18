@@ -19,6 +19,9 @@ import { getProfilePostsAction } from "@/features/posts/actions";
 import { PostCard } from "@/features/posts/components/post-card";
 import { MessageButton } from "@/features/messaging/components/message-button";
 import { ReportButton } from "@/features/reports/components/report-button";
+import { getMentorAvailabilityAction, getMentorReviewsAction } from "@/features/mentorship/actions";
+import { BookingWidget } from "@/features/mentorship/components/booking-widget";
+import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
 
 const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   student: "Student",
@@ -68,6 +71,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const profile = toProfile(profileRow, skills);
   const isOwnProfile = user?.id === profile.id;
   const { posts } = await getProfilePostsAction(profile.id, null);
+
+  const isMentor = profile.accountType === "mentor";
+  const [availableSlots, mentorReviewData] = isMentor
+    ? await Promise.all([getMentorAvailabilityAction(profile.id), getMentorReviewsAction(profile.id)])
+    : [[], { reviews: [], average: 0, count: 0 }];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -164,6 +172,19 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           )}
         </div>
       </div>
+
+      {isMentor && !isOwnProfile && (
+        <div className="glass mt-6 grid gap-4 rounded-2xl p-6">
+          <h2 className="text-lg font-semibold">Book a session</h2>
+          <BookingWidget mentorId={profile.id} slots={availableSlots} isLoggedIn={Boolean(user)} />
+          {mentorReviewData.count > 0 && (
+            <>
+              <h2 className="mt-2 text-lg font-semibold">Reviews</h2>
+              <MentorReviews {...mentorReviewData} />
+            </>
+          )}
+        </div>
+      )}
 
       {posts.length > 0 && (
         <div className="mt-6 grid gap-4">

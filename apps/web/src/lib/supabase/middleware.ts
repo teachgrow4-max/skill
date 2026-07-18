@@ -11,6 +11,8 @@ const PROTECTED_PREFIXES = [
   "/bookmarks",
   "/messages",
   "/moderation",
+  "/dashboard",
+  "/sessions",
 ];
 const AUTH_ONLY_PREFIXES = ["/login", "/signup", "/forgot-password"];
 

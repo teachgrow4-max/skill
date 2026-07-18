@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Label, Textarea } from "@skilltego/ui";
 import type { Profile } from "@skilltego/types";
+import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
 import { ACCOUNT_TYPE_OPTIONS, profileFormSchema, type ProfileFormValues } from "../schema";
 import { saveProfileAction } from "../actions";
 import { useUsernameAvailability } from "../hooks/use-username-availability";
@@ -19,12 +20,14 @@ interface ProfileFormProps {
 export function ProfileForm({ profile, mode }: ProfileFormProps) {
   const router = useRouter();
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [uploadingResume, setUploadingResume] = React.useState(false);
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -37,6 +40,7 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
       state: profile.state ?? "",
       city: profile.city ?? "",
       website: profile.website ?? "",
+      resumeUrl: profile.resumeUrl ?? "",
       skills: profile.skills.map((skill) => ({
         skillName: skill.name,
         category: skill.category,
@@ -48,6 +52,28 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
 
   const usernameValue = watch("username");
   const usernameStatus = useUsernameAvailability(usernameValue, profile.username);
+  const resumeUrl = watch("resumeUrl");
+
+  async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!isCloudinaryConfigured()) {
+      setFormError("Resume upload isn't configured yet — add Cloudinary credentials to .env.local.");
+      return;
+    }
+
+    setUploadingResume(true);
+    try {
+      const result = await uploadToCloudinary(file);
+      setValue("resumeUrl", result.url, { shouldDirty: true });
+    } catch (uploadError) {
+      setFormError(uploadError instanceof Error ? uploadError.message : "Resume upload failed.");
+    } finally {
+      setUploadingResume(false);
+      e.target.value = "";
+    }
+  }
 
   async function onSubmit(values: ProfileFormValues) {
     setFormError(null);
@@ -131,6 +157,28 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
         <Label htmlFor="website">Website</Label>
         <Input id="website" placeholder="https://" {...register("website")} />
         {errors.website && <p className="text-xs text-destructive">{errors.website.message}</p>}
+      </div>
+
+      <div className="grid gap-1.5">
+        <Label htmlFor="resume">Resume</Label>
+        {resumeUrl ? (
+          <div className="flex items-center gap-2 text-sm">
+            <a href={resumeUrl} target="_blank" rel="noreferrer noopener" className="text-primary hover:underline">
+              View current resume
+            </a>
+            <label htmlFor="resume" className="cursor-pointer text-xs text-muted-foreground hover:underline">
+              Replace
+            </label>
+          </div>
+        ) : (
+          <label
+            htmlFor="resume"
+            className="flex h-10 w-fit cursor-pointer items-center rounded-md border border-input px-3 text-sm text-muted-foreground hover:bg-accent"
+          >
+            {uploadingResume ? "Uploading…" : "Upload resume (PDF)"}
+          </label>
+        )}
+        <input id="resume" type="file" accept="application/pdf" className="hidden" onChange={handleResumeUpload} />
       </div>
 
       <div className="grid gap-1.5">
