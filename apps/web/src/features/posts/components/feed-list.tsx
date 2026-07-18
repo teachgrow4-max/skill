@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@skilltego/utils";
 import { getFeedAction, type FeedMode } from "../actions";
 import { PostCard } from "./post-card";
+import { PostCardSkeleton } from "./post-card-skeleton";
 
 const TABS: { mode: FeedMode; label: string }[] = [
   { mode: "following", label: "Following" },
@@ -60,7 +62,7 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
             className={cn(
               "flex-1 rounded-full py-2 text-sm font-medium transition-colors",
               mode === tab.mode
-                ? "bg-primary text-primary-foreground"
+                ? "gradient-brand text-primary-foreground shadow-glow"
                 : "text-muted-foreground hover:bg-accent/50",
             )}
           >
@@ -70,8 +72,10 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
       </div>
 
       {isLoading && (
-        <div className="flex justify-center py-10">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <div className="grid gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <PostCardSkeleton key={i} />
+          ))}
         </div>
       )}
 
@@ -83,9 +87,20 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
         </div>
       )}
 
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
-      ))}
+      <AnimatePresence initial={false}>
+        {posts.map((post) => (
+          <motion.div
+            key={post.id}
+            layout
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <PostCard post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
       <div ref={loadMoreRef} className="flex justify-center py-4">
         {isFetchingNextPage && <Loader2 className="size-5 animate-spin text-muted-foreground" />}

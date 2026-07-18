@@ -1,6 +1,17 @@
-import type { AuthorSummary, Message, MessageRow, Notification, NotificationRow } from "@skilltego/types";
+import type {
+  AuthorSummary,
+  Message,
+  MessageReactionSummary,
+  MessageRow,
+  Notification,
+  NotificationRow,
+} from "@skilltego/types";
 
-export function toMessage(row: MessageRow, sender: AuthorSummary): Message {
+export function toMessage(
+  row: MessageRow,
+  sender: AuthorSummary,
+  reactions: MessageReactionSummary[] = [],
+): Message {
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -9,6 +20,7 @@ export function toMessage(row: MessageRow, sender: AuthorSummary): Message {
     attachment: row.is_deleted ? null : row.attachment,
     isEdited: row.is_edited,
     isDeleted: row.is_deleted,
+    reactions,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

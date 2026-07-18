@@ -13,6 +13,8 @@ import type {
   ReportStatus,
   ReportTargetType,
   SessionStatus,
+  StorySticker,
+  StoryStickerData,
 } from "./database";
 
 export interface SkillTag {
@@ -112,6 +114,12 @@ export interface Comment {
   updatedAt: string;
 }
 
+export interface MessageReactionSummary {
+  emoji: string;
+  count: number;
+  reactedByMe: boolean;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -120,6 +128,7 @@ export interface Message {
   attachment: MessageAttachment | null;
   isEdited: boolean;
   isDeleted: boolean;
+  reactions: MessageReactionSummary[];
   createdAt: string;
   updatedAt: string;
 }
@@ -209,4 +218,24 @@ export interface MentorReview {
   rating: number;
   comment: string | null;
   createdAt: string;
+}
+
+export interface Story {
+  id: string;
+  author: AuthorSummary;
+  mediaUrl: string;
+  mediaType: "image" | "video";
+  caption: string | null;
+  stickerType: StorySticker;
+  stickerData: StoryStickerData;
+  createdAt: string;
+  expiresAt: string;
+  viewCount: number;
+  viewedByMe: boolean;
+}
+
+export interface StoryGroup {
+  author: AuthorSummary;
+  stories: Story[];
+  allViewed: boolean;
 }

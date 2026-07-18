@@ -13,6 +13,7 @@ import {
   getPostById,
   getPostsByAuthor,
   getPostsByIds,
+  getReelsPosts,
   getSavedPosts,
   getTrendingPosts,
   likePost,
@@ -54,6 +55,19 @@ export async function getFeedAction(
     page = await getLatestPosts(supabase, cursor);
   }
 
+  const posts = await hydratePosts(supabase, page.posts, user?.id ?? null);
+  return { posts, nextCursor: page.nextCursor };
+}
+
+export async function getReelsAction(
+  cursor: string | null,
+): Promise<{ posts: Post[]; nextCursor: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const page = await getReelsPosts(supabase, cursor);
   const posts = await hydratePosts(supabase, page.posts, user?.id ?? null);
   return { posts, nextCursor: page.nextCursor };
 }

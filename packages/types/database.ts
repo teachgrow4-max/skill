@@ -178,6 +178,13 @@ export interface MessageRow {
   updated_at: string;
 }
 
+export interface MessageReactionRow {
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+}
+
 export type NotificationType = "follow" | "like" | "comment" | "reply";
 
 export interface NotificationRow {
@@ -296,6 +303,68 @@ export interface MentorReviewRow {
   created_at: string;
 }
 
+export type StoryMediaType = "image" | "video";
+export type StorySticker = "none" | "poll" | "question" | "quiz" | "countdown" | "emoji_slider";
+
+export interface StoryPollData {
+  question: string;
+  options: string[];
+}
+
+export interface StoryQuestionData {
+  prompt: string;
+}
+
+export interface StoryQuizData {
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+
+export interface StoryCountdownData {
+  label: string;
+  targetIso: string;
+}
+
+export interface StoryEmojiSliderData {
+  question: string;
+  emoji: string;
+}
+
+export type StoryStickerData =
+  | StoryPollData
+  | StoryQuestionData
+  | StoryQuizData
+  | StoryCountdownData
+  | StoryEmojiSliderData
+  | Record<string, unknown>;
+
+export interface StoryRow {
+  id: string;
+  author_id: string;
+  media_url: string;
+  media_type: StoryMediaType;
+  caption: string | null;
+  sticker_type: StorySticker;
+  sticker_data: StoryStickerData;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface StoryViewRow {
+  story_id: string;
+  viewer_id: string;
+  viewed_at: string;
+}
+
+export interface StoryResponseRow {
+  id: string;
+  story_id: string;
+  viewer_id: string;
+  response: Json;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -371,6 +440,12 @@ export type Database = {
         Update: Partial<MessageRow>;
         Relationships: [];
       };
+      message_reactions: {
+        Row: MessageReactionRow;
+        Insert: MessageReactionRow;
+        Update: Partial<MessageReactionRow>;
+        Relationships: [];
+      };
       notifications: {
         Row: NotificationRow;
         Insert: Partial<NotificationRow> & { user_id: string; type: NotificationType; actor_id: string };
@@ -440,6 +515,24 @@ export type Database = {
         Update: Partial<MentorReviewRow>;
         Relationships: [];
       };
+      stories: {
+        Row: StoryRow;
+        Insert: Partial<StoryRow> & { author_id: string; media_url: string; media_type: StoryMediaType };
+        Update: Partial<StoryRow>;
+        Relationships: [];
+      };
+      story_views: {
+        Row: StoryViewRow;
+        Insert: StoryViewRow;
+        Update: Partial<StoryViewRow>;
+        Relationships: [];
+      };
+      story_responses: {
+        Row: StoryResponseRow;
+        Insert: Partial<StoryResponseRow> & { story_id: string; viewer_id: string; response: Json };
+        Update: Partial<StoryResponseRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -458,6 +551,8 @@ export type Database = {
       application_status: ApplicationStatus;
       verification_status: VerificationStatus;
       session_status: SessionStatus;
+      story_media_type: StoryMediaType;
+      story_sticker_type: StorySticker;
     };
     CompositeTypes: Record<string, never>;
   };

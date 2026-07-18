@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ConversationRow, Database, MessageRow } from "@skilltego/types";
+import type { ConversationRow, Database, MessageReactionRow, MessageRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -204,6 +204,63 @@ export async function sendMessage(
   input: Database["public"]["Tables"]["messages"]["Insert"],
 ): Promise<MessageRow> {
   const { data, error } = await client.from("messages").insert(input).select("*").single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createGroupConversation(
+  client: Client,
+  creatorId: string,
+  participantIds: string[],
+  title: string,
+): Promise<string> {
+  const { data: conversation, error: convError } = await client
+    .from("conversations")
+    .insert({ created_by: creatorId, is_group: true, title })
+    .select("id")
+    .single();
+  if (convError) throw convError;
+
+  const allParticipantIds = [...new Set([creatorId, ...participantIds])];
+  const { error: participantsError } = await client
+    .from("conversation_participants")
+    .insert(allParticipantIds.map((userId) => ({ conversation_id: conversation.id, user_id: userId })));
+  if (participantsError) throw participantsError;
+
+  return conversation.id;
+}
+
+export async function setMessageReaction(
+  client: Client,
+  messageId: string,
+  userId: string,
+  emoji: string,
+): Promise<void> {
+  const { error } = await client
+    .from("message_reactions")
+    .upsert({ message_id: messageId, user_id: userId, emoji }, { onConflict: "message_id,user_id" });
+  if (error) throw error;
+}
+
+export async function removeMessageReaction(
+  client: Client,
+  messageId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await client
+    .from("message_reactions")
+    .delete()
+    .eq("message_id", messageId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function getReactionsForMessages(
+  client: Client,
+  messageIds: string[],
+): Promise<MessageReactionRow[]> {
+  if (messageIds.length === 0) return [];
+  const { data, error } = await client.from("message_reactions").select("*").in("message_id", messageIds);
   if (error) throw error;
   return data;
 }

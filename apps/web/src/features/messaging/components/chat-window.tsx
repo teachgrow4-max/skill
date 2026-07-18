@@ -1,18 +1,44 @@
 "use client";
 
 import * as React from "react";
-import { Send } from "lucide-react";
+import { FileText, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button, Input } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { AuthorSummary, Message } from "@skilltego/types";
 import { createClient } from "@/lib/supabase/browser";
 import { markConversationReadAction, sendMessageAction } from "../actions";
+import { MessageReactions } from "./message-reactions";
+import { VoiceRecorderButton } from "./voice-recorder-button";
 
 interface ChatWindowProps {
   conversationId: string;
   currentUserId: string;
   participants: AuthorSummary[];
   initialMessages: Message[];
+}
+
+function AttachmentView({ attachment }: { attachment: NonNullable<Message["attachment"]> }) {
+  if (attachment.type === "image") {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={attachment.url} alt="" className="max-w-full rounded-lg" />;
+  }
+  if (attachment.type === "video") {
+    return <video src={attachment.url} controls className="max-w-full rounded-lg" />;
+  }
+  if (attachment.type === "audio") {
+    return <audio src={attachment.url} controls className="max-w-[220px]" />;
+  }
+  return (
+    <a
+      href={attachment.url}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="flex items-center gap-2 underline"
+    >
+      <FileText className="size-4 shrink-0" />
+      File
+    </a>
+  );
 }
 
 export function ChatWindow({
@@ -78,6 +104,7 @@ export function ChatWindow({
                     attachment: row.attachment,
                     isEdited: row.is_edited,
                     isDeleted: row.is_deleted,
+                    reactions: [],
                     createdAt: row.created_at,
                     updatedAt: row.updated_at,
                   },
@@ -94,23 +121,28 @@ export function ChatWindow({
     };
   }, [conversationId, currentUserId, participantMap]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!body.trim() || sending) return;
-
+  async function sendPayload(payload: {
+    body?: string;
+    attachment?: { url: string; type: "image" | "video" | "audio" | "pdf"; publicId?: string } | null;
+  }) {
     setError(null);
     setSending(true);
-    const result = await sendMessageAction(conversationId, { body });
+    const result = await sendMessageAction(conversationId, payload);
     setSending(false);
 
     if (!result.success) {
       setError(result.error ?? "Could not send message.");
       return;
     }
-
     if (result.data) {
       setMessages((prev) => [...prev, result.data!.message]);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim() || sending) return;
+    await sendPayload({ body });
     setBody("");
   }
 
@@ -120,25 +152,34 @@ export function ChatWindow({
         {messages.map((message) => {
           const isMine = message.sender.id === currentUserId;
           return (
-            <div key={message.id} className={cn("flex items-end gap-2", isMine && "flex-row-reverse")}>
+            <div key={message.id} className={cn("group flex items-end gap-2", isMine && "flex-row-reverse")}>
               <Avatar className="size-6">
                 <AvatarImage src={message.sender.avatarUrl ?? undefined} alt={message.sender.fullName} />
                 <AvatarFallback className="text-[10px]">{initials(message.sender.fullName)}</AvatarFallback>
               </Avatar>
-              <div
-                className={cn(
-                  "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",
-                  isMine ? "bg-primary text-primary-foreground" : "bg-muted",
-                )}
-              >
-                {message.isDeleted ? (
-                  <span className="italic text-muted-foreground">Message deleted</span>
-                ) : (
-                  message.body
-                )}
-                <div className={cn("mt-0.5 text-[10px] opacity-70")}>
-                  {formatRelativeTime(message.createdAt)}
+              <div className={cn("flex max-w-[75%] flex-col gap-1", isMine && "items-end")}>
+                <div
+                  className={cn(
+                    "rounded-2xl px-3.5 py-2 text-sm",
+                    isMine ? "bg-primary text-primary-foreground" : "bg-muted",
+                  )}
+                >
+                  {message.isDeleted ? (
+                    <span className="italic text-muted-foreground">Message deleted</span>
+                  ) : message.attachment ? (
+                    <AttachmentView attachment={message.attachment} />
+                  ) : (
+                    message.body
+                  )}
+                  <div className="mt-0.5 text-[10px] opacity-70">{formatRelativeTime(message.createdAt)}</div>
                 </div>
+                {!message.isDeleted && (
+                  <MessageReactions
+                    messageId={message.id}
+                    reactions={message.reactions}
+                    align={isMine ? "end" : "start"}
+                  />
+                )}
               </div>
             </div>
           );
@@ -146,7 +187,8 @@ export function ChatWindow({
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border pt-3">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-border pt-3">
+        <VoiceRecorderButton onRecorded={(attachment) => sendPayload({ attachment })} />
         <Input
           value={body}
           onChange={(e) => setBody(e.target.value)}

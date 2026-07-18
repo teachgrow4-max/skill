@@ -68,6 +68,26 @@ export async function getLatestPosts(client: Client, cursor: string | null): Pro
   };
 }
 
+export async function getReelsPosts(client: Client, cursor: string | null): Promise<FeedPage> {
+  let query = client
+    .from("posts")
+    .select("*")
+    .eq("status", "published")
+    .eq("type", "video")
+    .order("created_at", { ascending: false })
+    .limit(PAGE_SIZE);
+
+  if (cursor) query = query.lt("created_at", cursor);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return {
+    posts: data,
+    nextCursor: data.length === PAGE_SIZE ? data[data.length - 1].created_at : null,
+  };
+}
+
 export async function getFollowingPosts(
   client: Client,
   authorIds: string[],

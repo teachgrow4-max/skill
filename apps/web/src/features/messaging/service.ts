@@ -5,10 +5,11 @@ import {
   getLastMessages,
   getParticipantsForConversations,
   getProfilesByIds,
+  getReactionsForMessages,
   toAuthorSummary,
   toMessage,
 } from "@skilltego/database";
-import type { Conversation, Database, MessageRow } from "@skilltego/types";
+import type { Conversation, Database, MessageReactionSummary, MessageRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -67,12 +68,39 @@ export async function hydrateConversations(
   });
 }
 
-export async function hydrateMessages(client: Client, rows: MessageRow[]) {
+export async function hydrateMessages(
+  client: Client,
+  rows: MessageRow[],
+  currentUserId: string | null = null,
+) {
   if (rows.length === 0) return [];
+
   const senderIds = [...new Set(rows.map((row) => row.sender_id))];
-  const profiles = await getProfilesByIds(client, senderIds);
+  const messageIds = rows.map((row) => row.id);
+
+  const [profiles, reactionRows] = await Promise.all([
+    getProfilesByIds(client, senderIds),
+    getReactionsForMessages(client, messageIds),
+  ]);
+
   const profileMap = new Map(profiles.map((p) => [p.id, toAuthorSummary(p)]));
-  return rows.map((row) => toMessage(row, profileMap.get(row.sender_id) ?? unknownAuthor()));
+
+  const reactionsByMessage = new Map<string, MessageReactionSummary[]>();
+  for (const reaction of reactionRows) {
+    const list = reactionsByMessage.get(reaction.message_id) ?? [];
+    const existing = list.find((r) => r.emoji === reaction.emoji);
+    if (existing) {
+      existing.count += 1;
+      if (reaction.user_id === currentUserId) existing.reactedByMe = true;
+    } else {
+      list.push({ emoji: reaction.emoji, count: 1, reactedByMe: reaction.user_id === currentUserId });
+    }
+    reactionsByMessage.set(reaction.message_id, list);
+  }
+
+  return rows.map((row) =>
+    toMessage(row, profileMap.get(row.sender_id) ?? unknownAuthor(), reactionsByMessage.get(row.id) ?? []),
+  );
 }
 
 function unknownAuthor() {

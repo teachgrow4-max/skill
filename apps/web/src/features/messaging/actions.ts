@@ -1,11 +1,14 @@
 "use server";
 
 import {
+  createGroupConversation,
   getMessages,
   getOrCreateDirectConversation,
   getUserConversationIds,
   markConversationRead,
+  removeMessageReaction,
   sendMessage,
+  setMessageReaction,
 } from "@skilltego/database";
 import { moderateText } from "@skilltego/moderation";
 import { createClient } from "@/lib/supabase/server";
@@ -51,13 +54,37 @@ export async function startConversationAction(
   }
 }
 
+export async function createGroupChatAction(
+  participantIds: string[],
+  title: string,
+): Promise<ActionResult<{ conversationId: string }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+  if (participantIds.length < 2) return { success: false, error: "Pick at least 2 people for a group." };
+  if (!title.trim()) return { success: false, error: "Give your group a name." };
+
+  try {
+    const conversationId = await createGroupConversation(supabase, user.id, participantIds, title.trim());
+    return { success: true, data: { conversationId } };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not create group." };
+  }
+}
+
 export async function getMessagesAction(
   conversationId: string,
   cursor: string | null,
 ): Promise<{ messages: Message[]; nextCursor: string | null }> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const page = await getMessages(supabase, conversationId, cursor);
-  const messages = await hydrateMessages(supabase, page.messages);
+  const messages = await hydrateMessages(supabase, page.messages, user?.id ?? null);
   return { messages, nextCursor: page.nextCursor };
 }
 
@@ -97,10 +124,33 @@ export async function sendMessageAction(
       attachment: parsed.data.attachment ?? null,
     });
 
-    const [message] = await hydrateMessages(supabase, [row]);
+    const [message] = await hydrateMessages(supabase, [row], user.id);
     return { success: true, data: { message } };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not send message." };
+  }
+}
+
+export async function toggleMessageReactionAction(
+  messageId: string,
+  emoji: string,
+  currentlyReacted: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+
+  try {
+    if (currentlyReacted) {
+      await removeMessageReaction(supabase, messageId, user.id);
+    } else {
+      await setMessageReaction(supabase, messageId, user.id, emoji);
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not react." };
   }
 }
 

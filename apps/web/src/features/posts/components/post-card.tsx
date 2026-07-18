@@ -4,11 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   BadgeCheck,
   ExternalLink,
   FileText,
   Github,
+  Heart,
   MessageCircle,
   MoreHorizontal,
   Trash2,
@@ -18,7 +20,7 @@ import { initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { ReportButton } from "@/features/reports/components/report-button";
 import { deletePostAction } from "../actions";
-import { LikeButton } from "./like-button";
+import { LikeButton, type LikeButtonHandle } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentThread } from "./comment-thread";
 
@@ -33,7 +35,15 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   const [showComments, setShowComments] = React.useState(false);
   const [commentCount, setCommentCount] = React.useState(post.commentCount);
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [showHeartBurst, setShowHeartBurst] = React.useState(false);
+  const likeButtonRef = React.useRef<LikeButtonHandle>(null);
   const isOwner = currentUserId === post.author.id;
+
+  function handleDoubleTapLike() {
+    likeButtonRef.current?.like();
+    setShowHeartBurst(true);
+    window.setTimeout(() => setShowHeartBurst(false), 650);
+  }
 
   async function handleDelete() {
     if (!confirm("Delete this post? This can't be undone.")) return;
@@ -121,7 +131,23 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
       )}
 
       {post.media.length > 0 && (
-        <div className={`mt-3 grid gap-1 ${post.media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+        <div
+          className={`relative mt-3 grid gap-1 ${post.media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}
+          onDoubleClick={handleDoubleTapLike}
+        >
+          <AnimatePresence>
+            {showHeartBurst && (
+              <motion.div
+                className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1, 1] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.65, times: [0, 0.35, 0.8, 1] }}
+              >
+                <Heart className="size-24 fill-white text-white drop-shadow-lg" />
+              </motion.div>
+            )}
+          </AnimatePresence>
           {post.media.map((item, i) => (
             <div
               key={item.publicId ?? item.url}
@@ -162,6 +188,7 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
 
       <div className="mt-4 flex items-center gap-5">
         <LikeButton
+          ref={likeButtonRef}
           postId={post.id}
           initialIsLiked={post.isLiked}
           initialCount={post.likeCount}

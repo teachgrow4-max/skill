@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
 import { initials, formatRelativeTime } from "@skilltego/utils";
 import { getConversationsAction } from "@/features/messaging/actions";
+import { NewGroupButton } from "@/features/messaging/components/new-group-button";
 
 export const metadata: Metadata = { title: "Messages" };
 
@@ -11,7 +12,10 @@ export default async function MessagesPage() {
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-xl font-bold">Messages</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Messages</h1>
+        <NewGroupButton />
+      </div>
 
       {conversations.length === 0 && (
         <div className="glass rounded-xl p-8 text-center text-sm text-muted-foreground">
