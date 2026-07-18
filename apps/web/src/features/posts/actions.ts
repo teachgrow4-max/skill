@@ -6,23 +6,30 @@ import {
   createPost,
   deleteComment,
   deletePost,
+  getArchivedPosts,
+  getCommentById,
   getComments,
   getFollowingIds,
   getFollowingPosts,
   getLatestPosts,
+  getPinnedPostCount,
   getPostById,
   getPostsByAuthor,
   getPostsByIds,
+  getProfileById,
   getReelsPosts,
   getSavedPosts,
   getTrendingPosts,
   likePost,
   savePost,
+  setPostArchived,
+  setPostPinned,
   unlikePost,
   unsavePost,
 } from "@skilltego/database";
 import { moderateText } from "@skilltego/moderation";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToUser } from "@/lib/web-push";
 import { commentSchema, createPostSchema, type CreatePostInput } from "./schema";
 import { hydrateComments, hydratePosts } from "./service";
 import type { Comment, Post } from "@skilltego/types";
@@ -121,6 +128,7 @@ export async function createPostAction(input: CreatePostInput): Promise<ActionRe
       project_url: values.projectUrl || null,
       status: values.status,
       scheduled_at: values.scheduledAt || null,
+      hide_like_count: values.hideLikeCount,
     });
 
     revalidatePath("/feed");
@@ -166,6 +174,18 @@ export async function toggleLikeAction(
       await unlikePost(supabase, postId, user.id);
     } else {
       await likePost(supabase, postId, user.id);
+
+      const [post, liker] = await Promise.all([
+        getPostById(supabase, postId),
+        getProfileById(supabase, user.id),
+      ]);
+      if (post && liker && post.author_id !== user.id) {
+        await sendPushToUser(supabase, post.author_id, {
+          title: liker.full_name,
+          body: "Liked your post",
+          url: `/feed?post=${postId}`,
+        });
+      }
     }
     return { success: true, data: { isLiked: !isCurrentlyLiked } };
   } catch (error) {
@@ -231,6 +251,34 @@ export async function addCommentAction(
 
     const [comment] = await hydrateComments(supabase, [row]);
     revalidatePath(`/feed`);
+
+    const [post, commenter, parentComment] = await Promise.all([
+      getPostById(supabase, postId),
+      getProfileById(supabase, user.id),
+      parsed.data.parentCommentId ? getCommentById(supabase, parsed.data.parentCommentId) : null,
+    ]);
+
+    if (post && commenter) {
+      if (post.author_id !== user.id) {
+        await sendPushToUser(supabase, post.author_id, {
+          title: commenter.full_name,
+          body: `Commented: ${parsed.data.body.slice(0, 80)}`,
+          url: `/feed?post=${postId}`,
+        });
+      }
+      if (
+        parentComment &&
+        parentComment.author_id !== user.id &&
+        parentComment.author_id !== post.author_id
+      ) {
+        await sendPushToUser(supabase, parentComment.author_id, {
+          title: commenter.full_name,
+          body: `Replied: ${parsed.data.body.slice(0, 80)}`,
+          url: `/feed?post=${postId}`,
+        });
+      }
+    }
+
     return { success: true, data: { comment } };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not post comment." };
@@ -252,6 +300,71 @@ export async function deleteCommentAction(commentId: string, authorId: string): 
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not delete comment." };
   }
+}
+
+const MAX_PINNED_POSTS = 3;
+
+export async function toggleArchivePostAction(
+  postId: string,
+): Promise<ActionResult<{ isArchived: boolean }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+
+  const post = await getPostById(supabase, postId);
+  if (!post || post.author_id !== user.id) {
+    return { success: false, error: "You can only archive your own posts." };
+  }
+
+  try {
+    await setPostArchived(supabase, postId, !post.is_archived);
+    revalidatePath("/feed");
+    revalidatePath("/bookmarks");
+    return { success: true, data: { isArchived: !post.is_archived } };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not update post." };
+  }
+}
+
+export async function togglePinPostAction(postId: string): Promise<ActionResult<{ isPinned: boolean }>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+
+  const post = await getPostById(supabase, postId);
+  if (!post || post.author_id !== user.id) {
+    return { success: false, error: "You can only pin your own posts." };
+  }
+
+  if (!post.is_pinned) {
+    const pinnedCount = await getPinnedPostCount(supabase, user.id);
+    if (pinnedCount >= MAX_PINNED_POSTS) {
+      return { success: false, error: `You can only pin up to ${MAX_PINNED_POSTS} posts.` };
+    }
+  }
+
+  try {
+    await setPostPinned(supabase, postId, !post.is_pinned);
+    revalidatePath(`/profile/${user.id}`);
+    return { success: true, data: { isPinned: !post.is_pinned } };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not update post." };
+  }
+}
+
+export async function getMyArchivedPostsAction(): Promise<Post[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const rows = await getArchivedPosts(supabase, user.id);
+  return hydratePosts(supabase, rows, user.id);
 }
 
 export async function getBookmarkedPostsAction(): Promise<Post[]> {

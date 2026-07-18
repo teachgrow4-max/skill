@@ -32,14 +32,31 @@ export interface ProfileRow {
   languages: string[] | null;
   availability: AvailabilityStatus;
   is_verified: boolean;
+  is_private: boolean;
   xp: number;
   coins: number;
   level: number;
   onboarding_completed: boolean;
   resume_url: string | null;
+  streak_count: number;
+  last_active_date: string | null;
   search_vector: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface BadgeRow {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export interface ProfileBadgeRow {
+  profile_id: string;
+  badge_id: string;
+  earned_at: string;
 }
 
 export interface ProfileSkillRow {
@@ -83,6 +100,16 @@ export interface FollowRow {
   created_at: string;
 }
 
+export type FollowRequestStatus = "pending" | "accepted" | "declined";
+
+export interface FollowRequestRow {
+  requester_id: string;
+  target_id: string;
+  status: FollowRequestStatus;
+  created_at: string;
+  responded_at: string | null;
+}
+
 export type PostType =
   "text" | "image" | "carousel" | "video" | "pdf" | "code" | "github_link" | "project_link";
 
@@ -115,6 +142,10 @@ export interface PostRow {
   like_count: number;
   comment_count: number;
   save_count: number;
+  hide_like_count: boolean;
+  is_archived: boolean;
+  is_pinned: boolean;
+  pinned_at: string | null;
   search_vector: string | null;
   created_at: string;
   updated_at: string;
@@ -185,7 +216,16 @@ export interface MessageReactionRow {
   created_at: string;
 }
 
-export type NotificationType = "follow" | "like" | "comment" | "reply";
+export interface PushSubscriptionRow {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}
+
+export type NotificationType = "follow" | "like" | "comment" | "reply" | "follow_request" | "follow_accepted";
 
 export interface NotificationRow {
   id: string;
@@ -398,6 +438,24 @@ export type Database = {
         Update: Partial<FollowRow>;
         Relationships: [];
       };
+      follow_requests: {
+        Row: FollowRequestRow;
+        Insert: Partial<FollowRequestRow> & { requester_id: string; target_id: string };
+        Update: Partial<FollowRequestRow>;
+        Relationships: [];
+      };
+      badges: {
+        Row: BadgeRow;
+        Insert: Partial<BadgeRow> & { slug: string; name: string; description: string; icon: string };
+        Update: Partial<BadgeRow>;
+        Relationships: [];
+      };
+      profile_badges: {
+        Row: ProfileBadgeRow;
+        Insert: Partial<ProfileBadgeRow> & { profile_id: string; badge_id: string };
+        Update: Partial<ProfileBadgeRow>;
+        Relationships: [];
+      };
       posts: {
         Row: PostRow;
         Insert: Partial<PostRow> & { author_id: string };
@@ -444,6 +502,17 @@ export type Database = {
         Row: MessageReactionRow;
         Insert: MessageReactionRow;
         Update: Partial<MessageReactionRow>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: Partial<PushSubscriptionRow> & {
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+        };
+        Update: Partial<PushSubscriptionRow>;
         Relationships: [];
       };
       notifications: {
@@ -553,6 +622,7 @@ export type Database = {
       session_status: SessionStatus;
       story_media_type: StoryMediaType;
       story_sticker_type: StorySticker;
+      follow_request_status: FollowRequestStatus;
     };
     CompositeTypes: Record<string, never>;
   };

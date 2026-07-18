@@ -43,6 +43,7 @@ export const createPostSchema = z
     projectUrl: urlOrEmpty.optional().or(z.literal("")),
     status: z.enum(["draft", "scheduled", "published"]).default("published"),
     scheduledAt: z.string().optional().or(z.literal("")),
+    hideLikeCount: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     const requiresCaption = data.type === "text" && !data.caption;

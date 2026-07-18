@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Archive,
+  ArchiveRestore,
   BadgeCheck,
   ExternalLink,
   FileText,
@@ -13,13 +15,15 @@ import {
   Heart,
   MessageCircle,
   MoreHorizontal,
+  Pin,
+  PinOff,
   Trash2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
 import { initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { ReportButton } from "@/features/reports/components/report-button";
-import { deletePostAction } from "../actions";
+import { deletePostAction, toggleArchivePostAction, togglePinPostAction } from "../actions";
 import { LikeButton, type LikeButtonHandle } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentThread } from "./comment-thread";
@@ -36,6 +40,9 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   const [commentCount, setCommentCount] = React.useState(post.commentCount);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [showHeartBurst, setShowHeartBurst] = React.useState(false);
+  const [isArchived, setIsArchived] = React.useState(post.isArchived);
+  const [isPinned, setIsPinned] = React.useState(post.isPinned);
+  const [actionError, setActionError] = React.useState<string | null>(null);
   const likeButtonRef = React.useRef<LikeButtonHandle>(null);
   const isOwner = currentUserId === post.author.id;
 
@@ -51,6 +58,27 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
     if (result.success) router.refresh();
   }
 
+  async function handleToggleArchive() {
+    setMenuOpen(false);
+    const result = await toggleArchivePostAction(post.id);
+    if (result.success && result.data) {
+      setIsArchived(result.data.isArchived);
+      router.refresh();
+    }
+  }
+
+  async function handleTogglePin() {
+    setMenuOpen(false);
+    setActionError(null);
+    const result = await togglePinPostAction(post.id);
+    if (result.success && result.data) {
+      setIsPinned(result.data.isPinned);
+      router.refresh();
+    } else {
+      setActionError(result.error ?? "Could not update post.");
+    }
+  }
+
   return (
     <article className="glass rounded-xl p-4">
       <div className="flex items-start justify-between">
@@ -63,6 +91,7 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
             <div className="flex items-center gap-1">
               <span className="text-sm font-semibold">{post.author.fullName}</span>
               {post.author.isVerified && <BadgeCheck className="size-3.5 text-primary" />}
+              {isPinned && <Pin className="size-3 text-muted-foreground" aria-label="Pinned" />}
             </div>
             <p className="text-xs text-muted-foreground">
               @{post.author.username} · {formatRelativeTime(post.createdAt)}
@@ -81,14 +110,33 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
           {menuOpen && (
             <div className="absolute right-0 top-6 z-10 min-w-40 rounded-md border border-border bg-popover p-2 shadow-md">
               {isOwner ? (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="flex items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="size-3.5" />
-                  Delete
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={handleTogglePin}
+                    className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
+                  >
+                    {isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+                    {isPinned ? "Unpin from profile" : "Pin to profile"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleArchive}
+                    className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
+                  >
+                    {isArchived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
+                    {isArchived ? "Unarchive" : "Archive"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </button>
+                  {actionError && <p className="mt-1 px-2 text-xs text-destructive">{actionError}</p>}
+                </>
               ) : (
                 <ReportButton targetType="post" targetId={post.id} isLoggedIn={isLoggedIn} />
               )}
@@ -96,6 +144,12 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
           )}
         </div>
       </div>
+
+      {isArchived && (
+        <Badge variant="outline" className="mt-2 w-fit">
+          Archived — only you can see this
+        </Badge>
+      )}
 
       {post.caption && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{post.caption}</p>}
 
@@ -193,6 +247,7 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
           initialIsLiked={post.isLiked}
           initialCount={post.likeCount}
           isLoggedIn={isLoggedIn}
+          hideCount={post.hideLikeCount && !isOwner}
         />
         <button
           type="button"

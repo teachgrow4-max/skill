@@ -14,6 +14,7 @@ import {
   Shield,
   ShieldCheck,
   Sparkles,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@skilltego/utils";
 import type { NavLinkItem } from "./app-nav-items";
@@ -26,6 +27,7 @@ const ICONS = {
   search: Search,
   messages: MessageCircle,
   bookmarks: Bookmark,
+  leaderboard: Trophy,
   dashboard: LayoutDashboard,
   moderation: Shield,
   admin: ShieldCheck,

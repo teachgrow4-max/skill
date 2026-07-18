@@ -89,6 +89,7 @@ export async function saveProfileAction(
       city: values.city || null,
       website: values.website || null,
       resume_url: values.resumeUrl || null,
+      is_private: values.isPrivate,
       onboarding_completed: options?.completeOnboarding ? true : current.onboarding_completed,
     });
 

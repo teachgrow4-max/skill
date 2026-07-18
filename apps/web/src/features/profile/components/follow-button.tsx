@@ -3,23 +3,29 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@skilltego/ui";
-import { toggleFollowAction } from "../social-actions";
+import { toggleFollowAction, type FollowState } from "../social-actions";
 
 interface FollowButtonProps {
   targetProfileId: string;
   targetUsername: string;
-  initialIsFollowing: boolean;
+  initialState: FollowState;
   isLoggedIn: boolean;
 }
+
+const LABELS: Record<FollowState, string> = {
+  following: "Following",
+  requested: "Requested",
+  none: "Follow",
+};
 
 export function FollowButton({
   targetProfileId,
   targetUsername,
-  initialIsFollowing,
+  initialState,
   isLoggedIn,
 }: FollowButtonProps) {
   const router = useRouter();
-  const [following, setFollowing] = React.useState(initialIsFollowing);
+  const [state, setState] = React.useState<FollowState>(initialState);
   const [pending, setPending] = React.useState(false);
 
   async function handleClick() {
@@ -32,15 +38,15 @@ export function FollowButton({
     const result = await toggleFollowAction(targetProfileId, targetUsername);
     setPending(false);
 
-    if (result.success && result.isFollowing !== undefined) {
-      setFollowing(result.isFollowing);
+    if (result.success && result.state) {
+      setState(result.state);
       router.refresh();
     }
   }
 
   return (
-    <Button variant={following ? "outline" : "default"} disabled={pending} onClick={handleClick}>
-      {pending ? "…" : following ? "Following" : "Follow"}
+    <Button variant={state === "none" ? "default" : "outline"} disabled={pending} onClick={handleClick}>
+      {pending ? "…" : LABELS[state]}
     </Button>
   );
 }

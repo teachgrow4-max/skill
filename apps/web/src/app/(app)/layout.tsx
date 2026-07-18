@@ -1,10 +1,12 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopBar } from "@/components/app-top-bar";
 import { AppBottomNav } from "@/components/app-bottom-nav";
+import { DailyCheckIn } from "@/features/gamification/components/daily-check-in";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
+      <DailyCheckIn />
       <AppSidebar />
       <div className="flex min-h-screen flex-col md:pl-20 xl:pl-64">
         <AppTopBar />

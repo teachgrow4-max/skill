@@ -2,6 +2,7 @@
 
 import {
   createGroupConversation,
+  getConversationParticipantIds,
   getMessages,
   getOrCreateDirectConversation,
   getUserConversationIds,
@@ -12,6 +13,7 @@ import {
 } from "@skilltego/database";
 import { moderateText } from "@skilltego/moderation";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToUser } from "@/lib/web-push";
 import { hydrateConversations, hydrateMessages } from "./service";
 import { sendMessageSchema } from "./schema";
 import type { Conversation, Message } from "@skilltego/types";
@@ -125,6 +127,19 @@ export async function sendMessageAction(
     });
 
     const [message] = await hydrateMessages(supabase, [row], user.id);
+
+    const participantIds = await getConversationParticipantIds(supabase, conversationId);
+    const recipientIds = participantIds.filter((id) => id !== user.id);
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        sendPushToUser(supabase, recipientId, {
+          title: message.sender.fullName,
+          body: message.body ?? "Sent an attachment",
+          url: `/messages/${conversationId}`,
+        }),
+      ),
+    );
+
     return { success: true, data: { message } };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not send message." };

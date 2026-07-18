@@ -14,6 +14,10 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/sessions",
   "/admin",
+  "/follow-requests",
+  "/leaderboard",
+  "/calls",
+  "/archive",
 ];
 const AUTH_ONLY_PREFIXES = ["/login", "/signup", "/forgot-password"];
 

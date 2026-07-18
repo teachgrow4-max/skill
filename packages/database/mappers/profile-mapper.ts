@@ -21,9 +21,11 @@ export function toProfile(row: ProfileRow, skills: ProfileSkillRow[] = []): Prof
     languages: row.languages ?? [],
     availability: row.availability,
     isVerified: row.is_verified,
+    isPrivate: row.is_private,
     xp: row.xp,
     coins: row.coins,
     level: row.level,
+    streakCount: row.streak_count,
     onboardingCompleted: row.onboarding_completed,
     skills: skills.map((skill) => ({
       name: skill.skill_name,

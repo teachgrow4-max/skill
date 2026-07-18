@@ -89,6 +89,12 @@ export async function addComment(
   return data;
 }
 
+export async function getCommentById(client: Client, id: string): Promise<PostCommentRow | null> {
+  const { data, error } = await client.from("post_comments").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function getComments(client: Client, postId: string): Promise<PostCommentRow[]> {
   const { data, error } = await client
     .from("post_comments")

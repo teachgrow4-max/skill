@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Send } from "lucide-react";
+import Link from "next/link";
+import { FileText, Phone, Send, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button, Input } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { AuthorSummary, Message } from "@skilltego/types";
 import { createClient } from "@/lib/supabase/browser";
+import { useWebRTCCall } from "@/features/calls/use-webrtc-call";
+import { CallModal } from "@/features/calls/components/call-modal";
 import { markConversationReadAction, sendMessageAction } from "../actions";
 import { MessageReactions } from "./message-reactions";
 import { VoiceRecorderButton } from "./voice-recorder-button";
@@ -53,6 +56,13 @@ export function ChatWindow({
   const [error, setError] = React.useState<string | null>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const participantMap = React.useMemo(() => new Map(participants.map((p) => [p.id, p])), [participants]);
+  const otherParticipants = React.useMemo(
+    () => participants.filter((p) => p.id !== currentUserId),
+    [participants, currentUserId],
+  );
+  const callPartner = otherParticipants.length === 1 ? otherParticipants[0] : null;
+  const call = useWebRTCCall(conversationId, currentUserId);
+  const incomingCaller = call.incomingFrom ? participantMap.get(call.incomingFrom) : null;
 
   React.useEffect(() => {
     markConversationReadAction(conversationId);
@@ -148,6 +158,42 @@ export function ChatWindow({
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
+      {callPartner && (
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <Link href={`/profile/${callPartner.username}`} className="flex items-center gap-2">
+            <Avatar className="size-8">
+              <AvatarImage src={callPartner.avatarUrl ?? undefined} alt={callPartner.fullName} />
+              <AvatarFallback className="text-xs">{initials(callPartner.fullName)}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium">{callPartner.fullName}</span>
+          </Link>
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => call.startCall(false)}
+              disabled={call.status !== "idle"}
+              aria-label="Voice call"
+            >
+              <Phone className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => call.startCall(true)}
+              disabled={call.status !== "idle"}
+              aria-label="Video call"
+            >
+              <Video className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {callPartner && <CallModal call={call} otherUser={incomingCaller ?? callPartner} />}
+
       <div className="flex-1 space-y-3 overflow-y-auto pb-4">
         {messages.map((message) => {
           const isMine = message.sender.id === currentUserId;

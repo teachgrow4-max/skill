@@ -16,6 +16,8 @@ export * from "./repositories/verification-repository";
 export * from "./repositories/mentor-repository";
 export * from "./repositories/admin-repository";
 export * from "./repositories/story-repository";
+export * from "./repositories/gamification-repository";
+export * from "./repositories/push-repository";
 export * from "./mappers/profile-mapper";
 export * from "./mappers/post-mapper";
 export * from "./mappers/messaging-mapper";

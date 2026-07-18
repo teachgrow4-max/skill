@@ -2,6 +2,7 @@ import type {
   AccountType,
   ApplicationStatus,
   AvailabilityStatus,
+  FollowRequestStatus,
   MessageAttachment,
   NotificationType,
   OpportunityKind,
@@ -53,13 +54,31 @@ export interface Profile {
   languages: string[];
   availability: AvailabilityStatus;
   isVerified: boolean;
+  isPrivate: boolean;
   xp: number;
   coins: number;
   level: number;
+  streakCount: number;
   onboardingCompleted: boolean;
   skills: SkillTag[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Badge {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  earnedAt: string;
+}
+
+export interface LeaderboardEntry {
+  profile: AuthorSummary;
+  xp: number;
+  level: number;
+  rank: number;
 }
 
 export interface AuthUser {
@@ -97,6 +116,9 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   saveCount: number;
+  hideLikeCount: boolean;
+  isArchived: boolean;
+  isPinned: boolean;
   isLiked: boolean;
   isSaved: boolean;
   createdAt: string;
@@ -238,4 +260,11 @@ export interface StoryGroup {
   author: AuthorSummary;
   stories: Story[];
   allViewed: boolean;
+}
+
+export interface FollowRequest {
+  requester: AuthorSummary;
+  targetId: string;
+  status: FollowRequestStatus;
+  createdAt: string;
 }

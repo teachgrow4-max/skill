@@ -9,6 +9,7 @@ export interface NavLinkItem {
     | "search"
     | "messages"
     | "bookmarks"
+    | "leaderboard"
     | "dashboard"
     | "moderation"
     | "admin";
@@ -22,4 +23,5 @@ export const PRIMARY_NAV: NavLinkItem[] = [
   { href: "/search", label: "Search", icon: "search" },
   { href: "/messages", label: "Messages", icon: "messages" },
   { href: "/bookmarks", label: "Bookmarks", icon: "bookmarks" },
+  { href: "/leaderboard", label: "Leaderboard", icon: "leaderboard" },
 ];

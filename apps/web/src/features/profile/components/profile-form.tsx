@@ -43,6 +43,7 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
       city: profile.city ?? "",
       website: profile.website ?? "",
       resumeUrl: profile.resumeUrl ?? "",
+      isPrivate: profile.isPrivate,
       skills: profile.skills.map((skill) => ({
         skillName: skill.name,
         category: skill.category,
@@ -207,6 +208,16 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
           className="hidden"
           onChange={handleResumeUpload}
         />
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <Label htmlFor="isPrivate">Private account</Label>
+          <p className="text-xs text-muted-foreground">
+            Only approved followers can see your posts and stories.
+          </p>
+        </div>
+        <input id="isPrivate" type="checkbox" className="size-5" {...register("isPrivate")} />
       </div>
 
       <div className="grid gap-1.5">

@@ -12,6 +12,7 @@ interface LikeButtonProps {
   initialIsLiked: boolean;
   initialCount: number;
   isLoggedIn: boolean;
+  hideCount?: boolean;
 }
 
 export interface LikeButtonHandle {
@@ -19,7 +20,7 @@ export interface LikeButtonHandle {
 }
 
 export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(function LikeButton(
-  { postId, initialIsLiked, initialCount, isLoggedIn },
+  { postId, initialIsLiked, initialCount, isLoggedIn, hideCount },
   ref,
 ) {
   const router = useRouter();
@@ -76,7 +77,7 @@ export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(fu
       >
         <Heart className={cn("size-4", isLiked && "fill-current")} />
       </motion.span>
-      {count > 0 && count}
+      {!hideCount && count > 0 && count}
     </button>
   );
 });

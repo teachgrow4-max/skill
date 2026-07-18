@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, Heart, MessageCircle, Reply, UserPlus } from "lucide-react";
+import { Bell, Heart, Lock, MessageCircle, Reply, UserCheck, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Notification } from "@skilltego/types";
@@ -17,6 +17,8 @@ const ICONS = {
   like: Heart,
   comment: MessageCircle,
   reply: Reply,
+  follow_request: Lock,
+  follow_accepted: UserCheck,
 } as const;
 
 const LABELS: Record<Notification["type"], string> = {
@@ -24,10 +26,15 @@ const LABELS: Record<Notification["type"], string> = {
   like: "liked your post",
   comment: "commented on your post",
   reply: "replied to your comment",
+  follow_request: "requested to follow you",
+  follow_accepted: "accepted your follow request",
 };
 
 function targetHref(notification: Notification): string {
-  if (notification.type === "follow") return `/profile/${notification.actor.username}`;
+  if (notification.type === "follow" || notification.type === "follow_accepted") {
+    return `/profile/${notification.actor.username}`;
+  }
+  if (notification.type === "follow_request") return "/follow-requests";
   return "/feed";
 }
 

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Globe, MapPin } from "lucide-react";
+import { BadgeCheck, Globe, Lock, MapPin } from "lucide-react";
 import {
   getFollowerCount,
   getFollowingCount,
   getProfileByUsername,
   getProfileSkills,
-  isFollowing,
   toProfile,
 } from "@skilltego/database";
 import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/features/profile/components/follow-button";
+import { getFollowStateAction } from "@/features/profile/social-actions";
 import { getProfilePostsAction } from "@/features/posts/actions";
 import { PostCard } from "@/features/posts/components/post-card";
 import { MessageButton } from "@/features/messaging/components/message-button";
@@ -22,6 +22,8 @@ import { ReportButton } from "@/features/reports/components/report-button";
 import { getMentorAvailabilityAction, getMentorReviewsAction } from "@/features/mentorship/actions";
 import { BookingWidget } from "@/features/mentorship/components/booking-widget";
 import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
+import { getMyBadgesAction } from "@/features/gamification/actions";
+import { BadgeList } from "@/features/gamification/components/badge-list";
 
 const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   student: "Student",
@@ -61,21 +63,29 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [skills, followerCount, followingCount, viewerIsFollowing] = await Promise.all([
+  const [skills, followerCount, followingCount, viewerFollowState] = await Promise.all([
     getProfileSkills(supabase, profileRow.id),
     getFollowerCount(supabase, profileRow.id),
     getFollowingCount(supabase, profileRow.id),
-    user ? isFollowing(supabase, user.id, profileRow.id) : Promise.resolve(false),
+    user ? getFollowStateAction(profileRow.id) : Promise.resolve("none" as const),
   ]);
 
   const profile = toProfile(profileRow, skills);
   const isOwnProfile = user?.id === profile.id;
-  const { posts } = await getProfilePostsAction(profile.id, null);
+  const canViewContent = isOwnProfile || !profile.isPrivate || viewerFollowState === "following";
+
+  const [{ posts }, badges] = await Promise.all([
+    canViewContent
+      ? getProfilePostsAction(profile.id, null)
+      : Promise.resolve({ posts: [], nextCursor: null }),
+    getMyBadgesAction(profile.id),
+  ]);
 
   const isMentor = profile.accountType === "mentor";
-  const [availableSlots, mentorReviewData] = isMentor
-    ? await Promise.all([getMentorAvailabilityAction(profile.id), getMentorReviewsAction(profile.id)])
-    : [[], { reviews: [], average: 0, count: 0 }];
+  const [availableSlots, mentorReviewData] =
+    isMentor && canViewContent
+      ? await Promise.all([getMentorAvailabilityAction(profile.id), getMentorReviewsAction(profile.id)])
+      : [[], { reviews: [], average: 0, count: 0 }];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -101,7 +111,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 <FollowButton
                   targetProfileId={profile.id}
                   targetUsername={profile.username}
-                  initialIsFollowing={viewerIsFollowing}
+                  initialState={viewerFollowState}
                   isLoggedIn={Boolean(user)}
                 />
               </div>
@@ -125,6 +135,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </Badge>
             <Badge variant="outline">Level {profile.level}</Badge>
             <Badge variant="outline">{profile.xp} XP</Badge>
+            {profile.isPrivate && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Lock className="size-3" />
+                Private
+              </Badge>
+            )}
           </div>
 
           {profile.bio && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed">{profile.bio}</p>}
@@ -158,6 +174,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </span>
           </div>
 
+          {badges.length > 0 && (
+            <div className="mt-6">
+              <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Badges</h2>
+              <BadgeList badges={badges} />
+            </div>
+          )}
+
           {profile.skills.length > 0 && (
             <div className="mt-6">
               <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Skills</h2>
@@ -173,7 +196,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       </div>
 
-      {isMentor && !isOwnProfile && (
+      {!canViewContent && (
+        <div className="glass mt-6 grid justify-items-center gap-2 rounded-2xl p-10 text-center">
+          <Lock className="size-8 text-muted-foreground" />
+          <p className="font-semibold">This account is private</p>
+          <p className="text-sm text-muted-foreground">Follow @{profile.username} to see their posts.</p>
+        </div>
+      )}
+
+      {isMentor && !isOwnProfile && canViewContent && (
         <div className="glass mt-6 grid gap-4 rounded-2xl p-6">
           <h2 className="text-lg font-semibold">Book a session</h2>
           <BookingWidget mentorId={profile.id} slots={availableSlots} isLoggedIn={Boolean(user)} />
@@ -186,7 +217,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       )}
 
-      {posts.length > 0 && (
+      {canViewContent && posts.length > 0 && (
         <div className="mt-6 grid gap-4">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} isLoggedIn={Boolean(user)} currentUserId={user?.id ?? null} />

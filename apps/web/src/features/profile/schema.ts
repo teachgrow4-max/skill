@@ -22,6 +22,7 @@ export const profileFormSchema = z.object({
     .optional()
     .or(z.literal("")),
   resumeUrl: z.string().trim().url().optional().or(z.literal("")),
+  isPrivate: z.boolean().default(false),
   skills: z.array(skillInputSchema).max(20, "You can list up to 20 skills"),
 });
 

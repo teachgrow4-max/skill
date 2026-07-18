@@ -49,6 +49,7 @@ export function PostComposer() {
       projectUrl: "",
       status: "published",
       scheduledAt: "",
+      hideLikeCount: false,
     },
   });
 
@@ -241,6 +242,11 @@ export function PostComposer() {
           )
         }
       />
+
+      <label className="flex w-fit items-center gap-2 text-xs text-muted-foreground">
+        <input type="checkbox" className="size-4" {...register("hideLikeCount")} />
+        Hide like count on this post
+      </label>
 
       {formError && <p className="text-sm text-destructive">{formError}</p>}
 
