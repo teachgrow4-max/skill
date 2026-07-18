@@ -1,0 +1,12 @@
+{
+  "name": "@skilltego/config",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./site": "./site.ts",
+    "./skill-categories": "./skill-categories.ts"
+  }
+}
