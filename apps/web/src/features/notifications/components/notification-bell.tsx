@@ -38,7 +38,12 @@ function targetHref(notification: Notification): string {
   return "/feed";
 }
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  /** Which side the button sits near — the panel opens away from that edge so it stays on-screen. */
+  align?: "left" | "right";
+}
+
+export function NotificationBell({ align = "right" }: NotificationBellProps) {
   const [open, setOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -106,7 +111,12 @@ export function NotificationBell() {
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 max-h-96 w-80 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg">
+        <div
+          className={cn(
+            "absolute top-11 z-50 max-h-96 w-80 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg",
+            align === "right" ? "right-0" : "left-0",
+          )}
+        >
           <div className="flex items-center justify-between border-b border-border p-3">
             <span className="text-sm font-semibold">Notifications</span>
             {unreadCount > 0 && (

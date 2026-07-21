@@ -40,7 +40,7 @@ export async function AppSidebar() {
 
       <nav className="grid gap-1 px-3">
         <div className="flex items-center gap-3 rounded-xl px-1 py-1 text-muted-foreground">
-          <NotificationBell />
+          <NotificationBell align="left" />
           <span className="hidden text-sm font-medium xl:inline">Notifications</span>
         </div>
         {PRIMARY_NAV.map((item) => (
