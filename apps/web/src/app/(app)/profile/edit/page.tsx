@@ -22,7 +22,7 @@ export default async function EditProfilePage() {
   const profile = toProfile(profileRow, skills);
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-4 py-16">
+    <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-bold">Edit profile</h1>
       <PushNotificationToggle />
       <ProfileForm profile={profile} mode="edit" />

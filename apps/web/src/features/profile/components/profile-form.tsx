@@ -12,6 +12,7 @@ import { ACCOUNT_TYPE_OPTIONS, profileFormSchema, type ProfileFormValues } from 
 import { saveProfileAction } from "../actions";
 import { useUsernameAvailability } from "../hooks/use-username-availability";
 import { SkillsEditor } from "./skills-editor";
+import { AvatarCoverUploader } from "./avatar-cover-uploader";
 
 interface ProfileFormProps {
   profile: Profile;
@@ -43,6 +44,8 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
       city: profile.city ?? "",
       website: profile.website ?? "",
       resumeUrl: profile.resumeUrl ?? "",
+      avatarUrl: profile.avatarUrl ?? "",
+      coverUrl: profile.coverUrl ?? "",
       isPrivate: profile.isPrivate,
       skills: profile.skills.map((skill) => ({
         skillName: skill.name,
@@ -56,6 +59,8 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
   const usernameValue = watch("username");
   const usernameStatus = useUsernameAvailability(usernameValue, profile.username);
   const resumeUrl = watch("resumeUrl");
+  const avatarUrl = watch("avatarUrl");
+  const coverUrl = watch("coverUrl");
 
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -99,6 +104,23 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <AvatarCoverUploader
+          label="Photo"
+          shape="circle"
+          value={avatarUrl ?? ""}
+          onChange={(url) => setValue("avatarUrl", url, { shouldDirty: true })}
+          onError={setFormError}
+        />
+        <AvatarCoverUploader
+          label="Cover"
+          shape="banner"
+          value={coverUrl ?? ""}
+          onChange={(url) => setValue("coverUrl", url, { shouldDirty: true })}
+          onError={setFormError}
+        />
+      </div>
+
       <div className="grid gap-1.5">
         <Label htmlFor="fullName">Full name</Label>
         <Input id="fullName" {...register("fullName")} />

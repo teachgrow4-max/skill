@@ -199,3 +199,34 @@ export async function getPinnedPostCount(client: Client, authorId: string): Prom
   if (error) throw error;
   return count ?? 0;
 }
+
+export async function getPublishedPostCount(client: Client, authorId: string): Promise<number> {
+  const { count, error } = await client
+    .from("posts")
+    .select("*", { count: "exact", head: true })
+    .eq("author_id", authorId)
+    .eq("status", "published")
+    .eq("is_archived", false);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function getProfileEngagementTotals(
+  client: Client,
+  authorId: string,
+): Promise<{ totalLikes: number; totalComments: number }> {
+  const { data, error } = await client
+    .from("posts")
+    .select("like_count, comment_count")
+    .eq("author_id", authorId)
+    .eq("status", "published")
+    .eq("is_archived", false);
+  if (error) throw error;
+  return data.reduce(
+    (acc, row) => ({
+      totalLikes: acc.totalLikes + row.like_count,
+      totalComments: acc.totalComments + row.comment_count,
+    }),
+    { totalLikes: 0, totalComments: 0 },
+  );
+}

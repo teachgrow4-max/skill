@@ -7,3 +7,6 @@ export * from "./components/avatar";
 export * from "./components/badge";
 export * from "./components/separator";
 export * from "./components/skeleton";
+export * from "./components/dialog";
+export * from "./components/tabs";
+export * from "./components/empty-state";
