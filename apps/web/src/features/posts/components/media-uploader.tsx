@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { FileText, Loader2, Upload, Video, X } from "lucide-react";
 import { Button } from "@skilltego/ui";
+import { cn } from "@skilltego/utils";
 import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
 import type { PostMediaItem } from "@skilltego/types";
 
@@ -17,6 +18,23 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [dragActive, setDragActive] = React.useState(false);
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragActive(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragActive(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragActive(false);
+    handleFiles(e.dataTransfer.files);
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -59,7 +77,7 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
       {value.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {value.map((item, index) => (
@@ -91,7 +109,31 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
         </div>
       )}
 
-      {value.length < maxItems && (
+      {value.length === 0 && value.length < maxItems && (
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition-colors",
+            dragActive ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40",
+          )}
+        >
+          {uploading ? (
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          ) : (
+            <Upload className="size-6 text-muted-foreground" />
+          )}
+          <div className="text-sm">
+            <span className="font-medium text-foreground">
+              {uploading ? "Uploading…" : "Drag and drop"}
+            </span>
+            {!uploading && <span className="text-muted-foreground"> or click to upload images or videos</span>}
+          </div>
+        </button>
+      )}
+
+      {value.length > 0 && value.length < maxItems && (
         <Button
           type="button"
           variant="outline"
@@ -101,7 +143,7 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
           onClick={() => inputRef.current?.click()}
         >
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-          {uploading ? "Uploading…" : "Upload media"}
+          {uploading ? "Uploading…" : "Add more"}
         </Button>
       )}
 

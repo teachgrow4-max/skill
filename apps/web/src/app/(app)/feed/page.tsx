@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { PostComposer } from "@/features/posts/components/post-composer";
+import { CreatePostFab } from "@/features/posts/components/create-post-fab";
 import { FeedList } from "@/features/posts/components/feed-list";
 import { StoriesBar } from "@/features/stories/components/stories-bar";
 
@@ -15,8 +15,8 @@ export default async function FeedPage() {
   return (
     <div className="grid gap-4">
       <StoriesBar currentUserId={user?.id ?? null} />
-      <PostComposer />
       <FeedList isLoggedIn={Boolean(user)} currentUserId={user?.id ?? null} />
+      <CreatePostFab />
     </div>
   );
 }

@@ -10,3 +10,5 @@ export * from "./components/skeleton";
 export * from "./components/dialog";
 export * from "./components/tabs";
 export * from "./components/empty-state";
+export * from "./components/popover";
+export * from "./components/sheet";
