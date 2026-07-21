@@ -54,12 +54,29 @@ create index posts_status_created_idx on public.posts (status, created_at desc);
 create index posts_skill_category_idx on public.posts (skill_category);
 create index posts_tags_idx on public.posts using gin (tags);
 
-alter table public.posts add column search_vector tsvector
-  generated always as (
-    setweight(to_tsvector('english', coalesce(caption, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(skill_category, '')), 'B') ||
-    setweight(to_tsvector('english', array_to_string(tags, ' ')), 'B')
-  ) stored;
+-- search_vector is trigger-maintained rather than a generated column: Postgres's
+-- generated-column immutability check rejects to_tsvector-based expressions
+-- outright in some versions, even though the function itself is immutable.
+-- A trigger runs at write time and isn't subject to that static check.
+alter table public.posts add column search_vector tsvector;
+
+create function public.posts_set_search_vector()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.search_vector :=
+    setweight(to_tsvector('english', coalesce(new.caption, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(new.skill_category, '')), 'B') ||
+    setweight(to_tsvector('english', array_to_string(new.tags, ' ')), 'B');
+  return new;
+end;
+$$;
+
+create trigger posts_set_search_vector
+  before insert or update on public.posts
+  for each row
+  execute function public.posts_set_search_vector();
 
 create index posts_search_vector_idx on public.posts using gin (search_vector);
 
@@ -71,14 +88,27 @@ create trigger posts_set_updated_at
 -- ---------------------------------------------------------------------------
 -- profiles search vector (added here so Phase 2 search covers people too)
 -- ---------------------------------------------------------------------------
-alter table public.profiles add column search_vector tsvector
-  generated always as (
-    setweight(to_tsvector('english', coalesce(username, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(full_name, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(bio, '')), 'C') ||
-    setweight(to_tsvector('english', coalesce(company, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(college, '')), 'B')
-  ) stored;
+alter table public.profiles add column search_vector tsvector;
+
+create function public.profiles_set_search_vector()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.search_vector :=
+    setweight(to_tsvector('english', coalesce(new.username, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(new.full_name, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(new.bio, '')), 'C') ||
+    setweight(to_tsvector('english', coalesce(new.company, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(new.college, '')), 'B');
+  return new;
+end;
+$$;
+
+create trigger profiles_set_search_vector
+  before insert or update on public.profiles
+  for each row
+  execute function public.profiles_set_search_vector();
 
 create index profiles_search_vector_idx on public.profiles using gin (search_vector);
 
