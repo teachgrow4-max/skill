@@ -26,7 +26,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <div>
-      <div className="relative -mx-4 h-40 bg-gradient-to-r from-primary/40 to-secondary/40 sm:h-56">
+      <div className="gradient-hero relative -mx-4 h-40 sm:h-56">
         {profile.coverUrl && <Image src={profile.coverUrl} alt="" fill className="object-cover" priority />}
       </div>
 
