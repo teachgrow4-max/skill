@@ -405,6 +405,15 @@ export interface StoryResponseRow {
   created_at: string;
 }
 
+export type ProfileField = "full_name" | "username";
+
+export interface ProfileFieldChangeRow {
+  id: string;
+  profile_id: string;
+  field: ProfileField;
+  changed_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -412,6 +421,12 @@ export type Database = {
         Row: ProfileRow;
         Insert: Partial<ProfileRow> & { id: string; username: string; full_name: string };
         Update: Partial<ProfileRow>;
+        Relationships: [];
+      };
+      profile_field_changes: {
+        Row: ProfileFieldChangeRow;
+        Insert: Partial<ProfileFieldChangeRow> & { profile_id: string; field: ProfileField };
+        Update: Partial<ProfileFieldChangeRow>;
         Relationships: [];
       };
       profile_skills: {

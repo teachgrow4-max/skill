@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  getFieldChangeTimestamps,
   getProfileById,
   isUsernameAvailable,
+  recordFieldChange,
   replaceProfileSkills,
   updateProfile,
 } from "@skilltego/database";
 import { isValidUsername } from "@skilltego/utils";
+import type { ProfileField } from "@skilltego/types";
 import { createClient } from "@/lib/supabase/server";
 import { profileFormSchema, type ProfileFormValues } from "./schema";
 
@@ -16,6 +19,66 @@ export interface ActionResult {
   error?: string;
   fieldErrors?: Partial<Record<keyof ProfileFormValues, string>>;
   username?: string;
+}
+
+const CHANGE_WINDOW_DAYS = 30;
+const FIELD_CHANGE_LIMITS: Record<ProfileField, number> = { full_name: 2, username: 1 };
+const FIELD_LABELS: Record<ProfileField, string> = { full_name: "name", username: "username" };
+
+export interface FieldChangeStatus {
+  remaining: number;
+  nextAvailableAt: string | null;
+}
+
+export interface ProfileChangeStatus {
+  fullName: FieldChangeStatus;
+  username: FieldChangeStatus;
+}
+
+function addDays(iso: string, days: number): string {
+  const date = new Date(iso);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString();
+}
+
+function formatDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date(iso));
+}
+
+async function getFieldChangeStatus(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  profileId: string,
+  field: ProfileField,
+): Promise<FieldChangeStatus> {
+  const limit = FIELD_CHANGE_LIMITS[field];
+  const since = new Date(Date.now() - CHANGE_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const timestamps = await getFieldChangeTimestamps(supabase, profileId, field, since);
+
+  return {
+    remaining: Math.max(0, limit - timestamps.length),
+    nextAvailableAt: timestamps.length >= limit ? addDays(timestamps[0], CHANGE_WINDOW_DAYS) : null,
+  };
+}
+
+export async function getProfileChangeStatusAction(): Promise<ProfileChangeStatus> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      fullName: { remaining: FIELD_CHANGE_LIMITS.full_name, nextAvailableAt: null },
+      username: { remaining: FIELD_CHANGE_LIMITS.username, nextAvailableAt: null },
+    };
+  }
+
+  const [fullName, username] = await Promise.all([
+    getFieldChangeStatus(supabase, user.id, "full_name"),
+    getFieldChangeStatus(supabase, user.id, "username"),
+  ]);
+
+  return { fullName, username };
 }
 
 export async function checkUsernameAvailableAction(username: string): Promise<boolean> {
@@ -79,6 +142,28 @@ export async function saveProfileAction(
     }
   }
 
+  // Rate-limit name/username changes — but not during onboarding, where setting
+  // them up for the first time shouldn't count against the limit.
+  const isOnboarding = Boolean(options?.completeOnboarding);
+  const changedFields: ProfileField[] = [];
+  if (!isOnboarding) {
+    if (values.fullName !== current.full_name) changedFields.push("full_name");
+    if (values.username !== current.username) changedFields.push("username");
+
+    for (const field of changedFields) {
+      const status = await getFieldChangeStatus(supabase, user.id, field);
+      if (status.remaining <= 0 && status.nextAvailableAt) {
+        const formKey = field === "full_name" ? "fullName" : "username";
+        return {
+          success: false,
+          fieldErrors: {
+            [formKey]: `You've reached the limit for changing your ${FIELD_LABELS[field]} this month. Try again on ${formatDate(status.nextAvailableAt)}.`,
+          },
+        };
+      }
+    }
+  }
+
   try {
     await updateProfile(supabase, user.id, {
       username: values.username,
@@ -107,6 +192,10 @@ export async function saveProfileAction(
         profile_id: user.id,
       })),
     );
+
+    for (const field of changedFields) {
+      await recordFieldChange(supabase, user.id, field);
+    }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Something went wrong." };
   }

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, ProfileRow } from "@skilltego/types";
+import type { Database, ProfileField, ProfileRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -76,4 +76,36 @@ export async function updateProfile(
 
   if (error) throw error;
   return data;
+}
+
+// Postgres raises 42P01 if the table is genuinely missing; PostgREST raises
+// its own PGRST205 when the table hasn't been picked up by its schema cache
+// yet (e.g. immediately after the migration is applied, or before it's run
+// at all). Fail open on either rather than blocking every profile save.
+const MISSING_TABLE_CODES = new Set(["42P01", "PGRST205"]);
+
+export async function getFieldChangeTimestamps(
+  client: Client,
+  profileId: string,
+  field: ProfileField,
+  sinceIso: string,
+): Promise<string[]> {
+  const { data, error } = await client
+    .from("profile_field_changes")
+    .select("changed_at")
+    .eq("profile_id", profileId)
+    .eq("field", field)
+    .gte("changed_at", sinceIso)
+    .order("changed_at", { ascending: true });
+
+  if (error) {
+    if (MISSING_TABLE_CODES.has(error.code)) return [];
+    throw error;
+  }
+  return data.map((row) => row.changed_at);
+}
+
+export async function recordFieldChange(client: Client, profileId: string, field: ProfileField): Promise<void> {
+  const { error } = await client.from("profile_field_changes").insert({ profile_id: profileId, field });
+  if (error && !MISSING_TABLE_CODES.has(error.code)) throw error;
 }

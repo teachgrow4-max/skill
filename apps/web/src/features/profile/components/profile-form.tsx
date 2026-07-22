@@ -10,7 +10,7 @@ import type { Profile } from "@skilltego/types";
 import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
 import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
 import { ACCOUNT_TYPE_OPTIONS, profileFormSchema, type ProfileFormValues } from "../schema";
-import { saveProfileAction } from "../actions";
+import { saveProfileAction, type ProfileChangeStatus } from "../actions";
 import { useUsernameAvailability } from "../hooks/use-username-availability";
 import { SkillsEditor } from "./skills-editor";
 import { AvatarCoverUploader } from "./avatar-cover-uploader";
@@ -18,9 +18,14 @@ import { AvatarCoverUploader } from "./avatar-cover-uploader";
 interface ProfileFormProps {
   profile: Profile;
   mode: "onboarding" | "edit";
+  changeStatus?: ProfileChangeStatus;
 }
 
-export function ProfileForm({ profile, mode }: ProfileFormProps) {
+function formatChangeDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date(iso));
+}
+
+export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
   const router = useRouter();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [uploadingResume, setUploadingResume] = React.useState(false);
@@ -62,6 +67,8 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
   const resumeUrl = watch("resumeUrl");
   const avatarUrl = watch("avatarUrl");
   const coverUrl = watch("coverUrl");
+  const fullNameLocked = Boolean(changeStatus && changeStatus.fullName.remaining <= 0);
+  const usernameLocked = Boolean(changeStatus && changeStatus.username.remaining <= 0);
 
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -124,25 +131,47 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
 
       <div className="grid gap-1.5">
         <Label htmlFor="fullName">Full name</Label>
-        <Input id="fullName" {...register("fullName")} />
+        <Input id="fullName" disabled={fullNameLocked} {...register("fullName")} />
         {errors.fullName && <p className="text-xs text-destructive">{errors.fullName.message}</p>}
+        {fullNameLocked && changeStatus?.fullName.nextAvailableAt && (
+          <p className="text-xs text-muted-foreground">
+            You&apos;ve used both name changes for this month. Available again on{" "}
+            {formatChangeDate(changeStatus.fullName.nextAvailableAt)}.
+          </p>
+        )}
+        {!fullNameLocked && changeStatus && changeStatus.fullName.remaining < 2 && (
+          <p className="text-xs text-muted-foreground">
+            {changeStatus.fullName.remaining} name change{changeStatus.fullName.remaining === 1 ? "" : "s"} left
+            this month.
+          </p>
+        )}
       </div>
 
       <div className="grid gap-1.5">
         <Label htmlFor="username">Username</Label>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">skilltego.com/</span>
-          <Input id="username" {...register("username")} className="flex-1" />
+          <Input id="username" disabled={usernameLocked} {...register("username")} className="flex-1" />
         </div>
-        {usernameStatus === "checking" && (
+        {!usernameLocked && usernameStatus === "checking" && (
           <p className="text-xs text-muted-foreground">Checking availability…</p>
         )}
-        {usernameStatus === "available" && <p className="text-xs text-success">Username is available</p>}
-        {usernameStatus === "taken" && <p className="text-xs text-destructive">Username is already taken</p>}
-        {usernameStatus === "invalid" && (
+        {!usernameLocked && usernameStatus === "available" && (
+          <p className="text-xs text-success">Username is available</p>
+        )}
+        {!usernameLocked && usernameStatus === "taken" && (
+          <p className="text-xs text-destructive">Username is already taken</p>
+        )}
+        {!usernameLocked && usernameStatus === "invalid" && (
           <p className="text-xs text-destructive">3-30 characters: lowercase letters, numbers, underscores</p>
         )}
         {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
+        {usernameLocked && changeStatus?.username.nextAvailableAt && (
+          <p className="text-xs text-muted-foreground">
+            You&apos;ve already changed your username this month. Available again on{" "}
+            {formatChangeDate(changeStatus.username.nextAvailableAt)}.
+          </p>
+        )}
       </div>
 
       <div className="grid gap-1.5">
