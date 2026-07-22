@@ -20,7 +20,7 @@ export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostG
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-3 gap-1.5">
         {posts.map((post) => {
           const thumb = post.media[0]?.url ?? post.thumbnailUrl;
           const isVideo = post.media[0]?.type === "video";
@@ -30,7 +30,7 @@ export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostG
               key={post.id}
               type="button"
               onClick={() => setSelected(post)}
-              className="group relative aspect-square overflow-hidden rounded-sm bg-muted"
+              className="group relative aspect-square overflow-hidden rounded-lg bg-muted transition-shadow hover:shadow-glow"
             >
               {thumb ? (
                 <Image

@@ -1,7 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import * as React from "react";
+import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@skilltego/ui";
+import type { ReactNode } from "react";
 
 interface ProfileTabsProps {
   postsTab: ReactNode;
@@ -10,12 +12,29 @@ interface ProfileTabsProps {
 }
 
 export function ProfileTabs({ postsTab, savedTab, badgesTab }: ProfileTabsProps) {
+  const [active, setActive] = React.useState("posts");
+
+  const tabs = [
+    { value: "posts", label: "Posts" },
+    ...(savedTab ? [{ value: "saved", label: "Saved" }] : []),
+    { value: "badges", label: "Badges" },
+  ];
+
   return (
-    <Tabs defaultValue="posts" className="mt-2">
+    <Tabs value={active} onValueChange={setActive} className="mt-6">
       <TabsList>
-        <TabsTrigger value="posts">Posts</TabsTrigger>
-        {savedTab && <TabsTrigger value="saved">Saved</TabsTrigger>}
-        <TabsTrigger value="badges">Badges</TabsTrigger>
+        {tabs.map((tab) => (
+          <TabsTrigger key={tab.value} value={tab.value}>
+            {active === tab.value && (
+              <motion.span
+                layoutId="profile-tab-indicator"
+                className="gradient-brand absolute inset-0 -z-10 rounded-full shadow-glow"
+                transition={{ type: "spring", stiffness: 500, damping: 40 }}
+              />
+            )}
+            {tab.label}
+          </TabsTrigger>
+        ))}
       </TabsList>
       <TabsContent value="posts" className="mt-4">
         {postsTab}

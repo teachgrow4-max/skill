@@ -11,15 +11,20 @@ interface EmptyStateProps {
 
 function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn("glass grid justify-items-center gap-2 rounded-2xl p-10 text-center", className)}>
+    <div
+      className={cn(
+        "glass animate-in fade-in zoom-in grid justify-items-center gap-2 rounded-2xl p-10 text-center shadow-sm duration-300",
+        className,
+      )}
+    >
       {icon && (
-        <div className="mb-1 flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <div className="gradient-premium mb-2 flex size-16 items-center justify-center rounded-full text-deep-accent shadow-sm">
           {icon}
         </div>
       )}
-      <p className="font-semibold">{title}</p>
-      {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      {action && <div className="mt-2">{action}</div>}
+      <p className="text-base font-semibold">{title}</p>
+      {description && <p className="max-w-xs text-sm text-muted-foreground">{description}</p>}
+      {action && <div className="mt-3">{action}</div>}
     </div>
   );
 }

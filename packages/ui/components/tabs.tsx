@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { cn } from "@skilltego/utils";
@@ -10,7 +12,7 @@ const TabsList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
-    className={cn("flex items-center gap-1 border-b border-border", className)}
+    className={cn("glass flex items-center gap-1 rounded-full p-1", className)}
     {...props}
   />
 ));
@@ -23,9 +25,9 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "-mb-px flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors outline-none",
+      "relative flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold text-muted-foreground outline-none transition-colors",
       "hover:text-foreground",
-      "data-[state=active]:border-primary data-[state=active]:text-foreground",
+      "data-[state=active]:text-primary-foreground",
       "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       className,
     )}
@@ -40,7 +42,10 @@ const TabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}
-    className={cn("outline-none focus-visible:ring-2 focus-visible:ring-ring", className)}
+    className={cn(
+      "animate-in fade-in outline-none duration-300 focus-visible:ring-2 focus-visible:ring-ring",
+      className,
+    )}
     {...props}
   />
 ));

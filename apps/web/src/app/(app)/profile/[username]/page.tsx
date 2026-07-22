@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Lock } from "lucide-react";
+import { Lock, Rocket } from "lucide-react";
 import {
   getFollowerCount,
   getFollowingCount,
@@ -19,6 +19,7 @@ import { BookingWidget } from "@/features/mentorship/components/booking-widget";
 import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
 import { getMyBadgesAction } from "@/features/gamification/actions";
 import { BadgeList } from "@/features/gamification/components/badge-list";
+import { CreateFirstPostButton } from "@/features/posts/components/create-first-post-button";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ProfileStatsBar } from "@/features/profile/components/profile-stats-bar";
 import { ProfileTabs } from "@/features/profile/components/profile-tabs";
@@ -142,7 +143,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               posts={posts}
               isLoggedIn={Boolean(user)}
               currentUserId={user?.id ?? null}
-              emptyState={<EmptyState title="No posts yet" description="Shared posts will show up here." />}
+              emptyState={
+                <EmptyState
+                  icon={<Rocket className="size-7" />}
+                  title="No posts yet"
+                  description={
+                    isOwnProfile
+                      ? "Share your knowledge and grow your network."
+                      : "Shared posts will show up here."
+                  }
+                  action={isOwnProfile ? <CreateFirstPostButton /> : undefined}
+                />
+              }
             />
           }
           savedTab={

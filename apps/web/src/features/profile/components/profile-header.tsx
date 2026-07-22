@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, Coins, Flame, Globe, Lock, MapPin } from "lucide-react";
+import { BadgeCheck, Camera, Coins, Flame, Globe, Lock, MapPin, Pencil, TrendingUp } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import type { Profile } from "@skilltego/types";
@@ -26,20 +26,47 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <div>
-      <div className="gradient-hero relative -mx-4 h-40 sm:h-56">
+      <div className="gradient-hero relative -mx-4 h-48 overflow-hidden rounded-b-3xl shadow-glow-burgundy sm:h-64">
         {profile.coverUrl && <Image src={profile.coverUrl} alt="" fill className="object-cover" priority />}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-2/3 opacity-50"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.4) 1.5px, transparent 1.5px)",
+            backgroundSize: "20px 20px",
+            maskImage: "radial-gradient(circle at 100% 0%, black, transparent 65%)",
+            WebkitMaskImage: "radial-gradient(circle at 100% 0%, black, transparent 65%)",
+          }}
+        />
       </div>
 
       <div className="pb-6">
-        <div className="-mt-14 flex items-end justify-between sm:-mt-16">
-          <Avatar className="size-28 border-4 border-background sm:size-32">
-            <AvatarImage src={profile.avatarUrl ?? undefined} alt={profile.fullName} />
-            <AvatarFallback className="text-3xl">{initials(profile.fullName)}</AvatarFallback>
-          </Avatar>
+        <div className="-mt-16 flex items-end justify-between sm:-mt-20">
+          <div className="group relative shrink-0">
+            <Avatar className="ring-gradient-brand size-28 border-4 border-background shadow-glow transition-transform duration-300 group-hover:scale-105 sm:size-32">
+              <AvatarImage src={profile.avatarUrl ?? undefined} alt={profile.fullName} />
+              <AvatarFallback className="text-3xl">{initials(profile.fullName)}</AvatarFallback>
+            </Avatar>
+            {isOwnProfile && (
+              <Link
+                href="/profile/edit"
+                aria-label="Change profile photo"
+                className="gradient-brand absolute bottom-1 right-1 flex size-9 items-center justify-center rounded-full text-white shadow-glow-orange ring-4 ring-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Camera className="size-4" />
+              </Link>
+            )}
+          </div>
 
           {isOwnProfile ? (
-            <Button asChild variant="outline">
-              <Link href="/profile/edit">Edit profile</Link>
+            <Button
+              asChild
+              className="gradient-brand rounded-full text-white shadow-glow transition-transform hover:-translate-y-0.5 hover:shadow-glow-orange"
+            >
+              <Link href="/profile/edit">
+                <Pencil className="size-4" />
+                Edit profile
+              </Link>
             </Button>
           ) : (
             <div className="flex gap-2">
@@ -55,7 +82,7 @@ export function ProfileHeader({
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{profile.fullName}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{profile.fullName}</h1>
           {profile.isVerified && <BadgeCheck className="size-5 text-primary" aria-label="Verified" />}
         </div>
         <div className="flex items-center gap-2">
@@ -65,24 +92,32 @@ export function ProfileHeader({
           )}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{accountTypeLabel}</Badge>
-          <Badge variant="outline">Level {profile.level}</Badge>
-          <Badge variant="warning" className="flex items-center gap-1 transition-transform hover:scale-105">
-            <Coins className="size-3" />
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="gradient-brand rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-glow">
+            {accountTypeLabel}
+          </span>
+          <span className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-transform hover:scale-105">
+            <TrendingUp className="size-3.5 text-primary" />
+            Level {profile.level}
+          </span>
+          <Badge
+            variant="warning"
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs shadow-sm transition-transform hover:scale-105"
+          >
+            <Coins className="size-3.5" />
             {profile.skillCoins.toLocaleString()} Skill Coins
           </Badge>
           {profile.streakCount > 0 && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Flame className="size-3" />
+            <span className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-transform hover:scale-105">
+              <Flame className="size-3.5 text-secondary" />
               {profile.streakCount} day streak
-            </Badge>
+            </span>
           )}
           {profile.isPrivate && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Lock className="size-3" />
+            <span className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-transform hover:scale-105">
+              <Lock className="size-3.5" />
               Private
-            </Badge>
+            </span>
           )}
         </div>
 
