@@ -5,15 +5,22 @@ type Client = SupabaseClient<Database>;
 
 const SEARCH_LIMIT = 20;
 
-export async function searchProfiles(client: Client, query: string): Promise<ProfileRow[]> {
+export async function searchProfiles(
+  client: Client,
+  query: string,
+  excludeUserId?: string | null,
+): Promise<ProfileRow[]> {
   const trimmed = query.trim();
   if (trimmed.length === 0) return [];
 
-  const { data, error } = await client
+  let builder = client
     .from("profiles")
     .select("*")
-    .textSearch("search_vector", trimmed, { type: "websearch", config: "english" })
-    .limit(SEARCH_LIMIT);
+    .textSearch("search_vector", trimmed, { type: "websearch", config: "english" });
+
+  if (excludeUserId) builder = builder.neq("id", excludeUserId);
+
+  const { data, error } = await builder.limit(SEARCH_LIMIT);
 
   if (error) throw error;
   return data;
@@ -48,7 +55,11 @@ export async function searchPostsByCategory(client: Client, category: string): P
   return data;
 }
 
-export async function searchProfilesBySkill(client: Client, skillName: string): Promise<ProfileRow[]> {
+export async function searchProfilesBySkill(
+  client: Client,
+  skillName: string,
+  excludeUserId?: string | null,
+): Promise<ProfileRow[]> {
   const { data, error } = await client
     .from("profile_skills")
     .select("profile_id")
@@ -56,7 +67,7 @@ export async function searchProfilesBySkill(client: Client, skillName: string): 
 
   if (error) throw error;
 
-  const profileIds = [...new Set(data.map((row) => row.profile_id))];
+  const profileIds = [...new Set(data.map((row) => row.profile_id))].filter((id) => id !== excludeUserId);
   if (profileIds.length === 0) return [];
 
   const { data: profiles, error: profilesError } = await client

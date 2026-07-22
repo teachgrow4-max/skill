@@ -26,6 +26,13 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
 
   const trimmed = query.trim();
 
+  // Defense in depth: searchAction already excludes the viewer's own account,
+  // but never show it here even if that filtering regresses upstream.
+  const people = React.useMemo(
+    () => results?.profiles.filter((profile) => profile.id !== currentUserId) ?? [],
+    [results, currentUserId],
+  );
+
   React.useEffect(() => {
     if (trimmed.length < 2) {
       setResults(null);
@@ -91,7 +98,7 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
                   tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent/50"
                 }`}
               >
-                {t} {results && `(${t === "people" ? results.profiles.length : results.posts.length})`}
+                {t} {results && `(${t === "people" ? people.length : results.posts.length})`}
               </button>
             ))}
           </div>
@@ -104,10 +111,13 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
 
           {!loading && results && tab === "people" && (
             <div className="grid gap-2">
-              {results.profiles.length === 0 && (
-                <p className="text-sm text-muted-foreground">No people found.</p>
+              {people.length === 0 && (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-medium">No users found</p>
+                  <p className="text-xs text-muted-foreground">Try searching for another username.</p>
+                </div>
               )}
-              {results.profiles.map((profile) => (
+              {people.map((profile) => (
                 <Link
                   key={profile.id}
                   href={`/profile/${profile.username}`}

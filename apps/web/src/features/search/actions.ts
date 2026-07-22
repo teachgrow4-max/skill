@@ -20,14 +20,18 @@ export async function searchAction(query: string): Promise<SearchResults> {
   } = await supabase.auth.getUser();
 
   const [profileRows, skillProfileRows, postRows] = await Promise.all([
-    searchProfiles(supabase, trimmed),
-    searchProfilesBySkill(supabase, `%${trimmed}%`),
+    searchProfiles(supabase, trimmed, user?.id),
+    searchProfilesBySkill(supabase, `%${trimmed}%`, user?.id),
     searchPosts(supabase, trimmed),
   ]);
 
   const profileMap = new Map(
     [...profileRows, ...skillProfileRows].map((row) => [row.id, toAuthorSummary(row)]),
   );
+
+  // Defense in depth: the repository queries already exclude the viewer, but
+  // never surface your own account in search results even if that changes.
+  if (user) profileMap.delete(user.id);
 
   const posts = await hydratePosts(supabase, postRows, user?.id ?? null);
 

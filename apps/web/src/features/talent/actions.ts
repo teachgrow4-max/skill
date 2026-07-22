@@ -21,7 +21,10 @@ export async function searchTalentAction(skillQuery: string): Promise<ProfileRow
   if (trimmed.length < 2) return [];
 
   const supabase = await createClient();
-  return searchProfilesBySkill(supabase, `%${trimmed}%`);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return searchProfilesBySkill(supabase, `%${trimmed}%`, user?.id);
 }
 
 export async function toggleCandidateBookmarkAction(
