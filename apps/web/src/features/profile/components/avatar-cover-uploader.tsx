@@ -15,7 +15,7 @@ interface AvatarCoverUploaderProps {
 }
 
 export function AvatarCoverUploader({ label, value, onChange, onError, shape }: AvatarCoverUploaderProps) {
-  const inputId = React.useId();
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,10 +41,13 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
 
   return (
     <div className="grid gap-1.5">
-      <label
-        htmlFor={inputId}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        aria-label={`Change ${label.toLowerCase()}`}
         className={cn(
-          "group relative block cursor-pointer overflow-hidden bg-muted",
+          "group relative block cursor-pointer overflow-hidden bg-muted outline-none",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           shape === "circle" ? "size-24 rounded-full" : "aspect-[3/1] w-full rounded-lg",
         )}
       >
@@ -55,12 +58,18 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
             <Camera className="size-6" />
           </div>
         )}
-        <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/50 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-          {uploading ? "Uploading…" : `Change ${label.toLowerCase()}`}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/45 opacity-0 transition-all duration-300 group-hover:bg-black/60 group-hover:opacity-100 group-focus-visible:opacity-100">
+          {uploading ? (
+            <Loader2 className="size-5 animate-spin text-white" />
+          ) : (
+            <Camera className="size-5 text-white transition-transform duration-300 group-hover:scale-105" />
+          )}
+          <span className="px-2 text-center text-sm font-medium leading-tight text-white">
+            {uploading ? "Uploading…" : `Change ${label.toLowerCase()}`}
+          </span>
         </div>
-      </label>
-      <input id={inputId} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
     </div>
   );
 }
