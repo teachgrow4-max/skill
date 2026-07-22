@@ -41,7 +41,7 @@ const PROVIDERS: { id: OAuthProvider; label: string; icon: React.ReactNode }[] =
   },
 ];
 
-export function OAuthButtons({ redirectTo = "/" }: { redirectTo?: string }) {
+export function OAuthButtons({ redirectTo = "/feed" }: { redirectTo?: string }) {
   const [loadingProvider, setLoadingProvider] = React.useState<OAuthProvider | null>(null);
 
   async function handleClick(provider: OAuthProvider) {

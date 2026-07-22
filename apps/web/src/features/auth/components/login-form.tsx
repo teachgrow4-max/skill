@@ -13,7 +13,7 @@ import { OAuthButtons } from "./oauth-buttons";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") ?? "/";
+  const redirectTo = searchParams.get("redirectTo") ?? "/feed";
   const [formError, setFormError] = React.useState<string | null>(null);
 
   const {
