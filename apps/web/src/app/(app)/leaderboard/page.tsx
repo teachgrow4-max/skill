@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Coins, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
 import { cn, initials } from "@skilltego/utils";
 import { getLeaderboardAction } from "@/features/gamification/actions";
@@ -43,7 +43,10 @@ export default async function LeaderboardPage() {
               <p className="text-xs text-muted-foreground">@{entry.profile.username}</p>
             </div>
             <Badge variant="outline">Level {entry.level}</Badge>
-            <span className="text-sm font-medium">{entry.xp} XP</span>
+            <span className="flex shrink-0 items-center gap-1 text-sm font-medium">
+              <Coins className="size-3.5 text-warning" />
+              {entry.skillCoins.toLocaleString()}
+            </span>
           </Link>
         ))}
       </div>

@@ -33,8 +33,7 @@ export interface ProfileRow {
   availability: AvailabilityStatus;
   is_verified: boolean;
   is_private: boolean;
-  xp: number;
-  coins: number;
+  skill_coins: number;
   level: number;
   onboarding_completed: boolean;
   resume_url: string | null;

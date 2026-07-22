@@ -55,8 +55,7 @@ export interface Profile {
   availability: AvailabilityStatus;
   isVerified: boolean;
   isPrivate: boolean;
-  xp: number;
-  coins: number;
+  skillCoins: number;
   level: number;
   streakCount: number;
   onboardingCompleted: boolean;
@@ -76,7 +75,7 @@ export interface Badge {
 
 export interface LeaderboardEntry {
   profile: AuthorSummary;
-  xp: number;
+  skillCoins: number;
   level: number;
   rank: number;
 }

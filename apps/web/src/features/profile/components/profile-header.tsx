@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, Globe, Lock, MapPin } from "lucide-react";
+import { BadgeCheck, Coins, Flame, Globe, Lock, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import type { Profile } from "@skilltego/types";
@@ -68,8 +68,16 @@ export function ProfileHeader({
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{accountTypeLabel}</Badge>
           <Badge variant="outline">Level {profile.level}</Badge>
-          <Badge variant="outline">{profile.xp} XP</Badge>
-          {profile.streakCount > 0 && <Badge variant="outline">{profile.streakCount} day streak</Badge>}
+          <Badge variant="warning" className="flex items-center gap-1 transition-transform hover:scale-105">
+            <Coins className="size-3" />
+            {profile.skillCoins.toLocaleString()} Skill Coins
+          </Badge>
+          {profile.streakCount > 0 && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Flame className="size-3" />
+              {profile.streakCount} day streak
+            </Badge>
+          )}
           {profile.isPrivate && (
             <Badge variant="outline" className="flex items-center gap-1">
               <Lock className="size-3" />

@@ -31,21 +31,21 @@ export async function getLeaderboard(client: Client, limit = 50): Promise<Profil
   const { data, error } = await client
     .from("profiles")
     .select("*")
-    .order("xp", { ascending: false })
+    .order("skill_coins", { ascending: false })
     .limit(limit);
   if (error) throw error;
   return data;
 }
 
-function levelForXp(xp: number): number {
-  return Math.floor(xp / 100) + 1;
+function levelForSkillCoins(skillCoins: number): number {
+  return Math.floor(skillCoins / 100) + 1;
 }
 
-/** Updates streak/XP for a daily visit; returns the new streak count. Idempotent per calendar day. */
+/** Updates streak/Skill Coins for a daily visit; returns the new streak count. Idempotent per calendar day. */
 export async function recordDailyActivity(client: Client, profileId: string): Promise<number> {
   const { data: profile, error } = await client
     .from("profiles")
-    .select("xp, coins, streak_count, last_active_date")
+    .select("skill_coins, streak_count, last_active_date")
     .eq("id", profileId)
     .single();
   if (error) throw error;
@@ -55,16 +55,15 @@ export async function recordDailyActivity(client: Client, profileId: string): Pr
 
   const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
   const newStreak = profile.last_active_date === yesterday ? profile.streak_count + 1 : 1;
-  const newXp = profile.xp + 5;
+  const newSkillCoins = profile.skill_coins + 5;
 
   const { error: updateError } = await client
     .from("profiles")
     .update({
       streak_count: newStreak,
       last_active_date: today,
-      xp: newXp,
-      coins: profile.coins + 1,
-      level: levelForXp(newXp),
+      skill_coins: newSkillCoins,
+      level: levelForSkillCoins(newSkillCoins),
     })
     .eq("id", profileId);
   if (updateError) throw updateError;

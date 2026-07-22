@@ -33,7 +33,7 @@ export async function getLeaderboardAction(): Promise<LeaderboardEntry[]> {
   const rows = await getLeaderboard(supabase, 50);
   return rows.map((row, index) => ({
     profile: toAuthorSummary(row),
-    xp: row.xp,
+    skillCoins: row.skill_coins,
     level: row.level,
     rank: index + 1,
   }));
