@@ -23,7 +23,7 @@ export function LogoutButton() {
       type="button"
       disabled={pending}
       onClick={handleLogout}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10"
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-destructive/10 dark:text-red-400"
     >
       <LogOut className="size-4" />
       {pending ? "Logging out…" : "Log out"}
