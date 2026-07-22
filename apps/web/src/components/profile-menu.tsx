@@ -64,7 +64,11 @@ export function ProfileMenu({ username, fullName, avatarUrl, align = "end", clas
           <span className="hidden truncate xl:inline">{fullName}</span>
         </button>
       </PopoverTrigger>
-      <PopoverContent align={align} className="w-64">
+      <PopoverContent
+        align={align}
+        className="w-64 border border-border shadow-lg"
+        style={{ background: "var(--color-popover)", backdropFilter: "none", WebkitBackdropFilter: "none" }}
+      >
         <div className="grid gap-0.5">
           {links.map((item) => (
             <Link
