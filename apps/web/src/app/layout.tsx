@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { siteConfig } from "@skilltego/config";
 import { Providers } from "@/providers";
@@ -36,6 +36,14 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [siteConfig.ogImage],
   },
+};
+
+// viewportFit "cover" lets fixed-position elements (bottom nav, FAB) read
+// env(safe-area-inset-*) to clear the iOS home indicator / Android gesture bar.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
