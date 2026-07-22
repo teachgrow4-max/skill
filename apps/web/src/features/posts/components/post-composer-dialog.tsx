@@ -72,9 +72,9 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
   const captionRef = useAutoResizeTextarea(caption ?? "");
   const { ref: rhfCaptionRef, ...captionField } = register("caption");
 
-  async function onSubmit(values: CreatePostInput) {
+  async function submitPost(values: CreatePostInput, status: CreatePostInput["status"]) {
     setFormError(null);
-    const finalValues: CreatePostInput = { ...values, type: resolveFinalType(values) };
+    const finalValues: CreatePostInput = { ...values, type: resolveFinalType(values), status };
 
     const parsed = createPostSchema.safeParse(finalValues);
     if (!parsed.success) {
@@ -94,7 +94,7 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
       return;
     }
 
-    trackEvent("post_created", { type: parsed.data.type });
+    trackEvent("post_created", { type: parsed.data.type, status });
 
     reset();
     setSelectedCard("photo");
@@ -102,6 +102,9 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
     onOpenChange(false);
     router.refresh();
   }
+
+  const onSubmit = (values: CreatePostInput) => submitPost(values, "published");
+  const handleSaveDraft = handleSubmit((values) => submitPost(values, "draft"));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -236,6 +239,9 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
           <div className="flex items-center justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
+            </Button>
+            <Button type="button" variant="outline" disabled={isSubmitting || !canSubmit} onClick={handleSaveDraft}>
+              Save as draft
             </Button>
             <Button type="submit" disabled={isSubmitting || !canSubmit}>
               {isSubmitting ? "Posting…" : "Post"}

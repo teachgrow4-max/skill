@@ -166,6 +166,16 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
               </Link>
             );
           })}
+
+          {notifications.length > 0 && (
+            <Link
+              href="/notifications"
+              onClick={() => setOpen(false)}
+              className="block p-3 text-center text-sm font-medium text-primary hover:underline"
+            >
+              See all notifications
+            </Link>
+          )}
         </div>
       )}
     </div>

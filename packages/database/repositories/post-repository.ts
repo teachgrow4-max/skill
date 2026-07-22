@@ -177,6 +177,17 @@ export async function getArchivedPosts(client: Client, authorId: string): Promis
   return data;
 }
 
+export async function getDraftPosts(client: Client, authorId: string): Promise<PostRow[]> {
+  const { data, error } = await client
+    .from("posts")
+    .select("*")
+    .eq("author_id", authorId)
+    .eq("status", "draft")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 export async function setPostArchived(client: Client, id: string, isArchived: boolean): Promise<void> {
   const { error } = await client.from("posts").update({ is_archived: isArchived }).eq("id", id);
   if (error) throw error;

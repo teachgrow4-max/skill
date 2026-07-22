@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { getProfileById } from "@skilltego/database";
 import { DASHBOARD_ACCOUNT_TYPES, siteConfig } from "@skilltego/config";
-import { Avatar, AvatarFallback, AvatarImage } from "@skilltego/ui";
-import { initials } from "@skilltego/utils";
 import { createClient } from "@/lib/supabase/server";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { NavLink } from "./app-nav-links";
 import { PRIMARY_NAV, type NavLinkItem } from "./app-nav-items";
-import { LogoutButton } from "./logout-button";
+import { ProfileMenu } from "./profile-menu";
 import { ThemeToggle } from "./theme-toggle";
 
 export async function AppSidebar() {
@@ -58,20 +56,15 @@ export async function AppSidebar() {
 
       <div className="mt-auto grid gap-2 px-3 pb-6">
         {profile && (
-          <Link
-            href={`/profile/${profile.username}`}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-          >
-            <Avatar className="size-6">
-              <AvatarImage src={profile.avatar_url ?? undefined} alt={profile.full_name} />
-              <AvatarFallback className="text-[10px]">{initials(profile.full_name)}</AvatarFallback>
-            </Avatar>
-            <span className="hidden truncate xl:inline">{profile.full_name}</span>
-          </Link>
+          <ProfileMenu
+            username={profile.username}
+            fullName={profile.full_name}
+            avatarUrl={profile.avatar_url}
+            align="start"
+          />
         )}
         <div className="flex items-center gap-2 px-3">
           <ThemeToggle />
-          <LogoutButton compact />
         </div>
       </div>
     </aside>

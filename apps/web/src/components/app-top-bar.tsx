@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
+import { getProfileById } from "@skilltego/database";
 import { siteConfig } from "@skilltego/config";
+import { createClient } from "@/lib/supabase/server";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { ProfileMenu } from "./profile-menu";
 
-export function AppTopBar() {
+export async function AppTopBar() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const profile = user ? await getProfileById(supabase, user.id) : null;
+
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl md:hidden">
       <Link href="/feed" className="text-gradient-brand text-lg font-black tracking-tight">
@@ -18,6 +27,14 @@ export function AppTopBar() {
         >
           <MessageCircle className="size-5" />
         </Link>
+        {profile && (
+          <ProfileMenu
+            username={profile.username}
+            fullName={profile.full_name}
+            avatarUrl={profile.avatar_url}
+            className="rounded-full p-2"
+          />
+        )}
       </div>
     </header>
   );

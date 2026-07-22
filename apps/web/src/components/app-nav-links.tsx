@@ -4,13 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Bookmark,
   Compass,
   Film,
   Home,
   LayoutDashboard,
   MessageCircle,
-  Search,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -24,9 +22,7 @@ const ICONS = {
   explore: Compass,
   reels: Film,
   opportunities: Sparkles,
-  search: Search,
   messages: MessageCircle,
-  bookmarks: Bookmark,
   leaderboard: Trophy,
   dashboard: LayoutDashboard,
   moderation: Shield,

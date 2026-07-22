@@ -23,9 +23,7 @@ export const appNav = [
   { title: "Feed", href: "/feed" },
   { title: "Explore", href: "/explore" },
   { title: "Opportunities", href: "/opportunities" },
-  { title: "Search", href: "/search" },
   { title: "Messages", href: "/messages" },
-  { title: "Bookmarks", href: "/bookmarks" },
 ] as const;
 
 export const DASHBOARD_ACCOUNT_TYPES = ["company", "college", "mentor"] as const;

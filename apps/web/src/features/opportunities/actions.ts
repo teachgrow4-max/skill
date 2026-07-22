@@ -5,8 +5,10 @@ import {
   applyToOpportunity,
   createOpportunity,
   deleteOpportunity,
+  getApplicantOpportunityIds,
   getApplicationsForOpportunity,
   getOpportunitiesByAuthor,
+  getOpportunitiesByIds,
   getOpportunityById,
   listOpportunities,
   updateApplicationStatus,
@@ -63,6 +65,18 @@ export async function getMyOpportunitiesAction(): Promise<Opportunity[]> {
   if (!user) return [];
 
   const rows = await getOpportunitiesByAuthor(supabase, user.id);
+  return hydrateOpportunities(supabase, rows, user.id);
+}
+
+export async function getMyApplicationsAction(): Promise<Opportunity[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const opportunityIds = await getApplicantOpportunityIds(supabase, user.id);
+  const rows = await getOpportunitiesByIds(supabase, opportunityIds);
   return hydrateOpportunities(supabase, rows, user.id);
 }
 

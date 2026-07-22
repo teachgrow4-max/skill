@@ -6,9 +6,7 @@ export interface NavLinkItem {
     | "explore"
     | "reels"
     | "opportunities"
-    | "search"
     | "messages"
-    | "bookmarks"
     | "leaderboard"
     | "dashboard"
     | "moderation"
@@ -20,8 +18,6 @@ export const PRIMARY_NAV: NavLinkItem[] = [
   { href: "/explore", label: "Explore", icon: "explore" },
   { href: "/reels", label: "Reels", icon: "reels" },
   { href: "/opportunities", label: "Opportunities", icon: "opportunities" },
-  { href: "/search", label: "Search", icon: "search" },
   { href: "/messages", label: "Messages", icon: "messages" },
-  { href: "/bookmarks", label: "Bookmarks", icon: "bookmarks" },
   { href: "/leaderboard", label: "Leaderboard", icon: "leaderboard" },
 ];

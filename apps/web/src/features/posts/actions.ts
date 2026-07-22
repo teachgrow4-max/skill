@@ -9,6 +9,7 @@ import {
   getArchivedPosts,
   getCommentById,
   getComments,
+  getDraftPosts,
   getFollowingIds,
   getFollowingPosts,
   getLatestPosts,
@@ -26,6 +27,7 @@ import {
   setPostPinned,
   unlikePost,
   unsavePost,
+  updatePost,
 } from "@skilltego/database";
 import { moderateText } from "@skilltego/moderation";
 import { createClient } from "@/lib/supabase/server";
@@ -365,6 +367,39 @@ export async function getMyArchivedPostsAction(): Promise<Post[]> {
 
   const rows = await getArchivedPosts(supabase, user.id);
   return hydratePosts(supabase, rows, user.id);
+}
+
+export async function getMyDraftsAction(): Promise<Post[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const rows = await getDraftPosts(supabase, user.id);
+  return hydratePosts(supabase, rows, user.id);
+}
+
+export async function publishDraftAction(postId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+
+  const post = await getPostById(supabase, postId);
+  if (!post || post.author_id !== user.id) {
+    return { success: false, error: "You can only publish your own drafts." };
+  }
+
+  try {
+    await updatePost(supabase, postId, { status: "published" });
+    revalidatePath("/feed");
+    revalidatePath("/profile/drafts");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not publish draft." };
+  }
 }
 
 export async function getBookmarkedPostsAction(): Promise<Post[]> {

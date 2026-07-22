@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { getProfileById } from "@skilltego/database";
 import { siteConfig, marketingNav, appNav, DASHBOARD_ACCOUNT_TYPES } from "@skilltego/config";
-import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
-import { initials } from "@skilltego/utils";
+import { Button } from "@skilltego/ui";
 import { createClient } from "@/lib/supabase/server";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { ThemeToggle } from "./theme-toggle";
-import { LogoutButton } from "./logout-button";
+import { ProfileMenu } from "./profile-menu";
 
 export async function SiteHeader() {
   const supabase = await createClient();
@@ -50,15 +49,12 @@ export async function SiteHeader() {
           {profile ? (
             <>
               <NotificationBell />
-              <Button asChild variant="ghost" size="icon" className="rounded-full">
-                <Link href={`/profile/${profile.username}`} aria-label="Your profile">
-                  <Avatar className="size-8">
-                    <AvatarImage src={profile.avatar_url ?? undefined} alt={profile.full_name} />
-                    <AvatarFallback>{initials(profile.full_name)}</AvatarFallback>
-                  </Avatar>
-                </Link>
-              </Button>
-              <LogoutButton />
+              <ProfileMenu
+                username={profile.username}
+                fullName={profile.full_name}
+                avatarUrl={profile.avatar_url}
+                className="rounded-full p-1"
+              />
             </>
           ) : (
             <>

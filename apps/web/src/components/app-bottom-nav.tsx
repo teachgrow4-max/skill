@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bookmark, Compass, Film, Home, Search, Sparkles } from "lucide-react";
+import { Compass, Film, Home, Sparkles } from "lucide-react";
 import { cn } from "@skilltego/utils";
 
 const TABS = [
@@ -10,8 +10,6 @@ const TABS = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/reels", label: "Reels", icon: Film },
   { href: "/opportunities", label: "Opportunities", icon: Sparkles },
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/bookmarks", label: "Saved", icon: Bookmark },
 ];
 
 export function AppBottomNav() {

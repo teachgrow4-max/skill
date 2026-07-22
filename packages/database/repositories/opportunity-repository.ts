@@ -45,6 +45,25 @@ export async function getOpportunitiesByAuthor(client: Client, authorId: string)
   return data;
 }
 
+export async function getOpportunitiesByIds(client: Client, ids: string[]): Promise<OpportunityRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await client.from("opportunities").select("*").in("id", ids);
+  if (error) throw error;
+
+  const order = new Map(ids.map((id, index) => [id, index]));
+  return [...data].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+}
+
+export async function getApplicantOpportunityIds(client: Client, applicantId: string): Promise<string[]> {
+  const { data, error } = await client
+    .from("opportunity_applications")
+    .select("opportunity_id")
+    .eq("applicant_id", applicantId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data.map((row) => row.opportunity_id);
+}
+
 export async function listOpportunities(
   client: Client,
   filters: { kinds?: OpportunityKind[]; skillCategory?: string },

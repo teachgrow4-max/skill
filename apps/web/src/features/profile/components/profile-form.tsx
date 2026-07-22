@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -232,15 +233,27 @@ export function ProfileForm({ profile, mode }: ProfileFormProps) {
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border border-border p-3">
-        <div>
-          <Label htmlFor="isPrivate">Private account</Label>
-          <p className="text-xs text-muted-foreground">
-            Only approved followers can see your posts and stories.
-          </p>
+      {mode === "onboarding" ? (
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div>
+            <Label htmlFor="isPrivate">Private account</Label>
+            <p className="text-xs text-muted-foreground">
+              Only approved followers can see your posts and stories.
+            </p>
+          </div>
+          <input id="isPrivate" type="checkbox" className="size-5" {...register("isPrivate")} />
         </div>
-        <input id="isPrivate" type="checkbox" className="size-5" {...register("isPrivate")} />
-      </div>
+      ) : (
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div>
+            <Label>Privacy</Label>
+            <p className="text-xs text-muted-foreground">Manage whether your account is public or private.</p>
+          </div>
+          <Link href="/settings/privacy" className="text-sm font-medium text-primary hover:underline">
+            Manage
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-1.5">
         <Label>Skills</Label>

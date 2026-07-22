@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   getProfileById,
   isUsernameAvailable,
@@ -111,4 +112,19 @@ export async function saveProfileAction(
   }
 
   return { success: true, username: values.username };
+}
+
+export async function updateAccountPrivacyAction(isPrivate: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "You must be logged in to update this setting." };
+  }
+
+  await updateProfile(supabase, user.id, { is_private: isPrivate });
+  revalidatePath("/settings/privacy");
+  return { success: true };
 }
