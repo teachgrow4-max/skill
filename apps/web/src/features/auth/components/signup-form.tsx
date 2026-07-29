@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signUpSchema, signUpWithEmail, type SignUpInput } from "@skilltego/auth";
 import { Button, Input, Label } from "@skilltego/ui";
+import { siteConfig } from "@skilltego/config";
 import { createClient } from "@/lib/supabase/browser";
 import { trackEvent } from "@/providers/posthog-provider";
 import { OAuthButtons } from "./oauth-buttons";
@@ -20,8 +21,11 @@ export function SignupForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SignUpInput>({ resolver: zodResolver(signUpSchema) });
+
+  const agreedToTerms = watch("agreedToTerms");
 
   async function onSubmit(values: SignUpInput) {
     setFormError(null);
@@ -34,6 +38,7 @@ export function SignupForm() {
       fullName: values.fullName,
       emailRedirectTo,
       referralCode,
+      agreedToTerms: values.agreedToTerms,
     });
 
     if (error) {
@@ -119,22 +124,29 @@ export function SignupForm() {
             {...register("agreedToTerms")}
           />
           <Label htmlFor="agreedToTerms" className="font-normal text-muted-foreground">
-            I agree to the{" "}
-            <Link href="/terms" className="text-primary hover:underline">
+            I have read and agree to the {siteConfig.name}{" "}
+            <Link
+              href="/terms"
+              className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+            >
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link href="/privacy" className="text-primary hover:underline">
+            <Link
+              href="/privacy"
+              className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+            >
               Privacy Policy
             </Link>
-            .
+            . I understand that {siteConfig.legalEntity} may collect, process, store, and access my data as
+            described to provide, maintain, secure, and improve the {siteConfig.name} platform.
           </Label>
         </div>
         {errors.agreedToTerms && <p className="text-xs text-destructive">{errors.agreedToTerms.message}</p>}
 
         {formError && <p className="text-sm text-destructive">{formError}</p>}
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button type="submit" disabled={isSubmitting || !agreedToTerms} className="w-full">
           {isSubmitting ? "Creating account…" : "Create account"}
         </Button>
       </form>

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { siteConfig } from "@skilltego/config";
 
 export const metadata: Metadata = { title: "Terms of Service" };
@@ -6,90 +8,156 @@ export const metadata: Metadata = { title: "Terms of Service" };
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20">
-      <h1 className="text-4xl font-bold">Terms of Service</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Last updated:{" "}
-        {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}
-      </p>
+      <Link
+        href="/signup"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+      >
+        <ArrowLeft className="size-4" />
+        Back to sign up
+      </Link>
+
+      <h1 className="mt-6 text-4xl font-bold">{siteConfig.name} Terms of Service</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Effective Date: July 2026</p>
 
       <div className="mt-10 grid gap-8 leading-relaxed text-muted-foreground">
-        <Section title="1. Acceptance of terms">
+        <Section title="1. Acceptance of Terms">
           <p>
-            By creating a {siteConfig.name} account, you agree to these Terms of Service and our Privacy
-            Policy. If you do not agree, do not use {siteConfig.name}.
+            By creating an account or using {siteConfig.name}, you confirm that you are at least{" "}
+            {siteConfig.minAge} years old and agree to these Terms of Service and the Privacy Policy.
           </p>
         </Section>
 
-        <Section title="2. Eligibility">
-          <p>
-            You must be at least 13 years old to use {siteConfig.name}. By signing up, you confirm the age you
-            provide is accurate.
+        <Section title="2. Permissions Required">
+          <p>{siteConfig.name} may request permission to access:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Camera</li>
+            <li>Photo Gallery / Storage</li>
+            <li>Microphone</li>
+            <li>Location</li>
+            <li>Contacts (optional, only if you choose to find or invite friends)</li>
+            <li>Notifications</li>
+            <li>Device Information</li>
+            <li>Internet Connection</li>
+          </ul>
+          <p className="mt-2">
+            You may deny optional permissions, but some features may not function correctly.
           </p>
         </Section>
 
-        <Section title="3. Your account">
+        <Section title="3. Information We Collect">
+          <p>We may collect:</p>
+          <ul className="mt-2 grid list-disc gap-1 pl-5 sm:grid-cols-2">
+            <li>Name</li>
+            <li>Email address</li>
+            <li>Phone number</li>
+            <li>Username</li>
+            <li>Profile photo</li>
+            <li>Cover image</li>
+            <li>Resume</li>
+            <li>Portfolio</li>
+            <li>Skills</li>
+            <li>Education</li>
+            <li>Work experience</li>
+            <li>Photos</li>
+            <li>Videos</li>
+            <li>Reels</li>
+            <li>Stories</li>
+            <li>Messages</li>
+            <li>Device information</li>
+            <li>IP address</li>
+            <li>Login history</li>
+            <li>Usage analytics</li>
+            <li>Location (if permission is granted)</li>
+          </ul>
+        </Section>
+
+        <Section title="4. How We Use Your Information">
+          <p>Your information is used to:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Create and manage your account</li>
+            <li>Display your profile</li>
+            <li>Recommend jobs, internships, mentors, and opportunities</li>
+            <li>Personalize your experience</li>
+            <li>Improve security</li>
+            <li>Detect fraud and abuse</li>
+            <li>Send important notifications</li>
+            <li>Improve {siteConfig.name} services</li>
+          </ul>
+        </Section>
+
+        <Section title="5. Data Access">
           <p>
-            You are responsible for maintaining the confidentiality of your account credentials and for all
-            activity under your account. Notify us immediately of any unauthorized use.
+            {siteConfig.legalEntity}, the owner and operator of {siteConfig.name}, may access, process, store,
+            and manage user data only for legitimate operational purposes, including:
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Platform functionality</li>
+            <li>Customer support</li>
+            <li>Security</li>
+            <li>Moderation</li>
+            <li>Analytics</li>
+            <li>Legal compliance</li>
+            <li>Service improvements</li>
+          </ul>
+        </Section>
+
+        <Section title="6. User Responsibilities">
+          <p>Users must not:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Upload illegal content</li>
+            <li>Upload abusive or harmful content</li>
+            <li>Impersonate others</li>
+            <li>Share misleading information</li>
+            <li>Infringe intellectual property rights</li>
+            <li>Attempt unauthorized access or hacking</li>
+            <li>Use automated bots without permission</li>
+          </ul>
+          <p className="mt-2">Violations may result in account suspension or permanent termination.</p>
+        </Section>
+
+        <Section title="7. Content Ownership">
+          <p>
+            You retain ownership of the content you upload. By uploading content, you grant {siteConfig.name}{" "}
+            and {siteConfig.legalEntity} a non-exclusive, worldwide license to host, process, display, and
+            distribute your content solely for operating and improving the platform.
           </p>
         </Section>
 
-        <Section title="4. Acceptable use">
+        <Section title="8. Security">
           <p>
-            You agree not to: impersonate another person or organization; post false, misleading, or
-            fraudulent skill claims; upload content that is unlawful, harassing, hateful, sexually explicit,
-            or infringes on someone else&apos;s rights; spam other members; attempt to access accounts or data
-            that are not yours; or use automated means to scrape or abuse the platform.
+            We implement reasonable safeguards to protect your information. However, no online platform can
+            guarantee absolute security.
           </p>
         </Section>
 
-        <Section title="5. Content ownership">
-          <p>
-            You retain ownership of the content you post — your profile details, posts, and portfolio items.
-            By posting content, you grant {siteConfig.name} a non-exclusive, worldwide license to display and
-            distribute it within the platform so your profile can be discovered by others.
-          </p>
+        <Section title="9. Account Suspension">
+          <p>Accounts may be suspended or permanently terminated for:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>Fraud</li>
+            <li>Fake profiles</li>
+            <li>Spam</li>
+            <li>Harassment</li>
+            <li>Illegal activities</li>
+            <li>Violations of these Terms</li>
+          </ul>
         </Section>
 
-        <Section title="6. Moderation and enforcement">
+        <Section title="10. Updates">
           <p>
-            We may remove content or suspend accounts that violate these Terms or our Community Guidelines,
-            including content flagged by our automated moderation systems or reported by other members.
-          </p>
-        </Section>
-
-        <Section title="7. Company, college, and mentor accounts">
-          <p>
-            Organizations using {siteConfig.name} to discover talent, post opportunities, or offer mentorship
-            must provide accurate information about themselves and comply with applicable employment and
-            education laws when contacting members.
-          </p>
-        </Section>
-
-        <Section title="8. Termination">
-          <p>
-            You may delete your account at any time. We may suspend or terminate accounts that violate these
-            Terms, with notice where practical.
-          </p>
-        </Section>
-
-        <Section title="9. Disclaimer and limitation of liability">
-          <p>
-            {siteConfig.name} is provided &quot;as is&quot; without warranties of any kind. We are not liable
-            for indirect, incidental, or consequential damages arising from your use of the platform, to the
-            maximum extent permitted by law.
-          </p>
-        </Section>
-
-        <Section title="10. Changes to these terms">
-          <p>
-            We may update these Terms from time to time. Continued use of {siteConfig.name} after changes take
-            effect constitutes acceptance of the updated Terms.
+            {siteConfig.legalEntity} may update these Terms periodically. Continued use of {siteConfig.name}{" "}
+            after updates constitutes acceptance of the revised Terms.
           </p>
         </Section>
 
         <Section title="11. Contact">
-          <p>Questions about these Terms? Reach us from the Contact page.</p>
+          <p>
+            {siteConfig.legalEntity}
+            <br />
+            Email:{" "}
+            <a href={`mailto:${siteConfig.legalEmail}`} className="text-primary hover:underline">
+              {siteConfig.legalEmail}
+            </a>
+          </p>
         </Section>
       </div>
     </div>

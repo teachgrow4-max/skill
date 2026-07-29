@@ -47,6 +47,9 @@ export interface ProfileRow {
   has_posted_first_reel: boolean;
   has_received_first_like: boolean;
   has_reached_100_likes: boolean;
+  terms_accepted: boolean;
+  terms_accepted_at: string | null;
+  privacy_accepted_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -9,6 +9,8 @@ export const siteConfig = {
     github: "https://github.com/skilltego",
   },
   minAge: 13,
+  legalEntity: "TeachGrow LLP",
+  legalEmail: "teach@teachgrow.in",
 } as const;
 
 export const marketingNav = [

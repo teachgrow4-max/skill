@@ -12,6 +12,7 @@ export async function signUpWithEmail(
     fullName: string;
     emailRedirectTo: string;
     referralCode?: string;
+    agreedToTerms: boolean;
   },
 ) {
   return client.auth.signUp({
@@ -19,7 +20,11 @@ export async function signUpWithEmail(
     password: input.password,
     options: {
       emailRedirectTo: input.emailRedirectTo,
-      data: { full_name: input.fullName, referral_code: input.referralCode || undefined },
+      data: {
+        full_name: input.fullName,
+        referral_code: input.referralCode || undefined,
+        agreed_to_terms: input.agreedToTerms,
+      },
     },
   });
 }
