@@ -43,25 +43,33 @@ export async function getSkillCoinSummaryAction(): Promise<SkillCoinsSummary | n
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [profile, events] = await Promise.all([
-    getProfileById(supabase, user.id),
-    getSkillCoinEvents(supabase, user.id),
-  ]);
-  if (!profile) return null;
+  try {
+    const [profile, events] = await Promise.all([
+      getProfileById(supabase, user.id),
+      getSkillCoinEvents(supabase, user.id),
+    ]);
+    if (!profile) return null;
 
-  return {
-    balance: profile.skill_coins,
-    level: profile.level,
-    coinsIntoLevel: profile.skill_coins % COINS_PER_LEVEL,
-    coinsPerLevel: COINS_PER_LEVEL,
-    referralCode: profile.referral_code,
-    totalReferrals: profile.total_referrals,
-    history: events.map((event) => ({
-      amount: event.amount,
-      reason: event.reason,
-      createdAt: event.created_at,
-    })),
-  };
+    return {
+      balance: profile.skill_coins,
+      level: profile.level,
+      coinsIntoLevel: profile.skill_coins % COINS_PER_LEVEL,
+      coinsPerLevel: COINS_PER_LEVEL,
+      referralCode: profile.referral_code,
+      totalReferrals: profile.total_referrals,
+      history: events.map((event) => ({
+        amount: event.amount,
+        reason: event.reason,
+        createdAt: event.created_at,
+      })),
+    };
+  } catch (error) {
+    // Degrades to hiding the rewards section instead of crashing the whole
+    // profile page — e.g. if the skill_coin_events migration hasn't been
+    // applied to this environment's database yet.
+    console.error("getSkillCoinSummaryAction failed", error);
+    return null;
+  }
 }
 
 export async function getLeaderboardAction(): Promise<LeaderboardEntry[]> {
