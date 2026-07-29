@@ -17,20 +17,22 @@ alter table public.profiles add column has_received_first_like boolean not null 
 alter table public.profiles add column has_reached_100_likes boolean not null default false;
 
 -- Backfill referral codes for any rows that predate this migration, before
--- the column is locked down to not-null + unique below.
+-- the column is locked down to not-null + unique below. Codes are 5
+-- characters drawn from an unambiguous alphanumeric charset (no 0/O or 1/I),
+-- matching the format generated for new signups in handle_new_user() below.
 do $$
 declare
   rec record;
-  code text;
   candidate text;
+  code_charset text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  i int;
 begin
-  for rec in select id, username from public.profiles where referral_code is null loop
-    code := upper(left(regexp_replace(rec.username, '[^a-zA-Z0-9]', '', 'g'), 8));
-    if length(code) < 3 then
-      code := 'USER' || code;
-    end if;
+  for rec in select id from public.profiles where referral_code is null loop
     loop
-      candidate := code || floor(random() * 900 + 100)::int::text;
+      candidate := '';
+      for i in 1..5 loop
+        candidate := candidate || substr(code_charset, floor(random() * length(code_charset) + 1)::int, 1);
+      end loop;
       exit when not exists (select 1 from public.profiles where referral_code = candidate);
     end loop;
     update public.profiles set referral_code = candidate where id = rec.id;
@@ -39,6 +41,7 @@ end $$;
 
 alter table public.profiles alter column referral_code set not null;
 alter table public.profiles add constraint profiles_referral_code_key unique (referral_code);
+alter table public.profiles add constraint profiles_referral_code_format check (referral_code ~ '^[A-HJ-NP-Z2-9]{5}$');
 
 -- ---------------------------------------------------------------------------
 -- skill_coin_events: append-only ledger for every coin award
@@ -213,7 +216,8 @@ declare
   suffix int := 0;
   display_name text;
   new_referral_code text;
-  code_candidate text;
+  referral_code_charset text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  referral_code_char_idx int;
   referrer_id uuid;
   referral_code_input text;
 begin
@@ -244,13 +248,14 @@ begin
     final_username := left(base_username, 24) || '_' || suffix::text;
   end loop;
 
-  -- Generate a unique referral code, e.g. "NITHIN482".
-  code_candidate := upper(left(regexp_replace(base_username, '[^a-zA-Z0-9]', '', 'g'), 8));
-  if length(code_candidate) < 3 then
-    code_candidate := 'USER' || code_candidate;
-  end if;
+  -- Generate a unique 5-character referral code, e.g. "K7M2X". Charset
+  -- excludes 0/O and 1/I to avoid ambiguity when a code is shared aloud.
   loop
-    new_referral_code := code_candidate || floor(random() * 900 + 100)::int::text;
+    new_referral_code := '';
+    for referral_code_char_idx in 1..5 loop
+      new_referral_code := new_referral_code
+        || substr(referral_code_charset, floor(random() * length(referral_code_charset) + 1)::int, 1);
+    end loop;
     exit when not exists (select 1 from public.profiles where referral_code = new_referral_code);
   end loop;
 

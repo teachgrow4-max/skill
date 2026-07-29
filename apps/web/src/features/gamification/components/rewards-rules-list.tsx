@@ -14,7 +14,7 @@ const REWARD_RULES = [
 
 export function RewardsRulesList() {
   return (
-    <div className="glass mt-6 rounded-2xl p-6 shadow-sm">
+    <div id="rewards-rules-list" className="glass mt-6 scroll-mt-20 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <span className="gradient-brand flex size-10 items-center justify-center rounded-full text-white shadow-glow">
           <Coins className="size-5" />

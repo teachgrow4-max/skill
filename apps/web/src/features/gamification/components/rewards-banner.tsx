@@ -4,12 +4,9 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { Coins, Gift, Trophy, Users, X } from "lucide-react";
 import { Button } from "@skilltego/ui";
+import { scrollToId } from "../lib/scroll-to-id";
 
 const DISMISS_KEY = "skilltego_rewards_banner_dismissed";
-
-function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 export function RewardsBanner() {
   const [visible, setVisible] = React.useState(false);

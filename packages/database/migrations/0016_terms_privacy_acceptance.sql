@@ -22,7 +22,8 @@ declare
   suffix int := 0;
   display_name text;
   new_referral_code text;
-  code_candidate text;
+  referral_code_charset text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  referral_code_char_idx int;
   referrer_id uuid;
   referral_code_input text;
   terms_agreed boolean;
@@ -54,13 +55,14 @@ begin
     final_username := left(base_username, 24) || '_' || suffix::text;
   end loop;
 
-  -- Generate a unique referral code, e.g. "NITHIN482".
-  code_candidate := upper(left(regexp_replace(base_username, '[^a-zA-Z0-9]', '', 'g'), 8));
-  if length(code_candidate) < 3 then
-    code_candidate := 'USER' || code_candidate;
-  end if;
+  -- Generate a unique 5-character referral code, e.g. "K7M2X". Charset
+  -- excludes 0/O and 1/I to avoid ambiguity when a code is shared aloud.
   loop
-    new_referral_code := code_candidate || floor(random() * 900 + 100)::int::text;
+    new_referral_code := '';
+    for referral_code_char_idx in 1..5 loop
+      new_referral_code := new_referral_code
+        || substr(referral_code_charset, floor(random() * length(referral_code_charset) + 1)::int, 1);
+    end loop;
     exit when not exists (select 1 from public.profiles where referral_code = new_referral_code);
   end loop;
 

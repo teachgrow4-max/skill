@@ -20,6 +20,7 @@ import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
 import { getMyBadgesAction, getSkillCoinSummaryAction } from "@/features/gamification/actions";
 import { BadgeList } from "@/features/gamification/components/badge-list";
 import { RewardsBanner } from "@/features/gamification/components/rewards-banner";
+import { SkillCoinsInfoCard } from "@/features/gamification/components/skill-coins-info-card";
 import { SkillCoinsCard } from "@/features/gamification/components/skill-coins-card";
 import { ReferralCard } from "@/features/gamification/components/referral-card";
 import { RewardsRulesList } from "@/features/gamification/components/rewards-rules-list";
@@ -135,6 +136,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       {isOwnProfile && skillCoinSummary && (
         <>
           <RewardsBanner />
+          <SkillCoinsInfoCard />
           <SkillCoinsCard summary={skillCoinSummary} />
           <ReferralCard
             referralCode={skillCoinSummary.referralCode}
