@@ -23,6 +23,7 @@ const ALWAYS_PUBLIC_PREFIXES = [
   "/pricing",
   "/privacy",
   "/terms",
+  "/ref",
 ];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {

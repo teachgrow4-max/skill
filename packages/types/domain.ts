@@ -80,6 +80,22 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
+export interface SkillCoinEvent {
+  amount: number;
+  reason: string;
+  createdAt: string;
+}
+
+export interface SkillCoinsSummary {
+  balance: number;
+  level: number;
+  coinsIntoLevel: number;
+  coinsPerLevel: number;
+  referralCode: string;
+  totalReferrals: number;
+  history: SkillCoinEvent[];
+}
+
 export interface AuthUser {
   id: string;
   email: string | null;

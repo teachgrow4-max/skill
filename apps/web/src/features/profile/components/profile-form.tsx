@@ -9,6 +9,8 @@ import { Button, Input, Label, Textarea } from "@skilltego/ui";
 import type { Profile } from "@skilltego/types";
 import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
 import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
+import { CoinToast } from "@/features/gamification/components/coin-toast";
+import { useCoinToast } from "@/features/gamification/hooks/use-coin-toast";
 import { ACCOUNT_TYPE_OPTIONS, profileFormSchema, type ProfileFormValues } from "../schema";
 import { saveProfileAction, type ProfileChangeStatus } from "../actions";
 import { useUsernameAvailability } from "../hooks/use-username-availability";
@@ -29,6 +31,15 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
   const router = useRouter();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [uploadingResume, setUploadingResume] = React.useState(false);
+  const { toast, showToast } = useCoinToast();
+
+  React.useEffect(() => {
+    if (mode === "onboarding") {
+      showToast({ icon: "🪙", title: "+5 Skill Coins", subtitle: "Welcome Bonus Claimed!" });
+    }
+    // Only ever fires once per mount of the onboarding form, regardless of showToast identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const {
     register,
@@ -108,7 +119,22 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
           setError(field as keyof ProfileFormValues, { message });
         }
       }
-      setFormError(result.error ?? (result.fieldErrors ? "Please fix the highlighted fields." : "Something went wrong."));
+      setFormError(
+        result.error ?? (result.fieldErrors ? "Please fix the highlighted fields." : "Something went wrong."),
+      );
+      return;
+    }
+
+    if (result.coinsAwarded) {
+      showToast({
+        icon: "🎉",
+        title: `+${result.coinsAwarded} Skill Coins`,
+        subtitle: "Profile completed!",
+      });
+      window.setTimeout(() => {
+        router.push(`/profile/${result.username}`);
+        router.refresh();
+      }, 1200);
       return;
     }
 
@@ -118,6 +144,7 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
+      <CoinToast toast={toast} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <AvatarCoverUploader
           label="Photo"
@@ -147,8 +174,8 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
         )}
         {!fullNameLocked && changeStatus && changeStatus.fullName.remaining < 2 && (
           <p className="text-xs text-muted-foreground">
-            {changeStatus.fullName.remaining} name change{changeStatus.fullName.remaining === 1 ? "" : "s"} left
-            this month.
+            {changeStatus.fullName.remaining} name change{changeStatus.fullName.remaining === 1 ? "" : "s"}{" "}
+            left this month.
           </p>
         )}
       </div>

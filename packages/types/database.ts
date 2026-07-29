@@ -40,8 +40,23 @@ export interface ProfileRow {
   streak_count: number;
   last_active_date: string | null;
   search_vector: string | null;
+  referral_code: string;
+  referred_by: string | null;
+  total_referrals: number;
+  has_claimed_welcome: boolean;
+  has_posted_first_reel: boolean;
+  has_received_first_like: boolean;
+  has_reached_100_likes: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface SkillCoinEventRow {
+  id: string;
+  profile_id: string;
+  amount: number;
+  reason: string;
+  created_at: string;
 }
 
 export interface BadgeRow {
@@ -428,6 +443,12 @@ export type Database = {
         Update: Partial<ProfileFieldChangeRow>;
         Relationships: [];
       };
+      skill_coin_events: {
+        Row: SkillCoinEventRow;
+        Insert: Partial<SkillCoinEventRow> & { profile_id: string; amount: number; reason: string };
+        Update: Partial<SkillCoinEventRow>;
+        Relationships: [];
+      };
       profile_skills: {
         Row: ProfileSkillRow;
         Insert: Partial<ProfileSkillRow> & { profile_id: string; skill_name: string; category: string };
@@ -618,7 +639,12 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      claim_complete_profile_bonus: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+    };
     Enums: {
       account_type: AccountType;
       availability_status: AvailabilityStatus;

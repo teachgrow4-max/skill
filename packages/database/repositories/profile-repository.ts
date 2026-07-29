@@ -105,7 +105,11 @@ export async function getFieldChangeTimestamps(
   return data.map((row) => row.changed_at);
 }
 
-export async function recordFieldChange(client: Client, profileId: string, field: ProfileField): Promise<void> {
+export async function recordFieldChange(
+  client: Client,
+  profileId: string,
+  field: ProfileField,
+): Promise<void> {
   const { error } = await client.from("profile_field_changes").insert({ profile_id: profileId, field });
   if (error && !MISSING_TABLE_CODES.has(error.code)) throw error;
 }

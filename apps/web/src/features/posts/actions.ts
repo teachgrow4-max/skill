@@ -40,6 +40,7 @@ export interface ActionResult<T = undefined> {
   success: boolean;
   error?: string;
   data?: T;
+  coinsAwarded?: number;
 }
 
 export type FeedMode = "latest" | "following" | "trending";
@@ -115,6 +116,9 @@ export async function createPostAction(input: CreatePostInput): Promise<ActionRe
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "You must be logged in." };
 
+  const isFirstReelCandidate = values.type === "video" && values.status === "published";
+  const profileBefore = isFirstReelCandidate ? await getProfileById(supabase, user.id) : null;
+
   try {
     const post = await createPost(supabase, {
       author_id: user.id,
@@ -134,7 +138,8 @@ export async function createPostAction(input: CreatePostInput): Promise<ActionRe
     });
 
     revalidatePath("/feed");
-    return { success: true, data: { id: post.id } };
+    const firstReelBonus = profileBefore && !profileBefore.has_posted_first_reel ? 25 : undefined;
+    return { success: true, data: { id: post.id }, coinsAwarded: firstReelBonus };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not create post." };
   }

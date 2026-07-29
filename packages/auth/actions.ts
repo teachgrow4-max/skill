@@ -6,14 +6,20 @@ export type OAuthProvider = "google" | "github";
 
 export async function signUpWithEmail(
   client: Client,
-  input: { email: string; password: string; fullName: string; emailRedirectTo: string },
+  input: {
+    email: string;
+    password: string;
+    fullName: string;
+    emailRedirectTo: string;
+    referralCode?: string;
+  },
 ) {
   return client.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
       emailRedirectTo: input.emailRedirectTo,
-      data: { full_name: input.fullName },
+      data: { full_name: input.fullName, referral_code: input.referralCode || undefined },
     },
   });
 }

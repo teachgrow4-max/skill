@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { BadgeRow, Database, ProfileRow } from "@skilltego/types";
+import type { BadgeRow, Database, ProfileRow, SkillCoinEventRow } from "@skilltego/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -41,8 +41,16 @@ function levelForSkillCoins(skillCoins: number): number {
   return Math.floor(skillCoins / 100) + 1;
 }
 
-/** Updates streak/Skill Coins for a daily visit; returns the new streak count. Idempotent per calendar day. */
-export async function recordDailyActivity(client: Client, profileId: string): Promise<number> {
+const DAILY_LOGIN_REWARD = 2;
+const STREAK_BONUSES: Record<number, number> = { 7: 30, 30: 150 };
+
+export interface DailyActivityResult {
+  streak: number;
+  coinsAwarded: number;
+}
+
+/** Updates streak/Skill Coins for a daily visit; returns the new streak and coins awarded. Idempotent per calendar day. */
+export async function recordDailyActivity(client: Client, profileId: string): Promise<DailyActivityResult> {
   const { data: profile, error } = await client
     .from("profiles")
     .select("skill_coins, streak_count, last_active_date")
@@ -51,11 +59,12 @@ export async function recordDailyActivity(client: Client, profileId: string): Pr
   if (error) throw error;
 
   const today = new Date().toISOString().slice(0, 10);
-  if (profile.last_active_date === today) return profile.streak_count;
+  if (profile.last_active_date === today) return { streak: profile.streak_count, coinsAwarded: 0 };
 
   const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
   const newStreak = profile.last_active_date === yesterday ? profile.streak_count + 1 : 1;
-  const newSkillCoins = profile.skill_coins + 5;
+  const streakBonus = STREAK_BONUSES[newStreak] ?? 0;
+  const newSkillCoins = profile.skill_coins + DAILY_LOGIN_REWARD + streakBonus;
 
   const { error: updateError } = await client
     .from("profiles")
@@ -68,6 +77,12 @@ export async function recordDailyActivity(client: Client, profileId: string): Pr
     .eq("id", profileId);
   if (updateError) throw updateError;
 
+  const events = [{ profile_id: profileId, amount: DAILY_LOGIN_REWARD, reason: "Daily login" }];
+  if (streakBonus > 0) {
+    events.push({ profile_id: profileId, amount: streakBonus, reason: `${newStreak}-day streak bonus` });
+  }
+  await client.from("skill_coin_events").insert(events);
+
   if (newStreak >= 7) {
     const { data: badge } = await client.from("badges").select("id").eq("slug", "week_streak").maybeSingle();
     if (badge) {
@@ -77,5 +92,27 @@ export async function recordDailyActivity(client: Client, profileId: string): Pr
     }
   }
 
-  return newStreak;
+  return { streak: newStreak, coinsAwarded: DAILY_LOGIN_REWARD + streakBonus };
+}
+
+export async function getSkillCoinEvents(
+  client: Client,
+  profileId: string,
+  limit = 20,
+): Promise<SkillCoinEventRow[]> {
+  const { data, error } = await client
+    .from("skill_coin_events")
+    .select("*")
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+/** Awards the one-time complete-profile bonus via a security-definer RPC scoped to the caller's own row. */
+export async function claimCompleteProfileBonus(client: Client): Promise<number> {
+  const { data, error } = await client.rpc("claim_complete_profile_bonus");
+  if (error) throw error;
+  return data ?? 0;
 }

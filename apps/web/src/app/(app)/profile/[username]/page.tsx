@@ -17,8 +17,13 @@ import { getFollowStateAction } from "@/features/profile/social-actions";
 import { getMentorAvailabilityAction, getMentorReviewsAction } from "@/features/mentorship/actions";
 import { BookingWidget } from "@/features/mentorship/components/booking-widget";
 import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
-import { getMyBadgesAction } from "@/features/gamification/actions";
+import { getMyBadgesAction, getSkillCoinSummaryAction } from "@/features/gamification/actions";
 import { BadgeList } from "@/features/gamification/components/badge-list";
+import { RewardsBanner } from "@/features/gamification/components/rewards-banner";
+import { SkillCoinsCard } from "@/features/gamification/components/skill-coins-card";
+import { ReferralCard } from "@/features/gamification/components/referral-card";
+import { RewardsRulesList } from "@/features/gamification/components/rewards-rules-list";
+import { CoinHistoryCard } from "@/features/gamification/components/coin-history-card";
 import { CreateFirstPostButton } from "@/features/posts/components/create-first-post-button";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ProfileStatsBar } from "@/features/profile/components/profile-stats-bar";
@@ -65,19 +70,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const isOwnProfile = user?.id === profileRow.id;
 
-  const [skills, followerCount, followingCount, postCount, engagement, viewerFollowState] = await Promise.all([
-    getProfileSkills(supabase, profileRow.id),
-    getFollowerCount(supabase, profileRow.id),
-    getFollowingCount(supabase, profileRow.id),
-    getPublishedPostCount(supabase, profileRow.id),
-    getProfileEngagementTotals(supabase, profileRow.id),
-    user ? getFollowStateAction(profileRow.id) : Promise.resolve("none" as const),
-  ]);
+  const [skills, followerCount, followingCount, postCount, engagement, viewerFollowState] = await Promise.all(
+    [
+      getProfileSkills(supabase, profileRow.id),
+      getFollowerCount(supabase, profileRow.id),
+      getFollowingCount(supabase, profileRow.id),
+      getPublishedPostCount(supabase, profileRow.id),
+      getProfileEngagementTotals(supabase, profileRow.id),
+      user ? getFollowStateAction(profileRow.id) : Promise.resolve("none" as const),
+    ],
+  );
 
   const profile = toProfile(profileRow, skills);
   const canViewContent = isOwnProfile || !profile.isPrivate || viewerFollowState === "following";
 
-  const [{ posts }, savedPosts, badges] = await Promise.all([
+  const [{ posts }, savedPosts, badges, skillCoinSummary] = await Promise.all([
     canViewContent
       ? getProfilePostsAction(profile.id, null)
       : Promise.resolve({ posts: [], nextCursor: null }),
@@ -86,6 +93,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // the viewer's own saved list as if it belonged to the profile being viewed.
     isOwnProfile ? getBookmarkedPostsAction() : Promise.resolve([]),
     getMyBadgesAction(profile.id),
+    // Skill Coins balance/referral/history are personal — only ever the viewer's own.
+    isOwnProfile ? getSkillCoinSummaryAction() : Promise.resolve(null),
   ]);
 
   const isMentor = profile.accountType === "mentor";
@@ -121,6 +130,19 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           description={`Follow @${profile.username} to see their posts.`}
           className="mt-6"
         />
+      )}
+
+      {isOwnProfile && skillCoinSummary && (
+        <>
+          <RewardsBanner />
+          <SkillCoinsCard summary={skillCoinSummary} />
+          <ReferralCard
+            referralCode={skillCoinSummary.referralCode}
+            totalReferrals={skillCoinSummary.totalReferrals}
+          />
+          <RewardsRulesList />
+          <CoinHistoryCard history={skillCoinSummary.history} />
+        </>
       )}
 
       {isMentor && !isOwnProfile && canViewContent && (
@@ -163,7 +185,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 posts={savedPosts}
                 isLoggedIn={Boolean(user)}
                 currentUserId={user?.id ?? null}
-                emptyState={<EmptyState title="Nothing saved yet" description="Posts you save will show up here." />}
+                emptyState={
+                  <EmptyState title="Nothing saved yet" description="Posts you save will show up here." />
+                }
               />
             ) : undefined
           }

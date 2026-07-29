@@ -38,6 +38,7 @@ export const RESERVED_USERNAMES = new Set([
   "pricing",
   "privacy",
   "profile",
+  "ref",
   "root",
   "settings",
   "signup",

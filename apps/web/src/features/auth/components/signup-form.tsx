@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,8 @@ import { OAuthButtons } from "./oauth-buttons";
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get("ref") ?? undefined;
   const [formError, setFormError] = React.useState<string | null>(null);
 
   const {
@@ -31,6 +33,7 @@ export function SignupForm() {
       password: values.password,
       fullName: values.fullName,
       emailRedirectTo,
+      referralCode,
     });
 
     if (error) {

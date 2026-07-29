@@ -1,18 +1,26 @@
 "use server";
 
-import { getLeaderboard, getProfileBadges, recordDailyActivity, toAuthorSummary } from "@skilltego/database";
+import {
+  getLeaderboard,
+  getProfileBadges,
+  getProfileById,
+  getSkillCoinEvents,
+  recordDailyActivity,
+  toAuthorSummary,
+} from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
-import type { Badge, LeaderboardEntry } from "@skilltego/types";
+import type { Badge, LeaderboardEntry, SkillCoinsSummary } from "@skilltego/types";
 
-export async function recordDailyActivityAction(): Promise<{ streak: number } | null> {
+const COINS_PER_LEVEL = 100;
+
+export async function recordDailyActivityAction(): Promise<{ streak: number; coinsAwarded: number } | null> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const streak = await recordDailyActivity(supabase, user.id);
-  return { streak };
+  return recordDailyActivity(supabase, user.id);
 }
 
 export async function getMyBadgesAction(profileId: string): Promise<Badge[]> {
@@ -26,6 +34,34 @@ export async function getMyBadgesAction(profileId: string): Promise<Badge[]> {
     icon: badge.icon,
     earnedAt,
   }));
+}
+
+export async function getSkillCoinSummaryAction(): Promise<SkillCoinsSummary | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const [profile, events] = await Promise.all([
+    getProfileById(supabase, user.id),
+    getSkillCoinEvents(supabase, user.id),
+  ]);
+  if (!profile) return null;
+
+  return {
+    balance: profile.skill_coins,
+    level: profile.level,
+    coinsIntoLevel: profile.skill_coins % COINS_PER_LEVEL,
+    coinsPerLevel: COINS_PER_LEVEL,
+    referralCode: profile.referral_code,
+    totalReferrals: profile.total_referrals,
+    history: events.map((event) => ({
+      amount: event.amount,
+      reason: event.reason,
+      createdAt: event.created_at,
+    })),
+  };
 }
 
 export async function getLeaderboardAction(): Promise<LeaderboardEntry[]> {

@@ -188,7 +188,7 @@ begin
           'admin', 'administrator', 'api', 'app', 'about', 'auth', 'blog', 'careers',
           'company', 'companies', 'contact', 'college', 'colleges', 'dashboard', 'explore',
           'faq', 'feed', 'help', 'home', 'login', 'logout', 'mentor', 'mentors', 'messages',
-          'moderator', 'notifications', 'onboarding', 'org', 'pricing', 'privacy', 'profile',
+          'moderator', 'notifications', 'onboarding', 'org', 'pricing', 'privacy', 'profile', 'ref',
           'root', 'settings', 'signup', 'signin', 'skilltego', 'support', 'terms', 'verify'
         ])
   loop

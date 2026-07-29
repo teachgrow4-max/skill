@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  claimCompleteProfileBonus,
   getFieldChangeTimestamps,
   getProfileById,
   isUsernameAvailable,
@@ -19,6 +20,7 @@ export interface ActionResult {
   error?: string;
   fieldErrors?: Partial<Record<keyof ProfileFormValues, string>>;
   username?: string;
+  coinsAwarded?: number;
 }
 
 const CHANGE_WINDOW_DAYS = 30;
@@ -164,6 +166,11 @@ export async function saveProfileAction(
     }
   }
 
+  // Claimed before updateProfile flips onboarding_completed, since the RPC's
+  // own idempotency check reads that same flag to decide whether to award.
+  const coinsAwarded =
+    isOnboarding && !current.onboarding_completed ? await claimCompleteProfileBonus(supabase) : 0;
+
   try {
     await updateProfile(supabase, user.id, {
       username: values.username,
@@ -200,7 +207,7 @@ export async function saveProfileAction(
     return { success: false, error: error instanceof Error ? error.message : "Something went wrong." };
   }
 
-  return { success: true, username: values.username };
+  return { success: true, username: values.username, coinsAwarded: coinsAwarded || undefined };
 }
 
 export async function updateAccountPrivacyAction(isPrivate: boolean): Promise<ActionResult> {
