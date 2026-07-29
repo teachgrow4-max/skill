@@ -7,6 +7,7 @@ export interface NavLinkItem {
     | "reels"
     | "opportunities"
     | "messages"
+    | "skillCoins"
     | "leaderboard"
     | "dashboard"
     | "moderation"
@@ -19,5 +20,6 @@ export const PRIMARY_NAV: NavLinkItem[] = [
   { href: "/reels", label: "Reels", icon: "reels" },
   { href: "/opportunities", label: "Opportunities", icon: "opportunities" },
   { href: "/messages", label: "Messages", icon: "messages" },
+  { href: "/skill-coins", label: "Skill Coins", icon: "skillCoins" },
   { href: "/leaderboard", label: "Leaderboard", icon: "leaderboard" },
 ];

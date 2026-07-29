@@ -5,6 +5,7 @@ import {
   getProfileBadges,
   getProfileById,
   getSkillCoinEvents,
+  getSkillCoinTotals,
   recordDailyActivity,
   toAuthorSummary,
 } from "@skilltego/database";
@@ -44,9 +45,10 @@ export async function getSkillCoinSummaryAction(): Promise<SkillCoinsSummary | n
   if (!user) return null;
 
   try {
-    const [profile, events] = await Promise.all([
+    const [profile, events, totals] = await Promise.all([
       getProfileById(supabase, user.id),
       getSkillCoinEvents(supabase, user.id),
+      getSkillCoinTotals(supabase, user.id),
     ]);
     if (!profile) return null;
 
@@ -55,6 +57,9 @@ export async function getSkillCoinSummaryAction(): Promise<SkillCoinsSummary | n
       level: profile.level,
       coinsIntoLevel: profile.skill_coins % COINS_PER_LEVEL,
       coinsPerLevel: COINS_PER_LEVEL,
+      streakCount: profile.streak_count,
+      totalEarned: totals.earned,
+      totalRedeemed: totals.redeemed,
       referralCode: profile.referral_code,
       totalReferrals: profile.total_referrals,
       history: events.map((event) => ({

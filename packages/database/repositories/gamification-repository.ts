@@ -110,6 +110,26 @@ export async function getSkillCoinEvents(
   return data;
 }
 
+export interface SkillCoinTotals {
+  earned: number;
+  redeemed: number;
+}
+
+/** Sums the full ledger by sign, independent of getSkillCoinEvents' capped history — stays
+ *  accurate once a redemption feature starts writing negative-amount events. */
+export async function getSkillCoinTotals(client: Client, profileId: string): Promise<SkillCoinTotals> {
+  const { data, error } = await client.from("skill_coin_events").select("amount").eq("profile_id", profileId);
+  if (error) throw error;
+
+  return data.reduce(
+    (totals, { amount }) =>
+      amount >= 0
+        ? { ...totals, earned: totals.earned + amount }
+        : { ...totals, redeemed: totals.redeemed - amount },
+    { earned: 0, redeemed: 0 },
+  );
+}
+
 /** Awards the one-time complete-profile bonus via a security-definer RPC scoped to the caller's own row. */
 export async function claimCompleteProfileBonus(client: Client): Promise<number> {
   const { data, error } = await client.rpc("claim_complete_profile_bonus");

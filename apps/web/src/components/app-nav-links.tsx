@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  Coins,
   Compass,
   Film,
   Home,
@@ -23,6 +24,7 @@ const ICONS = {
   reels: Film,
   opportunities: Sparkles,
   messages: MessageCircle,
+  skillCoins: Coins,
   leaderboard: Trophy,
   dashboard: LayoutDashboard,
   moderation: Shield,

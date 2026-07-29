@@ -91,6 +91,9 @@ export interface SkillCoinsSummary {
   level: number;
   coinsIntoLevel: number;
   coinsPerLevel: number;
+  streakCount: number;
+  totalEarned: number;
+  totalRedeemed: number;
   referralCode: string;
   totalReferrals: number;
   history: SkillCoinEvent[];

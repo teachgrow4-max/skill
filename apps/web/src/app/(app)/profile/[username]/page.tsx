@@ -19,12 +19,7 @@ import { BookingWidget } from "@/features/mentorship/components/booking-widget";
 import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
 import { getMyBadgesAction, getSkillCoinSummaryAction } from "@/features/gamification/actions";
 import { BadgeList } from "@/features/gamification/components/badge-list";
-import { RewardsBanner } from "@/features/gamification/components/rewards-banner";
-import { SkillCoinsInfoCard } from "@/features/gamification/components/skill-coins-info-card";
-import { SkillCoinsCard } from "@/features/gamification/components/skill-coins-card";
-import { ReferralCard } from "@/features/gamification/components/referral-card";
-import { RewardsRulesList } from "@/features/gamification/components/rewards-rules-list";
-import { CoinHistoryCard } from "@/features/gamification/components/coin-history-card";
+import { SkillCoinsSummaryCard } from "@/features/gamification/components/skill-coins-summary-card";
 import { CreateFirstPostButton } from "@/features/posts/components/create-first-post-button";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ProfileStatsBar } from "@/features/profile/components/profile-stats-bar";
@@ -133,19 +128,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         />
       )}
 
-      {isOwnProfile && skillCoinSummary && (
-        <>
-          <RewardsBanner />
-          <SkillCoinsInfoCard />
-          <SkillCoinsCard summary={skillCoinSummary} />
-          <ReferralCard
-            referralCode={skillCoinSummary.referralCode}
-            totalReferrals={skillCoinSummary.totalReferrals}
-          />
-          <RewardsRulesList />
-          <CoinHistoryCard history={skillCoinSummary.history} />
-        </>
-      )}
+      {isOwnProfile && skillCoinSummary && <SkillCoinsSummaryCard balance={skillCoinSummary.balance} />}
 
       {isMentor && !isOwnProfile && canViewContent && (
         <div className="glass mt-6 grid gap-4 rounded-2xl p-6">
