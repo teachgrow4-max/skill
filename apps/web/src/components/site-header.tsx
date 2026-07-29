@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getProfileById } from "@skilltego/database";
 import { siteConfig, marketingNav, appNav, DASHBOARD_ACCOUNT_TYPES } from "@skilltego/config";
@@ -32,7 +33,15 @@ export async function SiteHeader() {
   return (
     <header className="glass sticky top-0 z-40 w-full border-b">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold tracking-tight">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+          <Image
+            src="/logo.png"
+            alt={siteConfig.name}
+            width={28}
+            height={28}
+            className="rounded-lg"
+            priority
+          />
           {siteConfig.name}
         </Link>
 

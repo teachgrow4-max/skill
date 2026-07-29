@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getProfileById } from "@skilltego/database";
 import { DASHBOARD_ACCOUNT_TYPES, siteConfig } from "@skilltego/config";
@@ -30,7 +31,7 @@ export async function AppSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-20 flex-col border-r border-border bg-background/80 backdrop-blur-xl md:flex xl:w-64">
       <Link href="/feed" className="flex items-center gap-2 px-4 py-6">
-        <span className="text-gradient-brand text-xl font-black tracking-tight">S</span>
+        <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" priority />
         <span className="text-gradient-brand hidden text-lg font-black tracking-tight xl:inline">
           {siteConfig.name}
         </span>
