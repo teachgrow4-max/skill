@@ -181,8 +181,17 @@ begin
     base_username := 'user_' || left(replace(new.id::text, '-', ''), 8);
   end if;
 
+  -- Reserved list mirrors RESERVED_USERNAMES in packages/utils/username.ts — keep in sync.
   final_username := base_username;
-  while exists (select 1 from public.profiles where username = final_username) loop
+  while exists (select 1 from public.profiles where username = final_username)
+     or final_username = any (array[
+          'admin', 'administrator', 'api', 'app', 'about', 'auth', 'blog', 'careers',
+          'company', 'companies', 'contact', 'college', 'colleges', 'dashboard', 'explore',
+          'faq', 'feed', 'help', 'home', 'login', 'logout', 'mentor', 'mentors', 'messages',
+          'moderator', 'notifications', 'onboarding', 'org', 'pricing', 'privacy', 'profile',
+          'root', 'settings', 'signup', 'signin', 'skilltego', 'support', 'terms', 'verify'
+        ])
+  loop
     suffix := suffix + 1;
     final_username := left(base_username, 24) || '_' || suffix::text;
   end loop;

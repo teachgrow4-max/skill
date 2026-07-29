@@ -36,6 +36,7 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
     control,
     watch,
     setValue,
+    setError,
     getValues,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
@@ -102,7 +103,12 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
     const result = await saveProfileAction(values, { completeOnboarding: mode === "onboarding" });
 
     if (!result.success) {
-      setFormError(result.error ?? "Something went wrong.");
+      if (result.fieldErrors) {
+        for (const [field, message] of Object.entries(result.fieldErrors)) {
+          setError(field as keyof ProfileFormValues, { message });
+        }
+      }
+      setFormError(result.error ?? (result.fieldErrors ? "Please fix the highlighted fields." : "Something went wrong."));
       return;
     }
 

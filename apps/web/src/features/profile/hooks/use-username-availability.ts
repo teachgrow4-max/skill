@@ -12,13 +12,18 @@ export function useUsernameAvailability(username: string, initialUsername?: stri
   React.useEffect(() => {
     const value = username.trim().toLowerCase();
 
-    if (value === "" || value === initialUsername) {
+    if (value === "") {
       setStatus("idle");
       return;
     }
 
     if (!isValidUsername(value)) {
       setStatus("invalid");
+      return;
+    }
+
+    if (value === initialUsername) {
+      setStatus("idle");
       return;
     }
 

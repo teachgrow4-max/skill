@@ -9,7 +9,7 @@ import {
   replaceProfileSkills,
   updateProfile,
 } from "@skilltego/database";
-import { isValidUsername } from "@skilltego/utils";
+import { isValidUsername, RESERVED_USERNAMES } from "@skilltego/utils";
 import type { ProfileField } from "@skilltego/types";
 import { createClient } from "@/lib/supabase/server";
 import { profileFormSchema, type ProfileFormValues } from "./schema";
@@ -115,10 +115,10 @@ export async function saveProfileAction(
   const values = parsed.data;
 
   if (!isValidUsername(values.username)) {
-    return {
-      success: false,
-      fieldErrors: { username: "3-30 characters: lowercase letters, numbers, and underscores only." },
-    };
+    const message = RESERVED_USERNAMES.has(values.username)
+      ? "This username is reserved. Please choose another."
+      : "3-30 characters: lowercase letters, numbers, and underscores only.";
+    return { success: false, fieldErrors: { username: message } };
   }
 
   const supabase = await createClient();
