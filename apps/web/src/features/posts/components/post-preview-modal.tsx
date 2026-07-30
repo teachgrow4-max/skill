@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   Pin,
   PinOff,
+  Send,
   Share2,
   Trash2,
   X,
@@ -29,6 +30,7 @@ import {
   AvatarFallback,
   AvatarImage,
   Badge,
+  Input,
   Sheet,
   SheetClose,
   SheetContent,
@@ -39,9 +41,10 @@ import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { ReportButton } from "@/features/reports/components/report-button";
 import { deletePostAction, toggleArchivePostAction, togglePinPostAction } from "../actions";
+import { useCommentThread } from "../hooks/use-comment-thread";
 import { LikeButton, type LikeButtonHandle } from "./like-button";
 import { SaveButton } from "./save-button";
-import { CommentThread } from "./comment-thread";
+import { CommentRow } from "./comment-thread";
 
 interface PostPreviewModalProps {
   post: Post | null;
@@ -125,10 +128,26 @@ function PostPreviewContent({
   const [linkCopied, setLinkCopied] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const likeButtonRef = React.useRef<LikeButtonHandle>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
   const touchStartX = React.useRef<number | null>(null);
+  const inputId = `comment-input-${post.id}`;
 
   const isOwner = currentUserId === post.author.id;
   const media = post.media;
+  const hasMedia = media.length > 0;
+
+  const {
+    loading: commentsLoading,
+    roots,
+    repliesByParent,
+    body: commentBody,
+    setBody: setCommentBody,
+    submitting: commentSubmitting,
+    replyingTo,
+    setReplyingTo,
+    handleSubmit: handleCommentSubmit,
+    handleDelete: handleCommentDelete,
+  } = useCommentThread(post.id, (delta) => setCommentCount((c) => c + delta));
 
   const goTo = React.useCallback(
     (index: number) => setActiveSlide(((index % media.length) + media.length) % media.length),
@@ -144,6 +163,15 @@ function PostPreviewContent({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeSlide, goTo, media.length]);
+
+  React.useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    el.play().catch(() => {
+      // autoplay can still be blocked in some browsers — controls stay usable either way
+    });
+  }, [activeSlide]);
 
   function handleDoubleTapLike() {
     likeButtonRef.current?.like();
@@ -214,231 +242,278 @@ function PostPreviewContent({
     <SheetContent
       hideClose
       className={cn(
-        "flex flex-col gap-0 p-0 sm:max-w-[720px]",
-        "h-[92vh] max-h-[92vh] sm:h-auto sm:max-h-[88vh]",
+        "flex flex-col gap-0 overflow-hidden p-0",
+        "h-[92vh] max-h-[92vh] sm:h-auto sm:max-h-[88vh] sm:max-w-2xl",
+        hasMedia && "lg:h-[90vh] lg:max-h-[90vh] lg:w-[1200px] lg:max-w-[1200px] lg:flex-row lg:rounded-2xl",
       )}
     >
       <SheetTitle className="sr-only">Post by {post.author.fullName}</SheetTitle>
 
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <Link
-          href={`/profile/${post.author.username}`}
-          className="flex min-w-0 items-center gap-3"
-          onClick={() => onOpenChange(false)}
+      {/* Media panel — left column on desktop, top on mobile/tablet */}
+      {hasMedia && (
+        <div
+          className={cn(
+            "relative flex shrink-0 select-none items-center justify-center bg-black",
+            "h-[42vh] w-full sm:h-[46vh]",
+            "lg:h-full lg:w-[820px]",
+          )}
+          onDoubleClick={handleDoubleTapLike}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
-          <Avatar className="size-11 shrink-0">
-            <AvatarImage src={post.author.avatarUrl ?? undefined} alt={post.author.fullName} />
-            <AvatarFallback>{initials(post.author.fullName)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1">
-              <span className="truncate text-sm font-semibold leading-tight">{post.author.fullName}</span>
-              {post.author.isVerified && <BadgeCheck className="size-3.5 shrink-0 text-primary" />}
-              {isPinned && <Pin className="size-3 shrink-0 text-muted-foreground" aria-label="Pinned" />}
-            </div>
-            <p className="truncate text-xs text-muted-foreground">
-              @{post.author.username} · {formatRelativeTime(post.createdAt)}
-            </p>
-          </div>
-        </Link>
+          <AnimatePresence>
+            {showHeartBurst && (
+              <motion.div
+                className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1, 1] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.65, times: [0, 0.35, 0.8, 1] }}
+              >
+                <Heart className="size-24 fill-white text-white drop-shadow-lg" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        <div className="flex shrink-0 items-center gap-0.5">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="More options"
-              className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <MoreHorizontal className="size-[18px]" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-9 z-20 min-w-44 rounded-xl border border-border bg-popover p-1.5 shadow-lg">
-                {isOwner ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleTogglePin}
-                      className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs hover:bg-accent"
-                    >
-                      {isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
-                      {isPinned ? "Unpin from profile" : "Pin to profile"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleToggleArchive}
-                      className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs hover:bg-accent"
-                    >
-                      {isArchived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
-                      {isArchived ? "Unarchive" : "Archive"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-3.5" />
-                      Delete
-                    </button>
-                    {actionError && <p className="mt-1 px-2.5 text-xs text-destructive">{actionError}</p>}
-                  </>
-                ) : (
-                  <ReportButton targetType="post" targetId={post.id} isLoggedIn={isLoggedIn} />
-                )}
+          <div className="relative h-full w-full">
+            {activeMedia.type === "image" && (
+              <>
+                {!loadedSlides[activeSlide] && <Skeleton className="absolute inset-0 rounded-none bg-white/10" />}
+                <Image
+                  src={activeMedia.url}
+                  alt=""
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 820px"
+                  className="object-contain"
+                  onLoad={() => setLoadedSlides((s) => ({ ...s, [activeSlide]: true }))}
+                />
+              </>
+            )}
+            {activeMedia.type === "video" && (
+              <video
+                ref={videoRef}
+                src={activeMedia.url}
+                controls
+                loop
+                playsInline
+                className="h-full w-full object-contain"
+                onDoubleClick={(e) => e.stopPropagation()}
+              />
+            )}
+            {activeMedia.type === "pdf" && (
+              <a
+                href={activeMedia.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/70"
+              >
+                <FileText className="size-10" />
+                <span className="text-sm">View PDF</span>
+              </a>
+            )}
+          </div>
+
+          {media.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => goTo(activeSlide - 1)}
+                aria-label="Previous"
+                className="absolute left-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => goTo(activeSlide + 1)}
+                aria-label="Next"
+                className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {media.map((_, i) => (
+                  <span
+                    key={i}
+                    className={cn("size-1.5 rounded-full transition-colors", i === activeSlide ? "bg-white" : "bg-white/40")}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Right / bottom panel — header + scrollable caption & comments + sticky actions & composer */}
+      <div className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", hasMedia && "lg:w-[380px] lg:shrink-0 lg:border-l lg:border-border")}>
+        {/* Sticky header */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <Link
+            href={`/profile/${post.author.username}`}
+            className="flex min-w-0 items-center gap-3"
+            onClick={() => onOpenChange(false)}
+          >
+            <Avatar className="size-9 shrink-0">
+              <AvatarImage src={post.author.avatarUrl ?? undefined} alt={post.author.fullName} />
+              <AvatarFallback>{initials(post.author.fullName)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="truncate text-sm font-semibold leading-tight">{post.author.fullName}</span>
+                {post.author.isVerified && <BadgeCheck className="size-3.5 shrink-0 text-primary" />}
+                {isPinned && <Pin className="size-3 shrink-0 text-muted-foreground" aria-label="Pinned" />}
+              </div>
+              <p className="truncate text-xs text-muted-foreground">@{post.author.username}</p>
+            </div>
+          </Link>
+
+          <div className="flex shrink-0 items-center gap-0.5">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="More options"
+                className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <MoreHorizontal className="size-[18px]" />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-9 z-20 min-w-44 rounded-xl border border-border bg-popover p-1.5 shadow-lg">
+                  {isOwner ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleTogglePin}
+                        className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs hover:bg-accent"
+                      >
+                        {isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+                        {isPinned ? "Unpin from profile" : "Pin to profile"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleToggleArchive}
+                        className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs hover:bg-accent"
+                      >
+                        {isArchived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
+                        {isArchived ? "Unarchive" : "Archive"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Delete
+                      </button>
+                      {actionError && <p className="mt-1 px-2.5 text-xs text-destructive">{actionError}</p>}
+                    </>
+                  ) : (
+                    <ReportButton targetType="post" targetId={post.id} isLoggedIn={isLoggedIn} />
+                  )}
+                </div>
+              )}
+            </div>
+            <SheetClose className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <X className="size-[18px]" />
+              <span className="sr-only">Close</span>
+            </SheetClose>
+          </div>
+        </div>
+
+        {/* Scrollable: archived badge, non-media content, caption, tags, comments */}
+        <div className="flex-1 overflow-y-auto">
+          {isArchived && (
+            <div className="px-4 pt-3">
+              <Badge variant="outline">Archived — only you can see this</Badge>
+            </div>
+          )}
+
+          <div className="grid gap-3 px-4 py-3">
+            {post.type === "code" && post.codeSnippet && (
+              <pre className="max-h-80 overflow-auto rounded-lg bg-muted p-3 text-xs">
+                {post.codeLanguage && <div className="mb-1 text-muted-foreground">{post.codeLanguage}</div>}
+                <code>{post.codeSnippet}</code>
+              </pre>
+            )}
+
+            {post.type === "github_link" && post.githubUrl && (
+              <a
+                href={post.githubUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm hover:bg-accent"
+              >
+                <Github className="size-5 shrink-0" />
+                <span className="truncate">{post.githubUrl}</span>
+              </a>
+            )}
+
+            {post.type === "project_link" && post.projectUrl && (
+              <a
+                href={post.projectUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm hover:bg-accent"
+              >
+                <ExternalLink className="size-5 shrink-0" />
+                <span className="truncate">{post.projectUrl}</span>
+              </a>
+            )}
+
+            {post.caption && (
+              <p className="text-sm leading-relaxed whitespace-pre-line">
+                <Link href={`/profile/${post.author.username}`} className="font-semibold hover:underline">
+                  {post.author.username}
+                </Link>{" "}
+                {renderCaption(post.caption)}
+              </p>
+            )}
+
+            {(post.skillCategory || post.tags.length > 0) && (
+              <div className="flex flex-wrap gap-1.5">
+                {post.skillCategory && <Badge variant="secondary">{post.skillCategory}</Badge>}
+                {post.tags.map((tag) => (
+                  <Badge key={tag} variant="outline">
+                    #{tag}
+                  </Badge>
+                ))}
               </div>
             )}
           </div>
-          <SheetClose className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-            <X className="size-[18px]" />
-            <span className="sr-only">Close</span>
-          </SheetClose>
-        </div>
-      </div>
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto">
-        {isArchived && (
-          <div className="px-4 pt-3 sm:px-5">
-            <Badge variant="outline">Archived — only you can see this</Badge>
-          </div>
-        )}
-
-        {media.length > 0 && (
-          <div
-            className="relative select-none bg-black"
-            onDoubleClick={handleDoubleTapLike}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <AnimatePresence>
-              {showHeartBurst && (
-                <motion.div
-                  className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
-                  initial={{ opacity: 0, scale: 0.4 }}
-                  animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1, 1] }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.65, times: [0, 0.35, 0.8, 1] }}
-                >
-                  <Heart className="size-24 fill-white text-white drop-shadow-lg" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="relative h-[60vh] max-h-[500px] w-full sm:h-[440px]">
-              {activeMedia.type === "image" && (
-                <>
-                  {!loadedSlides[activeSlide] && <Skeleton className="absolute inset-0 rounded-none" />}
-                  <Image
-                    src={activeMedia.url}
-                    alt=""
-                    fill
-                    sizes="(max-width: 640px) 100vw, 720px"
-                    className="object-contain"
-                    onLoad={() => setLoadedSlides((s) => ({ ...s, [activeSlide]: true }))}
+          <div className="grid gap-3 border-t border-border px-4 py-3">
+            {commentsLoading && <p className="text-xs text-muted-foreground">Loading comments…</p>}
+            {!commentsLoading && roots.length === 0 && (
+              <p className="text-xs text-muted-foreground">No comments yet.</p>
+            )}
+            {!commentsLoading &&
+              roots.map((comment) => (
+                <div key={comment.id} className="grid gap-2">
+                  <CommentRow
+                    comment={comment}
+                    currentUserId={currentUserId}
+                    nested={false}
+                    onDelete={handleCommentDelete}
+                    onReply={setReplyingTo}
                   />
-                </>
-              )}
-              {activeMedia.type === "video" && (
-                <video
-                  src={activeMedia.url}
-                  controls
-                  className="h-full w-full object-contain"
-                  onDoubleClick={(e) => e.stopPropagation()}
-                />
-              )}
-              {activeMedia.type === "pdf" && (
-                <a
-                  href={activeMedia.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted text-muted-foreground"
-                >
-                  <FileText className="size-10" />
-                  <span className="text-sm">View PDF</span>
-                </a>
-              )}
-            </div>
-
-            {media.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => goTo(activeSlide - 1)}
-                  aria-label="Previous"
-                  className="absolute left-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
-                >
-                  <ChevronLeft className="size-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => goTo(activeSlide + 1)}
-                  aria-label="Next"
-                  className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
-                >
-                  <ChevronRight className="size-5" />
-                </button>
-                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {media.map((_, i) => (
-                    <span
-                      key={i}
-                      className={cn("size-1.5 rounded-full transition-colors", i === activeSlide ? "bg-white" : "bg-white/40")}
+                  {(repliesByParent.get(comment.id) ?? []).map((reply) => (
+                    <CommentRow
+                      key={reply.id}
+                      comment={reply}
+                      currentUserId={currentUserId}
+                      nested
+                      onDelete={handleCommentDelete}
+                      onReply={setReplyingTo}
                     />
                   ))}
                 </div>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className="grid gap-3 px-4 py-4 sm:px-5">
-          {post.type === "code" && post.codeSnippet && (
-            <pre className="max-h-80 overflow-auto rounded-lg bg-muted p-3 text-xs">
-              {post.codeLanguage && <div className="mb-1 text-muted-foreground">{post.codeLanguage}</div>}
-              <code>{post.codeSnippet}</code>
-            </pre>
-          )}
-
-          {post.type === "github_link" && post.githubUrl && (
-            <a
-              href={post.githubUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm hover:bg-accent"
-            >
-              <Github className="size-5 shrink-0" />
-              <span className="truncate">{post.githubUrl}</span>
-            </a>
-          )}
-
-          {post.type === "project_link" && post.projectUrl && (
-            <a
-              href={post.projectUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm hover:bg-accent"
-            >
-              <ExternalLink className="size-5 shrink-0" />
-              <span className="truncate">{post.projectUrl}</span>
-            </a>
-          )}
-
-          {post.caption && (
-            <p className="text-[15px] leading-[1.7] whitespace-pre-line">{renderCaption(post.caption)}</p>
-          )}
-
-          {(post.skillCategory || post.tags.length > 0) && (
-            <div className="flex flex-wrap gap-1.5">
-              {post.skillCategory && <Badge variant="secondary">{post.skillCategory}</Badge>}
-              {post.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  #{tag}
-                </Badge>
               ))}
-            </div>
-          )}
+          </div>
+        </div>
 
-          <div className="-mx-1 flex items-center gap-1 border-t border-border pt-3">
+        {/* Sticky actions + comment composer */}
+        <div className="shrink-0 border-t border-border">
+          <div className="flex items-center gap-1 px-2 pt-2">
             <div className="rounded-full px-2 py-1.5 transition-colors hover:bg-accent">
               <LikeButton
                 ref={likeButtonRef}
@@ -452,7 +527,7 @@ function PostPreviewContent({
             </div>
             <button
               type="button"
-              onClick={() => document.getElementById(`comment-input-${post.id}`)?.focus()}
+              onClick={() => document.getElementById(inputId)?.focus()}
               className="flex items-center gap-2 rounded-full px-2 py-1.5 text-base font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <MessageCircle className="size-6" />
@@ -470,15 +545,52 @@ function PostPreviewContent({
               <SaveButton postId={post.id} initialIsSaved={post.isSaved} isLoggedIn={isLoggedIn} size="lg" />
             </div>
           </div>
-          {linkCopied && <p className="-mt-2 text-xs text-muted-foreground">Link copied to clipboard</p>}
 
-          <CommentThread
-            postId={post.id}
-            isLoggedIn={isLoggedIn}
-            currentUserId={currentUserId}
-            onCountChange={(delta) => setCommentCount((c) => c + delta)}
-            inputId={`comment-input-${post.id}`}
-          />
+          <div className="px-4 pb-1 pt-0.5">
+            {linkCopied ? (
+              <p className="text-xs text-muted-foreground">Link copied to clipboard</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{formatRelativeTime(post.createdAt)}</p>
+            )}
+          </div>
+
+          {isLoggedIn ? (
+            <div className="px-4 pb-3 pt-1">
+              {replyingTo && (
+                <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Replying to {replyingTo.author.fullName}</span>
+                  <button type="button" onClick={() => setReplyingTo(null)} className="hover:text-foreground">
+                    Cancel
+                  </button>
+                </div>
+              )}
+              <form onSubmit={handleCommentSubmit} className="flex items-center gap-2">
+                <Input
+                  id={inputId}
+                  value={commentBody}
+                  onChange={(e) => setCommentBody(e.target.value)}
+                  placeholder={replyingTo ? `Reply to ${replyingTo.author.fullName}…` : "Add a comment…"}
+                  maxLength={1000}
+                  className="h-11 rounded-full border-0 bg-muted px-4 shadow-none focus-visible:ring-1"
+                />
+                <button
+                  type="submit"
+                  disabled={commentSubmitting || !commentBody.trim()}
+                  aria-label="Post comment"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-primary transition-opacity hover:opacity-70 disabled:opacity-30"
+                >
+                  <Send className="size-5" />
+                </button>
+              </form>
+            </div>
+          ) : (
+            <p className="px-4 pb-3 pt-1 text-xs text-muted-foreground">
+              <Link href="/login" className="text-primary hover:underline">
+                Log in
+              </Link>{" "}
+              to comment.
+            </p>
+          )}
         </div>
       </div>
     </SheetContent>

@@ -1,12 +1,11 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Input } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Comment } from "@skilltego/types";
-import { addCommentAction, deleteCommentAction, getPostCommentsAction } from "../actions";
+import { useCommentThread } from "../hooks/use-comment-thread";
 
 interface CommentThreadProps {
   postId: string;
@@ -16,7 +15,7 @@ interface CommentThreadProps {
   inputId?: string;
 }
 
-function CommentRow({
+export function CommentRow({
   comment,
   currentUserId,
   nested,
@@ -67,65 +66,18 @@ function CommentRow({
 }
 
 export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange, inputId }: CommentThreadProps) {
-  const [comments, setComments] = React.useState<Comment[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [body, setBody] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-  const [replyingTo, setReplyingTo] = React.useState<Comment | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    getPostCommentsAction(postId).then((data) => {
-      if (!cancelled) {
-        setComments(data);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [postId]);
-
-  const { roots, repliesByParent } = React.useMemo(() => {
-    const roots: Comment[] = [];
-    const repliesByParent = new Map<string, Comment[]>();
-
-    for (const comment of comments) {
-      if (comment.parentCommentId) {
-        const list = repliesByParent.get(comment.parentCommentId) ?? [];
-        list.push(comment);
-        repliesByParent.set(comment.parentCommentId, list);
-      } else {
-        roots.push(comment);
-      }
-    }
-    return { roots, repliesByParent };
-  }, [comments]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!body.trim() || submitting) return;
-
-    setSubmitting(true);
-    const result = await addCommentAction(postId, { body, parentCommentId: replyingTo?.id ?? null });
-    setSubmitting(false);
-
-    if (result.success && result.data) {
-      setComments((prev) => [...prev, result.data!.comment]);
-      setBody("");
-      setReplyingTo(null);
-      onCountChange(1);
-    }
-  }
-
-  async function handleDelete(commentId: string, authorId: string) {
-    const result = await deleteCommentAction(commentId, authorId);
-    if (result.success) {
-      setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? { ...c, isDeleted: true, body: "[deleted]" } : c)),
-      );
-    }
-  }
+  const {
+    loading,
+    roots,
+    repliesByParent,
+    body,
+    setBody,
+    submitting,
+    replyingTo,
+    setReplyingTo,
+    handleSubmit,
+    handleDelete,
+  } = useCommentThread(postId, onCountChange);
 
   return (
     <div className="grid gap-3 border-t border-border pt-3">
