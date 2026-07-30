@@ -5,7 +5,7 @@ import Image from "next/image";
 import { FileText, Loader2, Upload, Video, X } from "lucide-react";
 import { Button } from "@skilltego/ui";
 import { cn } from "@skilltego/utils";
-import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadPostMedia } from "@/lib/supabase-storage";
 import type { PostMediaItem } from "@skilltego/types";
 
 interface MediaUploaderProps {
@@ -40,11 +40,6 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     if (!files || files.length === 0) return;
     setError(null);
 
-    if (!isCloudinaryConfigured()) {
-      setError("Media upload isn't configured yet — add Cloudinary credentials to .env.local.");
-      return;
-    }
-
     const remaining = maxItems - value.length;
     const toUpload = Array.from(files).slice(0, remaining);
 
@@ -52,13 +47,11 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     try {
       const uploaded = await Promise.all(
         toUpload.map(async (file) => {
-          const result = await uploadToCloudinary(file);
+          const result = await uploadPostMedia(file);
           const item: PostMediaItem = {
             url: result.url,
-            type: result.resourceType === "raw" ? "pdf" : result.resourceType,
-            width: result.width,
-            height: result.height,
-            publicId: result.publicId,
+            type: result.type,
+            publicId: result.path,
           };
           return item;
         }),
