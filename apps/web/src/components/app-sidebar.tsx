@@ -7,6 +7,7 @@ import { NotificationBell } from "@/features/notifications/components/notificati
 import { NavLink } from "./app-nav-links";
 import { PRIMARY_NAV, type NavLinkItem } from "./app-nav-items";
 import { ProfileMenu } from "./profile-menu";
+import { SidebarBranding } from "./sidebar-branding";
 import { SidebarFrame } from "./sidebar-frame";
 import { SidebarLabel } from "./sidebar-label";
 import { ThemeToggle } from "./theme-toggle";
@@ -38,6 +39,8 @@ export async function AppSidebar() {
           {siteConfig.name}
         </SidebarLabel>
       </Link>
+
+      <SidebarBranding />
 
       <nav className="grid gap-1 px-3">
         <div className="flex items-center gap-3 rounded-xl px-1 py-1 text-muted-foreground">
