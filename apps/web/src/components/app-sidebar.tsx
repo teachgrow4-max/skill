@@ -7,6 +7,8 @@ import { NotificationBell } from "@/features/notifications/components/notificati
 import { NavLink } from "./app-nav-links";
 import { PRIMARY_NAV, type NavLinkItem } from "./app-nav-items";
 import { ProfileMenu } from "./profile-menu";
+import { SidebarFrame } from "./sidebar-frame";
+import { SidebarLabel } from "./sidebar-label";
 import { ThemeToggle } from "./theme-toggle";
 
 export async function AppSidebar() {
@@ -29,18 +31,18 @@ export async function AppSidebar() {
   ];
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-20 flex-col border-r border-border bg-background/80 backdrop-blur-xl md:flex xl:w-64">
+    <SidebarFrame>
       <Link href="/feed" className="flex items-center gap-2 px-4 py-6">
         <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" priority />
-        <span className="text-gradient-brand hidden text-lg font-black tracking-tight xl:inline">
+        <SidebarLabel className="text-gradient-brand text-lg font-black tracking-tight">
           {siteConfig.name}
-        </span>
+        </SidebarLabel>
       </Link>
 
       <nav className="grid gap-1 px-3">
         <div className="flex items-center gap-3 rounded-xl px-1 py-1 text-muted-foreground">
           <NotificationBell align="left" />
-          <span className="hidden text-sm font-medium xl:inline">Notifications</span>
+          <SidebarLabel className="text-sm font-medium">Notifications</SidebarLabel>
         </div>
         {PRIMARY_NAV.map((item) => (
           <NavLink key={item.href} item={item} />
@@ -68,6 +70,6 @@ export async function AppSidebar() {
           <ThemeToggle />
         </div>
       </div>
-    </aside>
+    </SidebarFrame>
   );
 }
