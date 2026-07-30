@@ -24,9 +24,11 @@ function extensionFor(file: File): string {
 
 /**
  * Uploads a file to the public `post-media` Supabase Storage bucket under the
- * signed-in user's own folder (required by the bucket's RLS policies).
+ * signed-in user's own folder (required by the bucket's RLS policies). The
+ * `prefix` just labels the filename (post/avatar/cover/resume) — every kind of
+ * upload shares the same bucket and policies.
  */
-export async function uploadPostMedia(file: File): Promise<StorageUploadResult> {
+async function uploadToStorage(file: File, prefix: string): Promise<StorageUploadResult> {
   if (file.size > MAX_UPLOAD_SIZE_BYTES) {
     throw new Error("File is larger than 25MB.");
   }
@@ -36,10 +38,10 @@ export async function uploadPostMedia(file: File): Promise<StorageUploadResult> 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("You must be signed in to upload media.");
+    throw new Error("You must be signed in to upload files.");
   }
 
-  const path = `${user.id}/${crypto.randomUUID()}.${extensionFor(file)}`;
+  const path = `${user.id}/${prefix}-${crypto.randomUUID()}.${extensionFor(file)}`;
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",
     contentType: file.type,
@@ -51,4 +53,16 @@ export async function uploadPostMedia(file: File): Promise<StorageUploadResult> 
   } = supabase.storage.from(BUCKET).getPublicUrl(path);
 
   return { url: publicUrl, path, type: resolveMediaType(file.type) };
+}
+
+export function uploadPostMedia(file: File): Promise<StorageUploadResult> {
+  return uploadToStorage(file, "post");
+}
+
+export function uploadProfileImage(file: File, kind: "avatar" | "cover"): Promise<StorageUploadResult> {
+  return uploadToStorage(file, kind);
+}
+
+export function uploadResumeFile(file: File): Promise<StorageUploadResult> {
+  return uploadToStorage(file, "resume");
 }

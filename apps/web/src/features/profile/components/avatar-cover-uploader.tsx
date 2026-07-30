@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
 import { cn } from "@skilltego/utils";
-import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadProfileImage } from "@/lib/supabase-storage";
 
 interface AvatarCoverUploaderProps {
   label: string;
@@ -22,14 +22,9 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!isCloudinaryConfigured()) {
-      onError("Image upload isn't configured yet — add Cloudinary credentials to .env.local.");
-      return;
-    }
-
     setUploading(true);
     try {
-      const result = await uploadToCloudinary(file);
+      const result = await uploadProfileImage(file, shape === "circle" ? "avatar" : "cover");
       onChange(result.url);
     } catch (uploadError) {
       onError(uploadError instanceof Error ? uploadError.message : "Upload failed.");

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Label, Textarea } from "@skilltego/ui";
 import type { Profile } from "@skilltego/types";
-import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadResumeFile } from "@/lib/supabase-storage";
 import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
 import { CoinToast } from "@/features/gamification/components/coin-toast";
 import { useCoinToast } from "@/features/gamification/hooks/use-coin-toast";
@@ -86,14 +86,9 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!isCloudinaryConfigured()) {
-      setFormError("Resume upload isn't configured yet — add Cloudinary credentials to .env.local.");
-      return;
-    }
-
     setUploadingResume(true);
     try {
-      const result = await uploadToCloudinary(file);
+      const result = await uploadResumeFile(file);
       setValue("resumeUrl", result.url, { shouldDirty: true });
     } catch (uploadError) {
       setFormError(uploadError instanceof Error ? uploadError.message : "Resume upload failed.");
