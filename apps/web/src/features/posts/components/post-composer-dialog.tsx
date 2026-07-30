@@ -122,6 +122,12 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
         title: `+${result.coinsAwarded} Skill Coins`,
         subtitle: "Congratulations! You posted your first reel.",
       });
+    } else {
+      showToast(
+        status === "draft"
+          ? { icon: "📝", title: "Saved as draft", subtitle: "Find it later under your drafts." }
+          : { icon: "✅", title: "Post published", subtitle: "Your post is now live." },
+      );
     }
 
     reset();
@@ -138,7 +144,11 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
     <>
       <CoinToast toast={toast} />
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent hideClose className="flex flex-col gap-0 p-0 sm:max-w-[900px]">
+        <SheetContent
+          hideClose
+          style={{ background: "var(--color-card)" }}
+          className="flex flex-col gap-0 p-0 sm:max-w-[900px]"
+        >
           <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
             {/* Header */}
             <div className="flex shrink-0 items-start justify-between border-b border-border px-6 py-5 sm:px-8">
