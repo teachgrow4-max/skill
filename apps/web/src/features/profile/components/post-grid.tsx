@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { Heart, MessageCircle, PlayCircle } from "lucide-react";
 import type { Post } from "@skilltego/types";
-import { PostDetailDialog } from "./post-detail-dialog";
+import { PostPreviewModal } from "@/features/posts/components/post-preview-modal";
 
 interface PostGridProps {
   posts: Post[];
@@ -64,7 +64,7 @@ export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostG
         })}
       </div>
 
-      <PostDetailDialog
+      <PostPreviewModal
         post={selected}
         isLoggedIn={isLoggedIn}
         currentUserId={currentUserId}

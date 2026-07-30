@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Bookmark } from "lucide-react";
 import { cn } from "@skilltego/utils";
 import { toggleSaveAction } from "../actions";
@@ -10,9 +11,10 @@ interface SaveButtonProps {
   postId: string;
   initialIsSaved: boolean;
   isLoggedIn: boolean;
+  size?: "sm" | "lg";
 }
 
-export function SaveButton({ postId, initialIsSaved, isLoggedIn }: SaveButtonProps) {
+export function SaveButton({ postId, initialIsSaved, isLoggedIn, size = "sm" }: SaveButtonProps) {
   const router = useRouter();
   const [isSaved, setIsSaved] = React.useState(initialIsSaved);
   const [pending, setPending] = React.useState(false);
@@ -44,7 +46,14 @@ export function SaveButton({ postId, initialIsSaved, isLoggedIn }: SaveButtonPro
         isSaved && "text-primary hover:text-primary",
       )}
     >
-      <Bookmark className={cn("size-4", isSaved && "fill-current")} />
+      <motion.span
+        className="inline-flex"
+        whileTap={{ scale: 0.8 }}
+        animate={isSaved ? { scale: [1, 1.25, 1] } : {}}
+        transition={{ duration: 0.3 }}
+      >
+        <Bookmark className={cn(size === "lg" ? "size-6" : "size-4", isSaved && "fill-current")} />
+      </motion.span>
     </button>
   );
 }

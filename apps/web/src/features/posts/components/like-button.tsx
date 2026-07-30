@@ -13,6 +13,7 @@ interface LikeButtonProps {
   initialCount: number;
   isLoggedIn: boolean;
   hideCount?: boolean;
+  size?: "sm" | "lg";
 }
 
 export interface LikeButtonHandle {
@@ -20,7 +21,7 @@ export interface LikeButtonHandle {
 }
 
 export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(function LikeButton(
-  { postId, initialIsLiked, initialCount, isLoggedIn, hideCount },
+  { postId, initialIsLiked, initialCount, isLoggedIn, hideCount, size = "sm" },
   ref,
 ) {
   const router = useRouter();
@@ -66,7 +67,8 @@ export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(fu
       type="button"
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-1.5 text-sm transition-colors",
+        "flex items-center transition-colors",
+        size === "lg" ? "gap-2 text-base font-medium" : "gap-1.5 text-sm",
         isLiked ? "text-destructive" : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -75,7 +77,7 @@ export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(fu
         animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
         transition={{ duration: 0.3 }}
       >
-        <Heart className={cn("size-4", isLiked && "fill-current")} />
+        <Heart className={cn(size === "lg" ? "size-6" : "size-4", isLiked && "fill-current")} />
       </motion.span>
       {!hideCount && count > 0 && count}
     </button>

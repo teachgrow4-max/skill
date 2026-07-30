@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage, Button, Input } from "@skilltego/ui";
+import { Send } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage, Input } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Comment } from "@skilltego/types";
 import { addCommentAction, deleteCommentAction, getPostCommentsAction } from "../actions";
@@ -12,6 +13,7 @@ interface CommentThreadProps {
   isLoggedIn: boolean;
   currentUserId: string | null;
   onCountChange: (delta: number) => void;
+  inputId?: string;
 }
 
 function CommentRow({
@@ -64,7 +66,7 @@ function CommentRow({
   );
 }
 
-export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange }: CommentThreadProps) {
+export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange, inputId }: CommentThreadProps) {
   const [comments, setComments] = React.useState<Comment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [body, setBody] = React.useState("");
@@ -162,16 +164,23 @@ export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange
               </button>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Input
+              id={inputId}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder={replyingTo ? `Reply to ${replyingTo.author.fullName}…` : "Write a comment…"}
               maxLength={1000}
+              className="h-11 rounded-full px-4"
             />
-            <Button type="submit" size="sm" disabled={submitting || !body.trim()}>
-              Post
-            </Button>
+            <button
+              type="submit"
+              disabled={submitting || !body.trim()}
+              aria-label="Post comment"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              <Send className="size-4" />
+            </button>
           </div>
         </form>
       ) : (
