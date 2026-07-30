@@ -47,7 +47,7 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
         )}
       >
         {value ? (
-          <Image src={value} alt="" fill className="object-cover" />
+          <Image src={value} alt="" fill quality={90} className="object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <Camera className="size-6" />

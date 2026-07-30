@@ -208,7 +208,7 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
               className="relative aspect-video overflow-hidden rounded-lg bg-muted"
             >
               {item.type === "image" && (
-                <Image src={item.url} alt="" fill className="object-cover" unoptimized={i > 3} />
+                <Image src={item.url} alt="" fill quality={90} className="object-cover" unoptimized={i > 3} />
               )}
               {item.type === "video" && (
                 <video src={item.url} controls className="h-full w-full object-cover" />

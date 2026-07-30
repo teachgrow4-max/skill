@@ -27,7 +27,9 @@ export function ProfileHeader({
   return (
     <div>
       <div className="gradient-hero relative -mx-4 h-48 overflow-hidden rounded-b-3xl shadow-glow-burgundy sm:h-64">
-        {profile.coverUrl && <Image src={profile.coverUrl} alt="" fill className="object-cover" priority />}
+        {profile.coverUrl && (
+          <Image src={profile.coverUrl} alt="" fill quality={90} className="object-cover" priority />
+        )}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 right-0 w-2/3 opacity-50"

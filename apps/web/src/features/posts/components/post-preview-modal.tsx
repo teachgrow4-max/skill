@@ -241,6 +241,7 @@ function PostPreviewContent({
   return (
     <SheetContent
       hideClose
+      style={{ background: "var(--color-card)" }}
       className={cn(
         "flex flex-col gap-0 overflow-hidden p-0",
         "h-[92vh] max-h-[92vh] sm:h-auto sm:max-h-[88vh] sm:max-w-2xl",
@@ -283,6 +284,7 @@ function PostPreviewContent({
                   src={activeMedia.url}
                   alt=""
                   fill
+                  quality={95}
                   sizes="(max-width: 1024px) 100vw, 820px"
                   className="object-contain"
                   onLoad={() => setLoadedSlides((s) => ({ ...s, [activeSlide]: true }))}

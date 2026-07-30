@@ -39,7 +39,7 @@ export function DraftsList({ drafts }: { drafts: Post[] }) {
           <div key={post.id} className="glass flex items-center gap-3 rounded-xl p-3">
             <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
               {thumb ? (
-                <Image src={thumb} alt="" fill sizes="56px" className="object-cover" />
+                <Image src={thumb} alt="" fill quality={90} sizes="56px" className="object-cover" />
               ) : (
                 <span className="flex h-full items-center justify-center p-1 text-center text-[10px] text-muted-foreground">
                   {post.caption?.slice(0, 30) ?? "Draft"}

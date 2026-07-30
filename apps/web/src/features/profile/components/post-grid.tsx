@@ -48,6 +48,7 @@ export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostG
                   src={imageThumb}
                   alt=""
                   fill
+                  quality={90}
                   sizes="(max-width: 640px) 33vw, 220px"
                   className="object-cover transition-transform group-hover:scale-105"
                 />
