@@ -10,19 +10,39 @@ export function SkillCoinsWalletCard({ summary }: SkillCoinsWalletCardProps) {
   const coinsToNextLevel = summary.coinsPerLevel - summary.coinsIntoLevel;
 
   return (
-    <div id="skill-coins-card" className="glass mt-6 scroll-mt-20 overflow-hidden rounded-2xl shadow-sm">
-      <div className="gradient-brand p-6 text-white sm:p-8">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-white/85">
-          <Wallet className="size-4" />
-          Current Balance
+    <div
+      id="skill-coins-card"
+      className="mt-6 scroll-mt-20 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_10px_40px_#00000040]"
+    >
+      <div className="gradient-brand relative overflow-hidden p-6 text-white sm:p-8">
+        {/* subtle diagonal sheen, Apple-Wallet-card style */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.14) 45%, transparent 62%)",
+          }}
+        />
+
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-white/85">
+            <Wallet className="size-4" />
+            Current Balance
+          </div>
+          <span
+            className="flex size-11 items-center justify-center rounded-full text-[#3f3f46] shadow-[0_2px_8px_#0000004d]"
+            style={{ background: "radial-gradient(circle at 35% 30%, #f5f5f5, #d9d9d9 55%, #a1a1aa)" }}
+          >
+            <Coins className="size-5" />
+          </span>
         </div>
-        <div className="mt-2 flex items-end gap-2">
-          <Coins className="size-7" />
+
+        <div className="relative mt-3 flex items-end gap-2">
           <span className="text-4xl font-bold tabular-nums">{summary.balance.toLocaleString()}</span>
           <span className="pb-1 text-sm text-white/85">Skill Coins</span>
         </div>
 
-        <div className="mt-4">
+        <div className="relative mt-4">
           <div className="flex items-center justify-between text-xs text-white/85">
             <span>Level {summary.level}</span>
             <span>

@@ -9,14 +9,17 @@ export function SkillCoinsSummaryCard({ balance }: SkillCoinsSummaryCardProps) {
   return (
     <Link
       href="/skill-coins"
-      className="glass mt-6 flex items-center justify-between gap-3 rounded-2xl p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-5 shadow-[0_10px_40px_#00000026] transition-transform duration-200 hover:-translate-y-0.5"
     >
       <div className="flex items-center gap-3">
-        <span className="gradient-brand flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-glow">
+        <span
+          className="flex size-10 shrink-0 items-center justify-center rounded-full text-[#3f3f46] shadow-[0_2px_8px_#0000004d]"
+          style={{ background: "radial-gradient(circle at 35% 30%, #f5f5f5, #d9d9d9 55%, #a1a1aa)" }}
+        >
           <Coins className="size-5" />
         </span>
         <div>
-          <p className="text-sm font-semibold">🪙 Skill Coins</p>
+          <p className="text-sm font-semibold">Skill Coins</p>
           <p className="text-xs text-muted-foreground">
             Current Balance: {balance.toLocaleString()} Skill Coins
           </p>
