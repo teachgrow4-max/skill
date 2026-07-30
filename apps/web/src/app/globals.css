@@ -2,6 +2,13 @@
 @import "@skilltego/ui/tokens.css";
 @plugin "tailwindcss-animate";
 
+/* Tailwind's automatic content detection doesn't reliably reach sibling
+   workspace packages — without this, only classNames that happen to also
+   appear somewhere in apps/web/src get generated; anything unique to a
+   packages/ui component (e.g. an arbitrary-value class used nowhere else)
+   silently never makes it into the compiled CSS. */
+@source "../../../../packages/ui";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -9,12 +16,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-}
+@layer base {
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  }
 
-* {
-  border-color: var(--color-border);
+  * {
+    border-color: var(--color-border);
+  }
 }
