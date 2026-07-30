@@ -15,7 +15,7 @@ export function PostDetailDialog({ post, isLoggedIn, currentUserId, onOpenChange
   return (
     <Dialog open={post !== null} onOpenChange={onOpenChange}>
       {post && (
-        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto border-0 bg-transparent p-0 shadow-none">
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto border-0 bg-transparent p-0 pt-8 shadow-none">
           <DialogTitle className="sr-only">Post by {post.author.fullName}</DialogTitle>
           <PostCard post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
         </DialogContent>
