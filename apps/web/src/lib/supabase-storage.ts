@@ -10,6 +10,12 @@ export interface StorageUploadResult {
   type: "image" | "video" | "pdf";
 }
 
+export interface VoiceNoteUploadResult {
+  url: string;
+  path: string;
+  type: "audio";
+}
+
 function resolveMediaType(mimeType: string): "image" | "video" | "pdf" {
   if (mimeType.startsWith("image/")) return "image";
   if (mimeType.startsWith("video/")) return "video";
@@ -25,10 +31,10 @@ function extensionFor(file: File): string {
 /**
  * Uploads a file to the public `post-media` Supabase Storage bucket under the
  * signed-in user's own folder (required by the bucket's RLS policies). The
- * `prefix` just labels the filename (post/avatar/cover/resume) — every kind of
- * upload shares the same bucket and policies.
+ * `prefix` just labels the filename (post/avatar/cover/resume/voice) — every
+ * kind of upload shares the same bucket and policies.
  */
-async function uploadToStorage(file: File, prefix: string): Promise<StorageUploadResult> {
+async function uploadToStorage(file: File, prefix: string): Promise<{ url: string; path: string }> {
   if (file.size > MAX_UPLOAD_SIZE_BYTES) {
     throw new Error("File is larger than 25MB.");
   }
@@ -52,17 +58,28 @@ async function uploadToStorage(file: File, prefix: string): Promise<StorageUploa
     data: { publicUrl },
   } = supabase.storage.from(BUCKET).getPublicUrl(path);
 
-  return { url: publicUrl, path, type: resolveMediaType(file.type) };
+  return { url: publicUrl, path };
 }
 
-export function uploadPostMedia(file: File): Promise<StorageUploadResult> {
-  return uploadToStorage(file, "post");
+export async function uploadPostMedia(file: File): Promise<StorageUploadResult> {
+  const { url, path } = await uploadToStorage(file, "post");
+  return { url, path, type: resolveMediaType(file.type) };
 }
 
-export function uploadProfileImage(file: File, kind: "avatar" | "cover"): Promise<StorageUploadResult> {
-  return uploadToStorage(file, kind);
+export async function uploadProfileImage(
+  file: File,
+  kind: "avatar" | "cover",
+): Promise<StorageUploadResult> {
+  const { url, path } = await uploadToStorage(file, kind);
+  return { url, path, type: resolveMediaType(file.type) };
 }
 
-export function uploadResumeFile(file: File): Promise<StorageUploadResult> {
-  return uploadToStorage(file, "resume");
+export async function uploadResumeFile(file: File): Promise<StorageUploadResult> {
+  const { url, path } = await uploadToStorage(file, "resume");
+  return { url, path, type: resolveMediaType(file.type) };
+}
+
+export async function uploadVoiceNote(file: File): Promise<VoiceNoteUploadResult> {
+  const { url, path } = await uploadToStorage(file, "voice");
+  return { url, path, type: "audio" };
 }

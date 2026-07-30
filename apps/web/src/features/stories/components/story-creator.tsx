@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Loader2, X } from "lucide-react";
 import { Button, Input, Textarea } from "@skilltego/ui";
-import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadPostMedia } from "@/lib/supabase-storage";
 import { createStoryAction } from "../actions";
 import type { CreateStoryInput } from "../schema";
 
@@ -33,16 +33,11 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!isCloudinaryConfigured()) {
-      setError("Media upload isn't configured yet — add Cloudinary credentials to .env.local.");
-      return;
-    }
-
     setUploading(true);
     setError(null);
     try {
-      const result = await uploadToCloudinary(file);
-      setMedia({ url: result.url, type: result.resourceType === "video" ? "video" : "image" });
+      const result = await uploadPostMedia(file);
+      setMedia({ url: result.url, type: result.type === "video" ? "video" : "image" });
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
     } finally {
@@ -82,7 +77,7 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="glass w-full max-w-sm rounded-2xl p-4">
+      <div className="glass w-full max-w-sm rounded-2xl p-4" style={{ background: "var(--color-card)" }}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">Create story</h2>
           <button type="button" onClick={onClose} aria-label="Close">

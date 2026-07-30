@@ -4,7 +4,7 @@ import * as React from "react";
 import { Loader2, Mic, Square } from "lucide-react";
 import { Button } from "@skilltego/ui";
 import { cn } from "@skilltego/utils";
-import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadVoiceNote } from "@/lib/supabase-storage";
 
 interface VoiceRecorderButtonProps {
   onRecorded: (attachment: { url: string; type: "audio"; publicId?: string }) => void;
@@ -19,11 +19,6 @@ export function VoiceRecorderButton({ onRecorded }: VoiceRecorderButtonProps) {
 
   async function startRecording() {
     setError(null);
-
-    if (!isCloudinaryConfigured()) {
-      setError("Voice messages need Cloudinary configured — add credentials to .env.local.");
-      return;
-    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -41,8 +36,8 @@ export function VoiceRecorderButton({ onRecorded }: VoiceRecorderButtonProps) {
 
         setUploading(true);
         try {
-          const result = await uploadToCloudinary(file);
-          onRecorded({ url: result.url, type: "audio", publicId: result.publicId });
+          const result = await uploadVoiceNote(file);
+          onRecorded({ url: result.url, type: "audio", publicId: result.path });
         } catch (uploadError) {
           setError(uploadError instanceof Error ? uploadError.message : "Could not send voice note.");
         } finally {
