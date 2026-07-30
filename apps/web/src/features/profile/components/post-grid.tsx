@@ -22,8 +22,11 @@ export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostG
     <>
       <div className="grid grid-cols-3 gap-1.5">
         {posts.map((post) => {
-          const thumb = post.media[0]?.url ?? post.thumbnailUrl;
-          const isVideo = post.media[0]?.type === "video";
+          const firstMedia = post.media[0];
+          const isVideo = firstMedia?.type === "video";
+          // Only an actual image (or a server-generated thumbnail) can be handed to
+          // next/image — the raw video/PDF file URL isn't a renderable picture.
+          const imageThumb = firstMedia?.type === "image" ? firstMedia.url : post.thumbnailUrl;
 
           return (
             <button
@@ -32,9 +35,17 @@ export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostG
               onClick={() => setSelected(post)}
               className="group relative aspect-square overflow-hidden rounded-lg bg-muted transition-shadow hover:shadow-glow"
             >
-              {thumb ? (
+              {isVideo ? (
+                <video
+                  src={firstMedia.url}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+              ) : imageThumb ? (
                 <Image
-                  src={thumb}
+                  src={imageThumb}
                   alt=""
                   fill
                   sizes="(max-width: 640px) 33vw, 220px"
