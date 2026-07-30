@@ -34,7 +34,7 @@ export function BottomNavTabs({ username, fullName, avatarUrl }: BottomNavTabsPr
             key={tab.href}
             href={tab.href}
             className={cn(
-              "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium",
+              "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition-all duration-200 active:scale-90",
               active ? "text-primary" : "text-muted-foreground",
             )}
           >
@@ -47,7 +47,7 @@ export function BottomNavTabs({ username, fullName, avatarUrl }: BottomNavTabsPr
         <Link
           href={profileHref}
           className={cn(
-            "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium",
+            "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium transition-all duration-200 active:scale-90",
             profileActive ? "text-primary" : "text-muted-foreground",
           )}
         >
