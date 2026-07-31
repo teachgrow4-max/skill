@@ -78,7 +78,7 @@ export function ReferralCard({ referralCode, totalReferrals }: ReferralCardProps
         </div>
         <div className="rounded-xl border border-border p-3">
           <p className="text-xs text-muted-foreground">Referral Link</p>
-          <p className="mt-1 truncate font-mono text-sm">{referralLink}</p>
+          <p className="mt-1 break-all font-mono text-sm">{referralLink}</p>
         </div>
       </div>
 
