@@ -7,13 +7,13 @@ export function SidebarBranding() {
   const { collapsed } = useSidebar();
 
   return (
-    <div className={cn("hidden px-4", !collapsed && "xl:block")}>
+    <div className={cn("hidden w-full px-4", !collapsed && "xl:block")}>
       <div className="h-px w-full" style={{ background: "#2a2a2a" }} />
-      <div className="flex flex-col items-center gap-1.5 py-3 text-center">
-        <span className="text-[11px] font-medium leading-none" style={{ color: "#8a8a8a" }}>
+      <div className="flex w-full flex-col items-center gap-1 pb-5 pt-3.5 text-center">
+        <span className="text-[11px] font-medium leading-none" style={{ color: "#9CA3AF" }}>
           Powered by
         </span>
-        <span className="text-xs font-semibold leading-none" style={{ color: "#d9d9d9" }}>
+        <span className="text-[13px] font-semibold leading-none" style={{ color: "#6B7280" }}>
           TeachGrow
         </span>
       </div>
