@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Heart, Lock, MessageCircle, Reply, UserCheck, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
@@ -11,6 +12,7 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "../actions";
+import { useNotificationDeleteSync } from "../hooks/use-notification-delete-sync";
 
 const ICONS = {
   follow: UserPlus,
@@ -48,14 +50,27 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [loaded, setLoaded] = React.useState(false);
+  const [userId, setUserId] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    getNotificationsAction().then(({ notifications: data, unreadCount: count }) => {
+    getNotificationsAction().then(({ notifications: data, unreadCount: count, userId: id }) => {
       setNotifications(data);
       setUnreadCount(count);
+      setUserId(id);
     });
   }, []);
+
+  const handleDeleted = React.useCallback((id: string) => {
+    setNotifications((prev) => {
+      const removed = prev.find((n) => n.id === id);
+      if (!removed) return prev;
+      if (!removed.isRead) setUnreadCount((c) => Math.max(0, c - 1));
+      return prev.filter((n) => n.id !== id);
+    });
+  }, []);
+
+  useNotificationDeleteSync(userId, handleDeleted);
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -70,9 +85,10 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
   async function handleOpen() {
     setOpen((v) => !v);
     if (!loaded) {
-      const { notifications: data, unreadCount: count } = await getNotificationsAction();
+      const { notifications: data, unreadCount: count, userId: id } = await getNotificationsAction();
       setNotifications(data);
       setUnreadCount(count);
+      setUserId(id);
       setLoaded(true);
     }
   }
@@ -134,38 +150,50 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
             <p className="p-4 text-center text-sm text-muted-foreground">No notifications yet.</p>
           )}
 
-          {notifications.map((notification) => {
-            const Icon = ICONS[notification.type];
-            return (
-              <Link
-                key={notification.id}
-                href={targetHref(notification)}
-                onClick={() => handleClickNotification(notification)}
-                className={cn(
-                  "flex items-start gap-2.5 border-b border-border p-3 text-sm hover:bg-accent/50",
-                  !notification.isRead && "bg-accent/20",
-                )}
-              >
-                <Avatar className="size-8">
-                  <AvatarImage
-                    src={notification.actor.avatarUrl ?? undefined}
-                    alt={notification.actor.fullName}
-                  />
-                  <AvatarFallback className="text-xs">{initials(notification.actor.fullName)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p>
-                    <span className="font-medium">{notification.actor.fullName}</span>{" "}
-                    {LABELS[notification.type]}
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {formatRelativeTime(notification.createdAt)}
-                  </p>
-                </div>
-                <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-              </Link>
-            );
-          })}
+          <AnimatePresence initial={false}>
+            {notifications.map((notification) => {
+              const Icon = ICONS[notification.type];
+              return (
+                <motion.div
+                  key={notification.id}
+                  layout
+                  initial={false}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <Link
+                    href={targetHref(notification)}
+                    onClick={() => handleClickNotification(notification)}
+                    className={cn(
+                      "flex items-start gap-2.5 border-b border-border p-3 text-sm hover:bg-accent/50",
+                      !notification.isRead && "bg-accent/20",
+                    )}
+                  >
+                    <Avatar className="size-8">
+                      <AvatarImage
+                        src={notification.actor.avatarUrl ?? undefined}
+                        alt={notification.actor.fullName}
+                      />
+                      <AvatarFallback className="text-xs">
+                        {initials(notification.actor.fullName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p>
+                        <span className="font-medium">{notification.actor.fullName}</span>{" "}
+                        {LABELS[notification.type]}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatRelativeTime(notification.createdAt)}
+                      </p>
+                    </div>
+                    <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
           {notifications.length > 0 && (
             <Link

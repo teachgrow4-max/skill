@@ -15,12 +15,13 @@ import type { Notification } from "@skilltego/types";
 export async function getNotificationsAction(): Promise<{
   notifications: Notification[];
   unreadCount: number;
+  userId: string | null;
 }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { notifications: [], unreadCount: 0 };
+  if (!user) return { notifications: [], unreadCount: 0, userId: null };
 
   const [rows, unreadCount] = await Promise.all([
     getNotifications(supabase, user.id),
@@ -35,7 +36,7 @@ export async function getNotificationsAction(): Promise<{
     .filter((row) => actorMap.has(row.actor_id))
     .map((row) => toNotification(row, actorMap.get(row.actor_id)!));
 
-  return { notifications, unreadCount };
+  return { notifications, unreadCount, userId: user.id };
 }
 
 export async function markNotificationReadAction(notificationId: string): Promise<void> {
