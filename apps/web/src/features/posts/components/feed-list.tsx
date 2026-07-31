@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@skilltego/utils";
 import { getFeedAction, type FeedMode } from "../actions";
+import { usePostDeleteSync } from "../hooks/use-post-delete-sync";
 import { PostCard } from "./post-card";
 import { PostCardSkeleton } from "./post-card-skeleton";
 
@@ -23,7 +24,10 @@ interface FeedListProps {
 
 export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListProps) {
   const [mode, setMode] = React.useState<FeedMode>(defaultMode ?? (isLoggedIn ? "following" : "latest"));
+  const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
   const loadMoreRef = React.useRef<HTMLDivElement>(null);
+
+  usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["feed", mode],
@@ -49,7 +53,7 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const posts = data?.pages.flatMap((page) => page.posts) ?? [];
+  const posts = (data?.pages.flatMap((page) => page.posts) ?? []).filter((post) => !deletedIds.has(post.id));
 
   return (
     <div className="grid gap-4">

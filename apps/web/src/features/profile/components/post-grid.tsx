@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, MessageCircle, PlayCircle } from "lucide-react";
 import type { Post } from "@skilltego/types";
 import { PostPreviewModal } from "@/features/posts/components/post-preview-modal";
+import { usePostDeleteSync } from "@/features/posts/hooks/use-post-delete-sync";
 
 interface PostGridProps {
   posts: Post[];
@@ -15,13 +16,21 @@ interface PostGridProps {
 
 export function PostGrid({ posts, isLoggedIn, currentUserId, emptyState }: PostGridProps) {
   const [selected, setSelected] = React.useState<Post | null>(null);
+  const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
 
-  if (posts.length === 0) return <>{emptyState}</>;
+  usePostDeleteSync((id) => {
+    setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+    setSelected((current) => (current?.id === id ? null : current));
+  });
+
+  const visiblePosts = posts.filter((post) => !deletedIds.has(post.id));
+
+  if (visiblePosts.length === 0) return <>{emptyState}</>;
 
   return (
     <>
       <div className="grid grid-cols-3 gap-1.5">
-        {posts.map((post) => {
+        {visiblePosts.map((post) => {
           const firstMedia = post.media[0];
           const isVideo = firstMedia?.type === "video";
           // Only an actual image (or a server-generated thumbnail) can be handed to

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Archive,
@@ -36,6 +37,7 @@ interface PostCardProps {
 
 export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [showComments, setShowComments] = React.useState(false);
   const [commentCount, setCommentCount] = React.useState(post.commentCount);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -55,7 +57,11 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   async function handleDelete() {
     if (!confirm("Delete this post? This can't be undone.")) return;
     const result = await deletePostAction(post.id);
-    if (result.success) router.refresh();
+    if (result.success) {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["reels"] });
+      router.refresh();
+    }
   }
 
   async function handleToggleArchive() {
@@ -63,6 +69,8 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
     const result = await toggleArchivePostAction(post.id);
     if (result.success && result.data) {
       setIsArchived(result.data.isArchived);
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["reels"] });
       router.refresh();
     }
   }

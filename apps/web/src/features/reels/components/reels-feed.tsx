@@ -4,6 +4,7 @@ import * as React from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { getReelsAction } from "@/features/posts/actions";
+import { usePostDeleteSync } from "@/features/posts/hooks/use-post-delete-sync";
 import { ReelPlayer } from "./reel-player";
 
 export function ReelsFeed({
@@ -14,7 +15,10 @@ export function ReelsFeed({
   currentUserId: string | null;
 }) {
   const [muted, setMuted] = React.useState(true);
+  const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
   const loadMoreRef = React.useRef<HTMLDivElement>(null);
+
+  usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["reels"],
@@ -36,7 +40,7 @@ export function ReelsFeed({
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const posts = data?.pages.flatMap((page) => page.posts) ?? [];
+  const posts = (data?.pages.flatMap((page) => page.posts) ?? []).filter((post) => !deletedIds.has(post.id));
 
   if (isLoading) {
     return (

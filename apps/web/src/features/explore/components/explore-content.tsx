@@ -8,6 +8,7 @@ import { skillCategories } from "@skilltego/config";
 import { initials } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { PostCard } from "@/features/posts/components/post-card";
+import { usePostDeleteSync } from "@/features/posts/hooks/use-post-delete-sync";
 import { searchAction, type SearchResults } from "@/features/search/actions";
 
 interface ExploreContentProps {
@@ -23,6 +24,9 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
   const [results, setResults] = React.useState<SearchResults | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [tab, setTab] = React.useState<"people" | "posts">("people");
+  const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
+
+  usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
 
   const trimmed = query.trim();
 
@@ -31,6 +35,15 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
   const people = React.useMemo(
     () => results?.profiles.filter((profile) => profile.id !== currentUserId) ?? [],
     [results, currentUserId],
+  );
+
+  const visibleTrendingPosts = React.useMemo(
+    () => trendingPosts.filter((post) => !deletedIds.has(post.id)),
+    [trendingPosts, deletedIds],
+  );
+  const visibleResultPosts = React.useMemo(
+    () => (results?.posts ?? []).filter((post) => !deletedIds.has(post.id)),
+    [results, deletedIds],
   );
 
   React.useEffect(() => {
@@ -77,10 +90,10 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
           <div>
             <h2 className="mb-3 text-lg font-semibold">Trending this week</h2>
             <div className="grid gap-4">
-              {trendingPosts.length === 0 && (
+              {visibleTrendingPosts.length === 0 && (
                 <p className="text-sm text-muted-foreground">Nothing trending yet.</p>
               )}
-              {trendingPosts.map((post) => (
+              {visibleTrendingPosts.map((post) => (
                 <PostCard key={post.id} post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
               ))}
             </div>
@@ -98,7 +111,7 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
                   tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent/50"
                 }`}
               >
-                {t} {results && `(${t === "people" ? people.length : results.posts.length})`}
+                {t} {results && `(${t === "people" ? people.length : visibleResultPosts.length})`}
               </button>
             ))}
           </div>
@@ -141,8 +154,8 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
 
           {!loading && results && tab === "posts" && (
             <div className="grid gap-4">
-              {results.posts.length === 0 && <p className="text-sm text-muted-foreground">No posts found.</p>}
-              {results.posts.map((post) => (
+              {visibleResultPosts.length === 0 && <p className="text-sm text-muted-foreground">No posts found.</p>}
+              {visibleResultPosts.map((post) => (
                 <PostCard key={post.id} post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
               ))}
             </div>
