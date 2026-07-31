@@ -11,13 +11,19 @@ import { createClient } from "@/lib/supabase/browser";
 export function useNotificationDeleteSync(userId: string | null, onDeleted: (id: string) => void) {
   const onDeletedRef = React.useRef(onDeleted);
   onDeletedRef.current = onDeleted;
+  const instanceId = React.useId();
 
   React.useEffect(() => {
     if (!userId) return;
 
     const supabase = createClient();
+    // The browser client is a shared singleton (@supabase/ssr memoizes it), and
+    // NotificationBell mounts more than once at a time (desktop sidebar + mobile
+    // top bar). A channel name shared across those instances makes realtime-js
+    // reuse the same channel object, and a second .subscribe() on it throws —
+    // so the name is scoped per hook instance instead of just per user.
     const channel = supabase
-      .channel(`notifications-delete:${userId}`)
+      .channel(`notifications-delete:${userId}:${instanceId}`)
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
@@ -31,5 +37,5 @@ export function useNotificationDeleteSync(userId: string | null, onDeleted: (id:
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, instanceId]);
 }
