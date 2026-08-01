@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Skilltego</string>
+    <string name="title_activity_main">Skilltego</string>
+    <string name="package_name">com.skilltego.app</string>
+    <string name="custom_url_scheme">com.skilltego.app</string>
+</resources>

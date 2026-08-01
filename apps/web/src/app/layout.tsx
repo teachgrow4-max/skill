@@ -36,6 +36,11 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [siteConfig.ogImage],
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: siteConfig.name,
+  },
 };
 
 // viewportFit "cover" lets fixed-position elements (bottom nav, FAB) read
@@ -44,6 +49,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
