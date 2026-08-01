@@ -11,9 +11,16 @@ export function CtaBanner() {
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Join Skilltego and start building a profile that actually shows what you can do.
           </p>
-          <Button asChild size="lg" className="mt-8">
-            <Link href="/signup">Create your profile</Link>
-          </Button>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg">
+              <Link href="/signup">Create your profile</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <a href="/downloads/skilltego.apk" download>
+                Download for Android
+              </a>
+            </Button>
+          </div>
         </div>
       </FadeIn>
     </section>
