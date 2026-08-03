@@ -85,10 +85,15 @@ export async function compressVideoToLimit(
     await ffmpeg.exec([
       "-i",
       inputName,
+      // Downscale before encoding so there are fewer pixels to compress — this is
+      // usually the biggest speed lever for phone-recorded (1440p/4K) source video,
+      // and also gives the target bitrate a much easier job (better quality per bit).
+      "-vf",
+      "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease",
       "-c:v",
       "libx264",
       "-preset",
-      "veryfast",
+      "ultrafast",
       "-b:v",
       `${videoBitrate}`,
       "-maxrate",
