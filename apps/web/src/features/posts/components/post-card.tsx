@@ -46,7 +46,14 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   const [isPinned, setIsPinned] = React.useState(post.isPinned);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const likeButtonRef = React.useRef<LikeButtonHandle>(null);
+  const videoRefs = React.useRef<Record<number, HTMLVideoElement | null>>({});
   const isOwner = currentUserId === post.author.id;
+
+  function handleVideoPlay(index: number) {
+    for (const [key, el] of Object.entries(videoRefs.current)) {
+      if (Number(key) !== index && el && !el.paused) el.pause();
+    }
+  }
 
   function handleDoubleTapLike() {
     likeButtonRef.current?.like();
@@ -219,7 +226,15 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
                 <Image src={item.url} alt="" fill quality={90} className="object-cover" unoptimized={i > 3} />
               )}
               {item.type === "video" && (
-                <video src={item.url} controls className="h-full w-full object-cover" />
+                <video
+                  ref={(el) => {
+                    videoRefs.current[i] = el;
+                  }}
+                  src={item.url}
+                  controls
+                  onPlay={() => handleVideoPlay(i)}
+                  className="h-full w-full object-cover"
+                />
               )}
               {item.type === "pdf" && (
                 <a
