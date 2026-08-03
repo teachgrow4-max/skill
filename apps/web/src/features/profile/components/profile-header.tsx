@@ -1,7 +1,19 @@
+"use client";
+
+import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, Camera, Coins, Flame, Globe, Lock, MapPin, Pencil, TrendingUp } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@skilltego/ui";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import type { Profile } from "@skilltego/types";
 import type { FollowState } from "../social-actions";
@@ -24,11 +36,20 @@ export function ProfileHeader({
   isLoggedIn,
   viewerFollowState,
 }: ProfileHeaderProps) {
+  const [lightbox, setLightbox] = React.useState<{ url: string; alt: string } | null>(null);
+
   return (
     <div>
       <div className="gradient-hero relative -mx-4 h-48 overflow-hidden rounded-b-3xl shadow-glow-burgundy sm:h-64">
         {profile.coverUrl && (
-          <Image src={profile.coverUrl} alt="" fill quality={90} className="object-cover" priority />
+          <button
+            type="button"
+            onClick={() => setLightbox({ url: profile.coverUrl!, alt: `${profile.fullName}'s cover photo` })}
+            aria-label="View cover photo"
+            className="absolute inset-0 size-full cursor-zoom-in border-0 bg-transparent p-0"
+          >
+            <Image src={profile.coverUrl} alt="" fill quality={90} className="object-cover" priority />
+          </button>
         )}
         <div
           aria-hidden
@@ -45,10 +66,23 @@ export function ProfileHeader({
       <div className="pb-6">
         <div className="-mt-16 flex items-end justify-between sm:-mt-20">
           <div className="group relative shrink-0">
-            <Avatar className="ring-gradient-brand size-28 border-4 border-background shadow-glow transition-transform duration-300 group-hover:scale-105 sm:size-32">
-              <AvatarImage src={profile.avatarUrl ?? undefined} alt={profile.fullName} />
-              <AvatarFallback className="text-3xl">{initials(profile.fullName)}</AvatarFallback>
-            </Avatar>
+            {profile.avatarUrl ? (
+              <button
+                type="button"
+                onClick={() => setLightbox({ url: profile.avatarUrl!, alt: profile.fullName })}
+                aria-label="View profile photo"
+                className="block cursor-zoom-in rounded-full border-0 bg-transparent p-0"
+              >
+                <Avatar className="ring-gradient-brand size-28 border-4 border-background shadow-glow transition-transform duration-300 group-hover:scale-105 sm:size-32">
+                  <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+                  <AvatarFallback className="text-3xl">{initials(profile.fullName)}</AvatarFallback>
+                </Avatar>
+              </button>
+            ) : (
+              <Avatar className="ring-gradient-brand size-28 border-4 border-background shadow-glow transition-transform duration-300 group-hover:scale-105 sm:size-32">
+                <AvatarFallback className="text-3xl">{initials(profile.fullName)}</AvatarFallback>
+              </Avatar>
+            )}
             {isOwnProfile && (
               <Link
                 href="/profile/edit"
@@ -155,6 +189,20 @@ export function ProfileHeader({
           </div>
         )}
       </div>
+
+      <Dialog open={lightbox !== null} onOpenChange={(open) => !open && setLightbox(null)}>
+        <DialogContent className="flex max-h-[85vh] w-auto max-w-[92vw] items-center justify-center p-2 sm:max-w-2xl lg:max-w-3xl">
+          <DialogTitle className="sr-only">{lightbox?.alt ?? "Photo"}</DialogTitle>
+          {lightbox && (
+            // eslint-disable-next-line @next/next/no-img-element -- arbitrary aspect ratio, viewed at natural size
+            <img
+              src={lightbox.url}
+              alt={lightbox.alt}
+              className="max-h-[80vh] max-w-full rounded-xl object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
