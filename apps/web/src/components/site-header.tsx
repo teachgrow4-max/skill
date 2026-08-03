@@ -42,7 +42,7 @@ export async function SiteHeader() {
             className="rounded-lg"
             priority
           />
-          {siteConfig.name}
+          <span className="hidden sm:inline">{siteConfig.name}</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
@@ -53,7 +53,7 @@ export async function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           {profile ? (
             <>
@@ -67,10 +67,10 @@ export async function SiteHeader() {
             </>
           ) : (
             <>
-              <Button asChild variant="ghost">
+              <Button asChild variant="ghost" className="h-9 px-2.5 sm:h-10 sm:px-4">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="h-9 px-3 sm:h-10 sm:px-4">
                 <Link href="/signup">Sign up</Link>
               </Button>
             </>
