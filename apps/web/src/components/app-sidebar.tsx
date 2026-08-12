@@ -33,14 +33,16 @@ export async function AppSidebar() {
 
   return (
     <SidebarFrame>
-      <Link href="/feed" className="flex items-center gap-2 px-4 py-6">
-        <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" priority />
-        <SidebarLabel className="text-gradient-brand text-lg font-black tracking-tight">
-          {siteConfig.name}
-        </SidebarLabel>
-      </Link>
+      <div className="px-4 pb-3 pt-6">
+        <Link href="/feed" className="flex items-center gap-2">
+          <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" priority />
+          <SidebarLabel className="text-gradient-brand text-lg font-black tracking-tight">
+            {siteConfig.name}
+          </SidebarLabel>
+        </Link>
 
-      <SidebarBranding />
+        <SidebarBranding />
+      </div>
 
       <nav className="grid gap-1 px-3">
         <div className="flex items-center gap-3 rounded-xl px-1 py-1 text-muted-foreground">
