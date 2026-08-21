@@ -40,3 +40,49 @@ jobs:
         with:
           name: skilltego-debug-apk
           path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+  # Manual-only: produces the signed .aab Play Console requires (the debug APK
+  # above isn't signed and can't be uploaded there). Needs these repo secrets:
+  # ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+  # ANDROID_KEY_PASSWORD.
+  build-release-bundle:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Sync Capacitor Android project
+        working-directory: apps/mobile
+        run: npx cap sync android
+
+      - name: Decode release keystore
+        working-directory: apps/mobile/android/app
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > skilltego-release.keystore
+
+      - name: Build signed release bundle
+        working-directory: apps/mobile/android
+        env:
+          ANDROID_KEYSTORE_PATH: app/skilltego-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --console=plain
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skilltego-release-bundle
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
