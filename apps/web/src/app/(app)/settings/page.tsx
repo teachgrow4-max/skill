@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Lock, Palette } from "lucide-react";
+import { ChevronRight, Lock, Palette, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PushNotificationToggle } from "@/features/push/components/push-notification-toggle";
 
@@ -46,6 +46,20 @@ export default function SettingsPage() {
           <div>
             <p className="text-sm font-medium">Help & Support</p>
             <p className="text-xs text-muted-foreground">FAQs and ways to reach us.</p>
+          </div>
+          <ChevronRight className="size-4 text-muted-foreground" />
+        </Link>
+
+        <Link
+          href="/settings/delete-account"
+          className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-accent/40"
+        >
+          <div className="flex items-center gap-3">
+            <Trash2 className="size-4 text-destructive" />
+            <div>
+              <p className="text-sm font-medium text-destructive">Delete Account</p>
+              <p className="text-xs text-muted-foreground">Permanently delete your account and all your data.</p>
+            </div>
           </div>
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
