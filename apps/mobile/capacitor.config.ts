@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.skilltego.app",
+  appId: "teachgrow.Skilltego.com",
   appName: "Skilltego",
   webDir: "www",
   server: {

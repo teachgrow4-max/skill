@@ -11,7 +11,7 @@ android {
     namespace = "com.skilltego.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.skilltego.app"
+        applicationId "teachgrow.Skilltego.com"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
