@@ -1,11 +1,18 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { PostComposerDialog } from "./post-composer-dialog";
 
 export function CreatePostFab() {
   const [open, setOpen] = React.useState(false);
+  const pathname = usePathname();
+
+  // Only the Home feed — elsewhere it either has nothing to do (Explore,
+  // Reels, …) or collides with a page's own bottom controls (a chat's Send
+  // button sits in the same corner as this FAB).
+  if (pathname !== "/feed") return null;
 
   return (
     <>
