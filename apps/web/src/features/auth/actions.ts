@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -25,5 +26,17 @@ export async function deleteAccountAction(): Promise<ActionResult> {
   if (error) return { success: false, error: error.message };
 
   await supabase.auth.signOut();
+  (await cookies()).delete("onboarding_done");
   return { success: true };
+}
+
+/**
+ * Clears the "onboarding done" cookie set by saveProfileAction — httpOnly, so
+ * only a server action can remove it. Must run on logout: otherwise a second
+ * user signing in on the same browser would inherit the first user's cookie
+ * and skip the mandatory onboarding check in middleware.
+ */
+export async function clearOnboardingCookieAction(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete("onboarding_done");
 }

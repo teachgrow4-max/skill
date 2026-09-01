@@ -79,7 +79,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 
-  if (user && pathname !== "/onboarding" && !isAlwaysPublic && !pathname.startsWith("/api")) {
+  // onboarding_completed rarely changes (it's set once, permanently, when
+  // onboarding finishes — see saveProfileAction), so a DB round-trip on every
+  // single request to check it was pure added latency for almost every page
+  // load. The "onboarding_done" cookie (set at that same moment) lets nearly
+  // all requests skip straight past this block instead.
+  if (
+    user &&
+    pathname !== "/onboarding" &&
+    !isAlwaysPublic &&
+    !pathname.startsWith("/api") &&
+    !request.cookies.get("onboarding_done")
+  ) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("onboarding_completed")
@@ -88,6 +99,16 @@ export async function updateSession(request: NextRequest) {
 
     if (profile && !profile.onboarding_completed) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+
+    if (profile?.onboarding_completed) {
+      response.cookies.set("onboarding_done", "1", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+        maxAge: 60 * 60 * 24 * 365,
+        path: "/",
+      });
     }
   }
 

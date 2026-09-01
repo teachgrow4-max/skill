@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import {
   claimCompleteProfileBonus,
@@ -205,6 +206,19 @@ export async function saveProfileAction(
     }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+
+  if (options?.completeOnboarding) {
+    // Lets middleware skip the onboarding_completed DB lookup on every request
+    // once it's known to be true — see updateSession in lib/supabase/middleware.ts.
+    const cookieStore = await cookies();
+    cookieStore.set("onboarding_done", "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+    });
   }
 
   return { success: true, username: values.username, coinsAwarded: coinsAwarded || undefined };

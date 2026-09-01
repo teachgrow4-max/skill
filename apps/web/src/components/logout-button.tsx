@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { signOut } from "@skilltego/auth";
 import { createClient } from "@/lib/supabase/browser";
+import { clearOnboardingCookieAction } from "@/features/auth/actions";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export function LogoutButton() {
   async function handleLogout() {
     setPending(true);
     const supabase = createClient();
-    await signOut(supabase);
+    await Promise.all([signOut(supabase), clearOnboardingCookieAction()]);
     router.push("/");
     router.refresh();
   }
