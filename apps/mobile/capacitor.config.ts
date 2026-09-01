@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Skilltego",
   webDir: "www",
   server: {
-    url: "https://web-lac-phi-87.vercel.app",
+    url: "https://www.skilltego.com",
     androidScheme: "https",
     cleartext: false,
     allowNavigation: ["*.supabase.co"],
