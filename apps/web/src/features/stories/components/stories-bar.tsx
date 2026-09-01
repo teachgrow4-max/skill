@@ -39,30 +39,25 @@ export function StoriesBar({ currentUserId }: { currentUserId: string | null }) 
 
   return (
     <div className="glass flex gap-4 overflow-x-auto rounded-xl p-4">
-      <button
-        type="button"
-        onClick={handleMyStoryClick}
-        className="flex shrink-0 flex-col items-center gap-1"
-      >
+      <div className="flex shrink-0 flex-col items-center gap-1">
         <div className="relative">
-          {myGroup ? (
-            <div className={cn("rounded-full p-0.5", myGroup.allViewed ? "bg-border" : "gradient-brand")}>
-              <Avatar className="size-14 border-2 border-background">
-                <AvatarImage src={myGroup.author.avatarUrl ?? undefined} alt={myGroup.author.fullName} />
-                <AvatarFallback className="text-xs">{initials(myGroup.author.fullName)}</AvatarFallback>
-              </Avatar>
-            </div>
-          ) : (
-            <div className="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-border text-muted-foreground">
-              <Plus className="size-5" />
-            </div>
-          )}
+          <button type="button" onClick={handleMyStoryClick} aria-label={myGroup ? "View your story" : "Create a story"}>
+            {myGroup ? (
+              <div className={cn("rounded-full p-0.5", myGroup.allViewed ? "bg-border" : "gradient-brand")}>
+                <Avatar className="size-14 border-2 border-background">
+                  <AvatarImage src={myGroup.author.avatarUrl ?? undefined} alt={myGroup.author.fullName} />
+                  <AvatarFallback className="text-xs">{initials(myGroup.author.fullName)}</AvatarFallback>
+                </Avatar>
+              </div>
+            ) : (
+              <div className="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-border text-muted-foreground">
+                <Plus className="size-5" />
+              </div>
+            )}
+          </button>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setCreatorOpen(true);
-            }}
+            onClick={() => setCreatorOpen(true)}
             aria-label="Add to story"
             className="gradient-brand absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-background text-white"
           >
@@ -70,7 +65,7 @@ export function StoriesBar({ currentUserId }: { currentUserId: string | null }) 
           </button>
         </div>
         <span className="text-[11px] text-muted-foreground">Your story</span>
-      </button>
+      </div>
 
       {otherGroups.map((group) => (
         <button
