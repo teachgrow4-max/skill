@@ -5,10 +5,12 @@ import { Capacitor } from "@capacitor/core";
 import { signInWithOAuth, type OAuthProvider } from "@skilltego/auth";
 import { Button } from "@skilltego/ui";
 import { createClient } from "@/lib/supabase/browser";
+import { NATIVE_OAUTH_REDIRECT_STORAGE_KEY } from "@/providers/native-oauth-callback";
 
 // Must match the intent-filter scheme in AndroidManifest.xml and be registered
-// as a Redirect URL in the Supabase dashboard. See native-oauth-callback.tsx for
-// why native builds need a different callback target than the website does.
+// as a Redirect URL in the Supabase dashboard, exactly, with no query string —
+// see native-oauth-callback.tsx for why the redirect target isn't passed as a
+// query param here.
 const NATIVE_OAUTH_SCHEME = "teachgrow.skilltego.com";
 
 const PROVIDERS: { id: OAuthProvider; label: string; icon: React.ReactNode }[] = [
@@ -44,8 +46,12 @@ export function OAuthButtons({ redirectTo = "/feed" }: { redirectTo?: string }) 
   async function handleClick(provider: OAuthProvider) {
     setLoadingProvider(provider);
     const supabase = createClient();
-    const callbackUrl = Capacitor.isNativePlatform()
-      ? `${NATIVE_OAUTH_SCHEME}://auth-callback?redirectTo=${encodeURIComponent(redirectTo)}`
+    const isNative = Capacitor.isNativePlatform();
+    if (isNative) {
+      localStorage.setItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY, redirectTo);
+    }
+    const callbackUrl = isNative
+      ? `${NATIVE_OAUTH_SCHEME}://auth-callback`
       : `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`;
     const { error } = await signInWithOAuth(supabase, provider, callbackUrl);
     if (error) {
