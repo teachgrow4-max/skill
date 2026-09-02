@@ -23,54 +23,27 @@ export const NATIVE_OAUTH_REDIRECT_STORAGE_KEY = "skilltego:native-oauth-redirec
  * that return trip and finishes the PKCE exchange using the same WebView that
  * started it, since the code_verifier Supabase needs lives in its local storage.
  */
-// TEMPORARY: on-screen debug trail — logcat doesn't surface this WebView's
-// console output on the device this was debugged on (no devtools socket
-// either, since the debug APK doesn't have web contents debugging enabled),
-// so console.log was invisible. Remove once the native return-trip is
-// confirmed working end-to-end.
-function debugLine(text: string) {
-  let el = document.getElementById("__native_oauth_debug__");
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "__native_oauth_debug__";
-    el.style.cssText =
-      "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#c00;color:#fff;font:11px monospace;padding:6px;white-space:pre-wrap;max-height:40vh;overflow:auto;";
-    document.body.appendChild(el);
-  }
-  el.textContent += `${new Date().toISOString().slice(11, 19)} ${text}\n`;
-}
-
 export function NativeOAuthCallback() {
   React.useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    debugLine(`mounted, registering listener`);
 
     const listenerPromise = CapacitorApp.addListener("appUrlOpen", (event: URLOpenListenerEvent) => {
-      debugLine(`appUrlOpen: ${event.url}`);
       void (async () => {
         try {
           const url = new URL(event.url);
           const code = url.searchParams.get("code");
-          debugLine(`code present: ${Boolean(code)}`);
           if (!code) return;
 
           const redirectTo = localStorage.getItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY) ?? "/feed";
           localStorage.removeItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY);
           const supabase = createClient();
-          debugLine(`exchanging code...`);
           const { error } = await supabase.auth.exchangeCodeForSession(code);
-          debugLine(`exchange error: ${error?.message ?? "none"}`);
           window.location.href = error ? "/auth/auth-code-error" : redirectTo;
-        } catch (err) {
-          debugLine(`THREW: ${err instanceof Error ? err.message : String(err)}`);
+        } catch {
+          window.location.href = "/auth/auth-code-error";
         }
       })();
     });
-
-    listenerPromise.then(
-      () => debugLine(`listener registered ok`),
-      (err) => debugLine(`listener registration FAILED: ${err instanceof Error ? err.message : String(err)}`),
-    );
 
     return () => {
       listenerPromise.then((listener) => listener.remove());
