@@ -26,18 +26,33 @@ export const NATIVE_OAUTH_REDIRECT_STORAGE_KEY = "skilltego:native-oauth-redirec
 export function NativeOAuthCallback() {
   React.useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
+    console.log("[native-oauth] listener registering");
 
-    const listenerPromise = CapacitorApp.addListener("appUrlOpen", async (event: URLOpenListenerEvent) => {
-      const url = new URL(event.url);
-      const code = url.searchParams.get("code");
-      if (!code) return;
+    const listenerPromise = CapacitorApp.addListener("appUrlOpen", (event: URLOpenListenerEvent) => {
+      console.log("[native-oauth] appUrlOpen fired", event.url);
+      void (async () => {
+        try {
+          const url = new URL(event.url);
+          const code = url.searchParams.get("code");
+          console.log("[native-oauth] parsed code present?", Boolean(code));
+          if (!code) return;
 
-      const redirectTo = localStorage.getItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY) ?? "/feed";
-      localStorage.removeItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY);
-      const supabase = createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      window.location.href = error ? "/auth/auth-code-error" : redirectTo;
+          const redirectTo = localStorage.getItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY) ?? "/feed";
+          localStorage.removeItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY);
+          const supabase = createClient();
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          console.log("[native-oauth] exchangeCodeForSession error?", error?.message ?? null);
+          window.location.href = error ? "/auth/auth-code-error" : redirectTo;
+        } catch (err) {
+          console.error("[native-oauth] handler threw", err);
+        }
+      })();
     });
+
+    listenerPromise.then(
+      () => console.log("[native-oauth] listener registered"),
+      (err) => console.error("[native-oauth] listener registration failed", err),
+    );
 
     return () => {
       listenerPromise.then((listener) => listener.remove());
