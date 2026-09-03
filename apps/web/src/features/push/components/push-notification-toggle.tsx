@@ -92,7 +92,7 @@ export function PushNotificationToggle() {
   if (!supported) return null;
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+    <div className="glass flex items-center justify-between rounded-xl p-4 shadow-sm">
       <div>
         <p className="text-sm font-medium">Push notifications</p>
         <p className="text-xs text-muted-foreground">

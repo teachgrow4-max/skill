@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@skilltego/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors",
+  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all duration-200",
   {
     variants: {
       variant: {
@@ -13,6 +13,8 @@ const badgeVariants = cva(
         success: "border-transparent bg-success/15 text-success",
         warning: "border-transparent bg-warning/20 text-warning",
         destructive: "border-transparent bg-destructive/15 text-destructive",
+        glass: "glass border-transparent px-3 py-1.5 font-semibold shadow-sm hover:scale-105",
+        gradient: "gradient-brand border-transparent px-3 py-1.5 font-semibold text-white shadow-glow",
       },
     },
     defaultVariants: {

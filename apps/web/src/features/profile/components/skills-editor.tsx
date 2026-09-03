@@ -1,9 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { useFieldArray, type Control, type UseFormRegister, type FieldErrors } from "react-hook-form";
+import { Controller, useFieldArray, type Control, type UseFormRegister, type FieldErrors } from "react-hook-form";
 import { skillCategories } from "@skilltego/config";
-import { Button, Input } from "@skilltego/ui";
+import {
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@skilltego/ui";
 import { X } from "lucide-react";
 import { PROFICIENCY_OPTIONS, type ProfileFormValues } from "../schema";
 
@@ -25,7 +35,7 @@ export function SkillsEditor({ control, register, errors }: SkillsEditorProps) {
       {fields.map((field, index) => (
         <div
           key={field.id}
-          className="grid grid-cols-[1fr_1fr_1fr_auto] items-start gap-2 rounded-lg border border-border p-3"
+          className="glass grid grid-cols-[1fr_1fr_1fr_auto] items-start gap-2 rounded-xl p-3"
         >
           <div className="grid gap-1">
             <Input placeholder="Skill name" {...register(`skills.${index}.skillName` as const)} />
@@ -34,32 +44,48 @@ export function SkillsEditor({ control, register, errors }: SkillsEditorProps) {
             )}
           </div>
 
-          <select
-            className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-            {...register(`skills.${index}.category` as const)}
-          >
-            <option value="">Category</option>
-            {skillCategories.map((category) => (
-              <optgroup key={category.slug} label={category.name}>
-                {category.subcategories.map((sub) => (
-                  <option key={sub} value={sub}>
-                    {sub}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name={`skills.${index}.category` as const}
+            render={({ field: categoryField }) => (
+              <Select value={categoryField.value} onValueChange={categoryField.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {skillCategories.map((category) => (
+                    <SelectGroup key={category.slug}>
+                      <SelectLabel>{category.name}</SelectLabel>
+                      {category.subcategories.map((sub) => (
+                        <SelectItem key={sub} value={sub}>
+                          {sub}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
 
-          <select
-            className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-            {...register(`skills.${index}.proficiency` as const)}
-          >
-            {PROFICIENCY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name={`skills.${index}.proficiency` as const}
+            render={({ field: proficiencyField }) => (
+              <Select value={proficiencyField.value} onValueChange={proficiencyField.onChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFICIENCY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
 
           <Button
             type="button"

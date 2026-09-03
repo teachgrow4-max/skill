@@ -6,13 +6,16 @@ import { PushNotificationToggle } from "@/features/push/components/push-notifica
 
 export const metadata: Metadata = { title: "Settings" };
 
+const rowClass =
+  "glass flex items-center justify-between rounded-xl p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow";
+
 export default function SettingsPage() {
   return (
     <div className="grid gap-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
 
       <div className="grid gap-3">
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div className={rowClass}>
           <div className="flex items-center gap-3">
             <Palette className="size-4 text-muted-foreground" />
             <div>
@@ -25,10 +28,7 @@ export default function SettingsPage() {
 
         <PushNotificationToggle />
 
-        <Link
-          href="/settings/privacy"
-          className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-accent/40"
-        >
+        <Link href="/settings/privacy" className={rowClass}>
           <div className="flex items-center gap-3">
             <Lock className="size-4 text-muted-foreground" />
             <div>
@@ -39,10 +39,7 @@ export default function SettingsPage() {
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
 
-        <Link
-          href="/help"
-          className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-accent/40"
-        >
+        <Link href="/help" className={rowClass}>
           <div>
             <p className="text-sm font-medium">Help & Support</p>
             <p className="text-xs text-muted-foreground">FAQs and ways to reach us.</p>
@@ -50,10 +47,7 @@ export default function SettingsPage() {
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
 
-        <Link
-          href="/settings/delete-account"
-          className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-accent/40"
-        >
+        <Link href="/settings/delete-account" className={rowClass}>
           <div className="flex items-center gap-3">
             <Trash2 className="size-4 text-destructive" />
             <div>

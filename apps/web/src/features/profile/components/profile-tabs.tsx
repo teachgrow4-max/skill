@@ -7,15 +7,17 @@ import type { ReactNode } from "react";
 
 interface ProfileTabsProps {
   postsTab: ReactNode;
+  reelsTab?: ReactNode;
   savedTab?: ReactNode;
   badgesTab: ReactNode;
 }
 
-export function ProfileTabs({ postsTab, savedTab, badgesTab }: ProfileTabsProps) {
+export function ProfileTabs({ postsTab, reelsTab, savedTab, badgesTab }: ProfileTabsProps) {
   const [active, setActive] = React.useState("posts");
 
   const tabs = [
     { value: "posts", label: "Posts" },
+    ...(reelsTab ? [{ value: "reels", label: "Reels" }] : []),
     ...(savedTab ? [{ value: "saved", label: "Saved" }] : []),
     { value: "badges", label: "Badges" },
   ];
@@ -39,6 +41,11 @@ export function ProfileTabs({ postsTab, savedTab, badgesTab }: ProfileTabsProps)
       <TabsContent value="posts" className="mt-4">
         {postsTab}
       </TabsContent>
+      {reelsTab && (
+        <TabsContent value="reels" className="mt-4">
+          {reelsTab}
+        </TabsContent>
+      )}
       {savedTab && (
         <TabsContent value="saved" className="mt-4">
           {savedTab}

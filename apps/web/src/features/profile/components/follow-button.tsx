@@ -10,6 +10,7 @@ interface FollowButtonProps {
   targetUsername: string;
   initialState: FollowState;
   isLoggedIn: boolean;
+  targetIsPrivate?: boolean;
 }
 
 const LABELS: Record<FollowState, string> = {
@@ -23,10 +24,10 @@ export function FollowButton({
   targetUsername,
   initialState,
   isLoggedIn,
+  targetIsPrivate = false,
 }: FollowButtonProps) {
   const router = useRouter();
   const [state, setState] = React.useState<FollowState>(initialState);
-  const [pending, setPending] = React.useState(false);
 
   async function handleClick() {
     if (!isLoggedIn) {
@@ -34,19 +35,25 @@ export function FollowButton({
       return;
     }
 
-    setPending(true);
+    const previous = state;
+    // Unfollowing always lands on "none"; following optimistically guesses
+    // "requested" vs "following" from the target's privacy — the server
+    // result (below) corrects this in the rare case it's wrong.
+    const optimistic: FollowState = previous === "none" ? (targetIsPrivate ? "requested" : "following") : "none";
+    setState(optimistic);
+
     const result = await toggleFollowAction(targetProfileId, targetUsername);
-    setPending(false);
 
     if (result.success && result.state) {
       setState(result.state);
-      router.refresh();
+    } else {
+      setState(previous);
     }
   }
 
   return (
-    <Button variant={state === "none" ? "default" : "outline"} disabled={pending} onClick={handleClick}>
-      {pending ? "…" : LABELS[state]}
+    <Button variant={state === "none" ? "default" : "outline"} onClick={handleClick}>
+      {LABELS[state]}
     </Button>
   );
 }

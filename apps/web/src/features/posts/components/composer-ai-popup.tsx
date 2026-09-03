@@ -120,7 +120,7 @@ export function ComposerAiPopup({ values, setValue }: ComposerAiPopupProps) {
         <button
           type="button"
           aria-label="AI writing tools"
-          className="flex size-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm transition-colors hover:text-primary"
+          className="flex size-10 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm transition-colors hover:text-primary"
         >
           <Sparkles className="size-4" />
         </button>

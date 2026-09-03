@@ -30,10 +30,7 @@ export function ProfileStatsBar({
           key={stat.label}
           className="flex flex-col items-center gap-1.5 rounded-xl px-1 py-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50"
         >
-          <span
-            className="flex size-8 items-center justify-center rounded-full text-[#3f3f46] sm:size-9"
-            style={{ background: "radial-gradient(circle at 35% 30%, #f5f5f5, #d9d9d9 55%, #a1a1aa)" }}
-          >
+          <span className="gradient-premium flex size-8 items-center justify-center rounded-full text-premium-foreground sm:size-9">
             <stat.icon className="size-4" />
           </span>
           <span className="text-base font-bold tabular-nums sm:text-lg">{stat.value.toLocaleString()}</span>

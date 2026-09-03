@@ -7,12 +7,7 @@ import { Bell, Heart, Lock, MessageCircle, Reply, UserCheck, UserPlus } from "lu
 import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Notification } from "@skilltego/types";
-import {
-  getNotificationsAction,
-  markAllNotificationsReadAction,
-  markNotificationReadAction,
-} from "../actions";
-import { useNotificationDeleteSync } from "../hooks/use-notification-delete-sync";
+import { useNotifications } from "@/providers/notifications-provider";
 
 const ICONS = {
   follow: UserPlus,
@@ -47,30 +42,8 @@ interface NotificationBellProps {
 
 export function NotificationBell({ align = "right" }: NotificationBellProps) {
   const [open, setOpen] = React.useState(false);
-  const [notifications, setNotifications] = React.useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = React.useState(0);
-  const [loaded, setLoaded] = React.useState(false);
-  const [userId, setUserId] = React.useState<string | null>(null);
+  const { notifications, unreadCount, markAllRead, markRead } = useNotifications();
   const containerRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    getNotificationsAction().then(({ notifications: data, unreadCount: count, userId: id }) => {
-      setNotifications(data);
-      setUnreadCount(count);
-      setUserId(id);
-    });
-  }, []);
-
-  const handleDeleted = React.useCallback((id: string) => {
-    setNotifications((prev) => {
-      const removed = prev.find((n) => n.id === id);
-      if (!removed) return prev;
-      if (!removed.isRead) setUnreadCount((c) => Math.max(0, c - 1));
-      return prev.filter((n) => n.id !== id);
-    });
-  }, []);
-
-  useNotificationDeleteSync(userId, handleDeleted);
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -82,28 +55,13 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  async function handleOpen() {
+  function handleOpen() {
     setOpen((v) => !v);
-    if (!loaded) {
-      const { notifications: data, unreadCount: count, userId: id } = await getNotificationsAction();
-      setNotifications(data);
-      setUnreadCount(count);
-      setUserId(id);
-      setLoaded(true);
-    }
-  }
-
-  async function handleMarkAllRead() {
-    setUnreadCount(0);
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    await markAllNotificationsReadAction();
   }
 
   async function handleClickNotification(notification: Notification) {
     if (!notification.isRead) {
-      setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)));
-      setUnreadCount((c) => Math.max(0, c - 1));
-      await markNotificationReadAction(notification.id);
+      await markRead(notification.id);
     }
     setOpen(false);
   }
@@ -138,7 +96,7 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
             {unreadCount > 0 && (
               <button
                 type="button"
-                onClick={handleMarkAllRead}
+                onClick={markAllRead}
                 className="text-xs text-primary hover:underline"
               >
                 Mark all read

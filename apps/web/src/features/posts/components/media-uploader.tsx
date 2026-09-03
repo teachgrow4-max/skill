@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { FileText, RefreshCw, UploadCloud, Video, X } from "lucide-react";
+import { Camera, FileText, RefreshCw, UploadCloud, Video, X } from "lucide-react";
 import { cn } from "@skilltego/utils";
 import { MAX_UPLOAD_SIZE_BYTES, uploadPostMedia } from "@/lib/supabase-storage";
 import { MAX_COMPRESSIBLE_SOURCE_BYTES, compressVideoToLimit } from "@/lib/video-compress";
@@ -30,6 +30,7 @@ function formatBytes(bytes: number): string {
 
 export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const cameraInputRef = React.useRef<HTMLInputElement>(null);
   const replaceIndexRef = React.useRef<number | null>(null);
   const [pending, setPending] = React.useState<PendingUpload[]>([]);
   const [meta, setMeta] = React.useState<Record<string, { name: string; size: number }>>({});
@@ -188,7 +189,7 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
                   <button
                     type="button"
                     onClick={() => removeAt(index)}
-                    className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
                     aria-label="Remove"
                   >
                     <X className="size-3.5" />
@@ -241,29 +242,41 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
       )}
 
       {!atLimit && (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={cn(
-            "flex flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed p-10 text-center transition-all",
-            dragActive ? "scale-[1.01] border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-accent/30",
-          )}
-        >
-          <div className="flex size-12 items-center justify-center rounded-full bg-accent text-primary">
-            <UploadCloud className="size-6" />
-          </div>
-          <div className="text-sm">
-            <span className="font-semibold text-foreground">Drag & drop</span>
-            <span className="text-muted-foreground"> or </span>
-            <span className="font-semibold text-primary">browse files</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Images, videos, or PDFs · up to 25MB (larger videos are compressed automatically) · up to {maxItems} files
-          </p>
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-secondary/60 py-3 text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:bg-accent"
+          >
+            <Camera className="size-4" />
+            Take a photo or video
+          </button>
+
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "flex flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed p-10 text-center transition-all",
+              dragActive ? "scale-[1.01] border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-accent/30",
+            )}
+          >
+            <div className="flex size-12 items-center justify-center rounded-full bg-accent text-primary">
+              <UploadCloud className="size-6" />
+            </div>
+            <div className="text-sm">
+              <span className="font-semibold text-foreground">Drag & drop</span>
+              <span className="text-muted-foreground"> or </span>
+              <span className="font-semibold text-primary">browse files</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Images, videos, or PDFs · up to 25MB (larger videos are compressed automatically) · up to{" "}
+              {maxItems} files
+            </p>
+          </button>
+        </>
       )}
 
       <input
@@ -271,6 +284,14 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
         type="file"
         accept="image/*,video/*,application/pdf"
         multiple
+        className="hidden"
+        onChange={handleInputChange}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
         className="hidden"
         onChange={handleInputChange}
       />

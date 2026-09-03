@@ -12,8 +12,10 @@ import {
 } from "@skilltego/database";
 import { EmptyState } from "@skilltego/ui";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/get-current-user";
 import { getProfilePostsAction, getBookmarkedPostsAction } from "@/features/posts/actions";
 import { getFollowStateAction } from "@/features/profile/social-actions";
+import { getProfileChangeStatusAction } from "@/features/profile/actions";
 import { getMentorAvailabilityAction, getMentorReviewsAction } from "@/features/mentorship/actions";
 import { BookingWidget } from "@/features/mentorship/components/booking-widget";
 import { MentorReviews } from "@/features/mentorship/components/mentor-reviews";
@@ -60,9 +62,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const profileRow = await getProfileByUsername(supabase, username);
   if (!profileRow) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   const isOwnProfile = user?.id === profileRow.id;
 
@@ -80,7 +80,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const profile = toProfile(profileRow, skills);
   const canViewContent = isOwnProfile || !profile.isPrivate || viewerFollowState === "following";
 
-  const [{ posts }, savedPosts, badges, skillCoinSummary] = await Promise.all([
+  const [{ posts }, savedPosts, badges, skillCoinSummary, changeStatus] = await Promise.all([
     canViewContent
       ? getProfilePostsAction(profile.id, null)
       : Promise.resolve({ posts: [], nextCursor: null }),
@@ -91,6 +91,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     getMyBadgesAction(profile.id),
     // Skill Coins balance/referral/history are personal — only ever the viewer's own.
     isOwnProfile ? getSkillCoinSummaryAction() : Promise.resolve(null),
+    isOwnProfile ? getProfileChangeStatusAction() : Promise.resolve(undefined),
   ]);
 
   const isMentor = profile.accountType === "mentor";
@@ -107,6 +108,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         isOwnProfile={isOwnProfile}
         isLoggedIn={Boolean(user)}
         viewerFollowState={viewerFollowState}
+        changeStatus={changeStatus}
       />
 
       {canViewContent && (
@@ -163,6 +165,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 />
               }
             />
+          }
+          reelsTab={
+            posts.some((post) => post.type === "video") ? (
+              <PostGrid
+                posts={posts.filter((post) => post.type === "video")}
+                isLoggedIn={Boolean(user)}
+                currentUserId={user?.id ?? null}
+                emptyState={<EmptyState title="No reels yet" description="Video posts will show up here." />}
+              />
+            ) : undefined
           }
           savedTab={
             isOwnProfile ? (

@@ -1,20 +1,15 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { getProfileById } from "@skilltego/database";
 import { siteConfig } from "@skilltego/config";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/supabase/get-current-user";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { ProfileMenu } from "./profile-menu";
 
 export async function AppTopBar() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const profile = user ? await getProfileById(supabase, user.id) : null;
+  const profile = await getCurrentProfile();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl md:hidden">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-xl md:hidden">
       <Link href="/feed" className="text-gradient-brand text-lg font-black tracking-tight">
         {siteConfig.name}
       </Link>

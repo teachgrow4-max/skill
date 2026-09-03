@@ -3,13 +3,12 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, Camera, Coins, Flame, Globe, Lock, MapPin, Pencil, TrendingUp } from "lucide-react";
+import { BadgeCheck, Camera, Coins, Flame, Globe, Lock, MapPin, TrendingUp } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
   Badge,
-  Button,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -17,6 +16,8 @@ import {
 import { initials } from "@skilltego/utils";
 import type { Profile } from "@skilltego/types";
 import type { FollowState } from "../social-actions";
+import type { ProfileChangeStatus } from "../actions";
+import { EditProfileSheet } from "./edit-profile-sheet";
 import { FollowButton } from "./follow-button";
 import { MessageButton } from "@/features/messaging/components/message-button";
 import { ReportButton } from "@/features/reports/components/report-button";
@@ -27,6 +28,7 @@ interface ProfileHeaderProps {
   isOwnProfile: boolean;
   isLoggedIn: boolean;
   viewerFollowState: FollowState;
+  changeStatus?: ProfileChangeStatus;
 }
 
 export function ProfileHeader({
@@ -35,6 +37,7 @@ export function ProfileHeader({
   isOwnProfile,
   isLoggedIn,
   viewerFollowState,
+  changeStatus,
 }: ProfileHeaderProps) {
   const [lightbox, setLightbox] = React.useState<{ url: string; alt: string } | null>(null);
 
@@ -95,15 +98,7 @@ export function ProfileHeader({
           </div>
 
           {isOwnProfile ? (
-            <Button
-              asChild
-              className="gradient-brand rounded-full text-white shadow-glow transition-transform hover:-translate-y-0.5 hover:shadow-glow-orange"
-            >
-              <Link href="/profile/edit">
-                <Pencil className="size-4" />
-                Edit profile
-              </Link>
-            </Button>
+            changeStatus && <EditProfileSheet profile={profile} changeStatus={changeStatus} />
           ) : (
             <div className="flex gap-2">
               <MessageButton targetUserId={profile.id} isLoggedIn={isLoggedIn} />
@@ -112,6 +107,7 @@ export function ProfileHeader({
                 targetUsername={profile.username}
                 initialState={viewerFollowState}
                 isLoggedIn={isLoggedIn}
+                targetIsPrivate={profile.isPrivate}
               />
             </div>
           )}
@@ -129,31 +125,26 @@ export function ProfileHeader({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="gradient-brand rounded-full px-3 py-1.5 text-xs font-semibold text-white shadow-glow">
-            {accountTypeLabel}
-          </span>
-          <span className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-transform hover:scale-105">
+          <Badge variant="gradient">{accountTypeLabel}</Badge>
+          <Badge variant="glass">
             <TrendingUp className="size-3.5 text-primary" />
             Level {profile.level}
-          </span>
-          <Badge
-            variant="warning"
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs shadow-sm transition-transform hover:scale-105"
-          >
+          </Badge>
+          <Badge variant="warning" className="rounded-full px-3 py-1.5 shadow-sm transition-transform hover:scale-105">
             <Coins className="size-3.5" />
             {profile.skillCoins.toLocaleString()} Skill Coins
           </Badge>
           {profile.streakCount > 0 && (
-            <span className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-transform hover:scale-105">
+            <Badge variant="glass">
               <Flame className="size-3.5 text-secondary" />
               {profile.streakCount} day streak
-            </span>
+            </Badge>
           )}
           {profile.isPrivate && (
-            <span className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-transform hover:scale-105">
+            <Badge variant="glass">
               <Lock className="size-3.5" />
               Private
-            </span>
+            </Badge>
           )}
         </div>
 

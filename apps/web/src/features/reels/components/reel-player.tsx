@@ -66,7 +66,7 @@ export function ReelPlayer({ post, isLoggedIn, currentUserId, muted, onToggleMut
   return (
     <div
       ref={containerRef}
-      className="relative flex h-[calc(100dvh-9rem)] w-full snap-start items-center justify-center overflow-hidden rounded-2xl bg-black md:h-[calc(100dvh-3rem)]"
+      className="relative flex h-[calc(100dvh-9rem)] w-full snap-start snap-always items-center justify-center overflow-hidden rounded-2xl bg-black md:h-[calc(100dvh-3rem)]"
     >
       <video
         ref={videoRef}

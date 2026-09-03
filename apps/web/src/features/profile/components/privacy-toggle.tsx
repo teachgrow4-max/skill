@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { Switch } from "@skilltego/ui";
 import { updateAccountPrivacyAction } from "../actions";
 
 export function PrivacyToggle({ initialIsPrivate }: { initialIsPrivate: boolean }) {
@@ -22,18 +23,12 @@ export function PrivacyToggle({ initialIsPrivate }: { initialIsPrivate: boolean 
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+    <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
       <div>
         <p className="text-sm font-medium">Private account</p>
         <p className="text-xs text-muted-foreground">Only approved followers can see your posts and stories.</p>
       </div>
-      <input
-        type="checkbox"
-        className="size-5"
-        checked={isPrivate}
-        disabled={pending}
-        onChange={(e) => handleChange(e.target.checked)}
-      />
+      <Switch checked={isPrivate} disabled={pending} onCheckedChange={handleChange} />
     </div>
   );
 }

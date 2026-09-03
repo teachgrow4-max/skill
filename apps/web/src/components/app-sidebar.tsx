@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getProfileById } from "@skilltego/database";
 import { DASHBOARD_ACCOUNT_TYPES, siteConfig } from "@skilltego/config";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/supabase/get-current-user";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { NavLink } from "./app-nav-links";
 import { PRIMARY_NAV, type NavLinkItem } from "./app-nav-items";
@@ -13,12 +12,7 @@ import { SidebarLabel } from "./sidebar-label";
 import { ThemeToggle } from "./theme-toggle";
 
 export async function AppSidebar() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const profile = user ? await getProfileById(supabase, user.id) : null;
+  const profile = await getCurrentProfile();
   const showDashboard =
     profile && (DASHBOARD_ACCOUNT_TYPES as readonly string[]).includes(profile.account_type);
   const showModeration =

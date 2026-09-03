@@ -3,9 +3,20 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Input, Label, Textarea } from "@skilltego/ui";
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+  Textarea,
+} from "@skilltego/ui";
 import type { Profile } from "@skilltego/types";
 import { uploadResumeFile } from "@/lib/supabase-storage";
 import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
@@ -21,13 +32,15 @@ interface ProfileFormProps {
   profile: Profile;
   mode: "onboarding" | "edit";
   changeStatus?: ProfileChangeStatus;
+  /** Called right after a successful save, before the router navigates — lets a Sheet-embedded form close itself. */
+  onSaved?: () => void;
 }
 
 function formatChangeDate(iso: string): string {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date(iso));
 }
 
-export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
+export function ProfileForm({ profile, mode, changeStatus, onSaved }: ProfileFormProps) {
   const router = useRouter();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [uploadingResume, setUploadingResume] = React.useState(false);
@@ -127,12 +140,14 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
         subtitle: "Profile completed!",
       });
       window.setTimeout(() => {
+        onSaved?.();
         router.push(`/profile/${result.username}`);
         router.refresh();
       }, 1200);
       return;
     }
 
+    onSaved?.();
     router.push(`/profile/${result.username}`);
     router.refresh();
   }
@@ -204,17 +219,24 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
 
       <div className="grid gap-1.5">
         <Label htmlFor="accountType">I am a</Label>
-        <select
-          id="accountType"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          {...register("accountType")}
-        >
-          {ACCOUNT_TYPE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <Controller
+          control={control}
+          name="accountType"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="accountType">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ACCOUNT_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
       </div>
 
       <div className="grid gap-1.5">
@@ -291,17 +313,23 @@ export function ProfileForm({ profile, mode, changeStatus }: ProfileFormProps) {
       </div>
 
       {mode === "onboarding" ? (
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
           <div>
             <Label htmlFor="isPrivate">Private account</Label>
             <p className="text-xs text-muted-foreground">
               Only approved followers can see your posts and stories.
             </p>
           </div>
-          <input id="isPrivate" type="checkbox" className="size-5" {...register("isPrivate")} />
+          <Controller
+            control={control}
+            name="isPrivate"
+            render={({ field }) => (
+              <Switch id="isPrivate" checked={field.value} onCheckedChange={field.onChange} />
+            )}
+          />
         </div>
       ) : (
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
           <div>
             <Label>Privacy</Label>
             <p className="text-xs text-muted-foreground">Manage whether your account is public or private.</p>

@@ -12,3 +12,5 @@ export * from "./components/tabs";
 export * from "./components/empty-state";
 export * from "./components/popover";
 export * from "./components/sheet";
+export * from "./components/select";
+export * from "./components/switch";

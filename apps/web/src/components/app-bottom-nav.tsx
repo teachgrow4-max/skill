@@ -1,13 +1,8 @@
-import { getProfileById } from "@skilltego/database";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/supabase/get-current-user";
 import { BottomNavTabs } from "./bottom-nav-tabs";
 
 export async function AppBottomNav() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const profile = user ? await getProfileById(supabase, user.id) : null;
+  const profile = await getCurrentProfile();
 
   return (
     <BottomNavTabs

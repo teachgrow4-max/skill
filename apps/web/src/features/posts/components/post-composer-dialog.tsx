@@ -5,7 +5,22 @@ import { useRouter } from "next/navigation";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, EyeOff, Globe, MapPin, Settings2, X } from "lucide-react";
-import { Button, Input, Sheet, SheetContent, SheetTitle, Textarea } from "@skilltego/ui";
+import {
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  Switch,
+  Textarea,
+} from "@skilltego/ui";
 import { skillCategories } from "@skilltego/config";
 import { cn } from "@skilltego/utils";
 import { trackEvent } from "@/providers/posthog-provider";
@@ -262,27 +277,31 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
                     >
                       <div className="grid gap-4 border-t border-border px-4 py-4">
                         <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="relative">
-                            <select
-                              className="h-11 w-full appearance-none rounded-xl border border-input bg-background px-3 pr-8 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              {...register("skillCategory")}
-                            >
-                              <option value="">Category (optional)</option>
-                              {skillCategories.map((category) => (
-                                <optgroup
-                                  key={category.slug}
-                                  label={`${CATEGORY_ICON[category.slug] ?? "🏷️"} ${category.name}`}
-                                >
-                                  {category.subcategories.map((sub) => (
-                                    <option key={sub} value={sub}>
-                                      {sub}
-                                    </option>
+                          <Controller
+                            name="skillCategory"
+                            control={control}
+                            render={({ field }) => (
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className="h-11 rounded-xl">
+                                  <SelectValue placeholder="Category (optional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {skillCategories.map((category) => (
+                                    <SelectGroup key={category.slug}>
+                                      <SelectLabel>
+                                        {CATEGORY_ICON[category.slug] ?? "🏷️"} {category.name}
+                                      </SelectLabel>
+                                      {category.subcategories.map((sub) => (
+                                        <SelectItem key={sub} value={sub}>
+                                          {sub}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
                                   ))}
-                                </optgroup>
-                              ))}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                          </div>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
 
                           <div className="relative">
                             <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -300,15 +319,19 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
                           render={({ field }) => <TagsInput value={field.value} onChange={field.onChange} />}
                         />
 
-                        <label className="flex w-fit items-center gap-2 text-sm text-muted-foreground">
-                          <input
-                            type="checkbox"
-                            className="size-4 accent-primary"
-                            {...register("hideLikeCount")}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <EyeOff className="size-3.5" />
+                            Hide like count on this post
+                          </span>
+                          <Controller
+                            name="hideLikeCount"
+                            control={control}
+                            render={({ field }) => (
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            )}
                           />
-                          <EyeOff className="size-3.5" />
-                          Hide like count on this post
-                        </label>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -319,27 +342,30 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
             </div>
 
             {/* Sticky footer */}
-            <div className="flex shrink-0 flex-col-reverse items-stretch gap-3 border-t border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <div className="grid shrink-0 gap-3 border-t border-border px-6 py-4 sm:px-8">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Globe className="size-3.5" />
                 Anyone who can see your profile can view this
               </span>
-              <div className="flex items-center justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isSubmitting || !canSubmit}
-                  onClick={handleSaveDraft}
-                >
-                  Save as draft
-                </Button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex items-center justify-center gap-2 sm:order-first">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isSubmitting || !canSubmit}
+                    onClick={handleSaveDraft}
+                  >
+                    Save as draft
+                  </Button>
+                </div>
                 <Button
                   type="submit"
                   disabled={isSubmitting || !canSubmit}
-                  className="gradient-brand border-0 text-primary-foreground shadow-glow"
+                  className="w-full gradient-brand border-0 text-primary-foreground shadow-glow sm:w-fit"
                 >
                   {isSubmitting ? "Posting…" : "Publish post"}
                 </Button>
