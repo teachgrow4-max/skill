@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
 import { initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { ReportButton } from "@/features/reports/components/report-button";
+import { useActiveVideoStore } from "@/lib/active-video-store";
 import { deletePostAction, toggleArchivePostAction, togglePinPostAction } from "../actions";
 import { LikeButton, type LikeButtonHandle } from "./like-button";
 import { SaveButton } from "./save-button";
@@ -48,12 +49,27 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   const likeButtonRef = React.useRef<LikeButtonHandle>(null);
   const videoRefs = React.useRef<Record<number, HTMLVideoElement | null>>({});
   const isOwner = currentUserId === post.author.id;
+  const setActiveVideo = useActiveVideoStore((s) => s.setActive);
+  const activeVideoId = useActiveVideoStore((s) => s.activeId);
+
+  const videoId = React.useCallback((index: number) => `${post.id}:${index}`, [post.id]);
 
   function handleVideoPlay(index: number) {
     for (const [key, el] of Object.entries(videoRefs.current)) {
       if (Number(key) !== index && el && !el.paused) el.pause();
     }
+    setActiveVideo(videoId(index));
   }
+
+  // Claiming on play (above) only stops this post's OWN other videos —
+  // without this, tapping play here then playing a reel (or a video in a
+  // different post) wouldn't pause this one, since each PostCard only ever
+  // tracked its own local video refs.
+  React.useEffect(() => {
+    for (const [key, el] of Object.entries(videoRefs.current)) {
+      if (el && !el.paused && activeVideoId !== videoId(Number(key))) el.pause();
+    }
+  }, [activeVideoId, videoId]);
 
   function handleDoubleTapLike() {
     likeButtonRef.current?.like();

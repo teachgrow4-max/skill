@@ -5,7 +5,13 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { getReelsAction } from "@/features/posts/actions";
 import { usePostDeleteSync } from "@/features/posts/hooks/use-post-delete-sync";
+import { useActiveVideoStore } from "@/lib/active-video-store";
 import { ReelPlayer } from "./reel-player";
+
+// Only reels within this many positions of the currently-playing one keep a
+// mounted <video> element — everything further away shows just its poster,
+// so a long scroll session doesn't accumulate dozens of live decoders.
+const LOAD_WINDOW = 1;
 
 export function ReelsFeed({
   isLoggedIn,
@@ -41,6 +47,8 @@ export function ReelsFeed({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const posts = (data?.pages.flatMap((page) => page.posts) ?? []).filter((post) => !deletedIds.has(post.id));
+  const activeVideoId = useActiveVideoStore((s) => s.activeId);
+  const activeIndex = posts.findIndex((post) => post.id === activeVideoId);
 
   if (isLoading) {
     return (
@@ -61,7 +69,7 @@ export function ReelsFeed({
   return (
     <div className="scrollbar-none h-[calc(100dvh-9rem)] snap-y snap-mandatory overflow-y-auto md:h-[calc(100dvh-3rem)]">
       <div className="grid gap-3">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <ReelPlayer
             key={post.id}
             post={post}
@@ -69,6 +77,7 @@ export function ReelsFeed({
             currentUserId={currentUserId}
             muted={muted}
             onToggleMute={() => setMuted((m) => !m)}
+            shouldLoadVideo={activeIndex === -1 ? index <= LOAD_WINDOW : Math.abs(index - activeIndex) <= LOAD_WINDOW}
           />
         ))}
         <div ref={loadMoreRef} className="flex justify-center py-4">

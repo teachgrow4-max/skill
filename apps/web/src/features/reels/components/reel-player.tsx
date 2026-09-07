@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, Bookmark, Heart, MessageCircle, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@skilltego/ui";
@@ -8,6 +9,7 @@ import { cn, initials } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { toggleLikeAction, toggleSaveAction } from "@/features/posts/actions";
 import { CommentThread } from "@/features/posts/components/comment-thread";
+import { useActiveVideoStore } from "@/lib/active-video-store";
 
 interface ReelPlayerProps {
   post: Post;
@@ -15,9 +17,18 @@ interface ReelPlayerProps {
   currentUserId: string | null;
   muted: boolean;
   onToggleMute: () => void;
+  /** False for reels scrolled far from view — releases the <video> element (and its decoder/buffer) entirely, keeping just the poster. */
+  shouldLoadVideo: boolean;
 }
 
-export function ReelPlayer({ post, isLoggedIn, currentUserId, muted, onToggleMute }: ReelPlayerProps) {
+export function ReelPlayer({
+  post,
+  isLoggedIn,
+  currentUserId,
+  muted,
+  onToggleMute,
+  shouldLoadVideo,
+}: ReelPlayerProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isLiked, setIsLiked] = React.useState(post.isLiked);
@@ -25,25 +36,44 @@ export function ReelPlayer({ post, isLoggedIn, currentUserId, muted, onToggleMut
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
   const [showComments, setShowComments] = React.useState(false);
   const [commentCount, setCommentCount] = React.useState(post.commentCount);
+  const setActiveVideo = useActiveVideoStore((s) => s.setActive);
+  const activeVideoId = useActiveVideoStore((s) => s.activeId);
 
+  // Observes the container (not the <video> itself) so scrolling toward a
+  // reel whose video isn't mounted yet still promotes it into view — see the
+  // windowing logic in ReelsFeed, which mounts shouldLoadVideo based on
+  // proximity to whichever post this effect claims as active.
   React.useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          video.play().catch(() => {});
-        } else {
-          video.pause();
+          setActiveVideo(post.id);
+        } else if (videoRef.current) {
+          videoRef.current.pause();
         }
       },
       { threshold: 0.6 },
     );
 
-    observer.observe(video);
+    observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [post.id, setActiveVideo]);
+
+  // Only the claimed video actually plays — this is what makes cross-component
+  // exclusivity (a reel vs. a video a user tapped play on in a post card)
+  // actually guaranteed, rather than just an emergent side effect of layout.
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (activeVideoId === post.id) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [activeVideoId, post.id, shouldLoadVideo]);
 
   async function handleLike() {
     const next = !isLiked;
@@ -68,17 +98,26 @@ export function ReelPlayer({ post, isLoggedIn, currentUserId, muted, onToggleMut
       ref={containerRef}
       className="relative flex h-[calc(100dvh-9rem)] w-full snap-start snap-always items-center justify-center overflow-hidden rounded-2xl bg-black md:h-[calc(100dvh-3rem)]"
     >
-      <video
-        ref={videoRef}
-        src={post.media[0]?.url}
-        poster={post.thumbnailUrl ?? undefined}
-        preload="metadata"
-        loop
-        muted={muted}
-        playsInline
-        className="h-full w-full object-contain"
-        onClick={() => (videoRef.current?.paused ? videoRef.current.play() : videoRef.current?.pause())}
-      />
+      {shouldLoadVideo ? (
+        <video
+          ref={videoRef}
+          src={post.media[0]?.url}
+          poster={post.thumbnailUrl ?? undefined}
+          preload="metadata"
+          loop
+          muted={muted}
+          playsInline
+          className="h-full w-full object-contain"
+          onClick={() => (videoRef.current?.paused ? videoRef.current.play() : videoRef.current?.pause())}
+        />
+      ) : post.thumbnailUrl ? (
+        // Scrolled far enough away that the <video> element (and its decoder/
+        // buffer) is unmounted entirely — just the poster stays, at effectively
+        // no cost, so scrolling back doesn't show a blank frame while it reloads.
+        <Image src={post.thumbnailUrl} alt="" fill className="object-contain" unoptimized />
+      ) : (
+        <div className="h-full w-full bg-black" />
+      )}
 
       <button
         type="button"
