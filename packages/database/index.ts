@@ -18,6 +18,7 @@ export * from "./repositories/admin-repository";
 export * from "./repositories/story-repository";
 export * from "./repositories/gamification-repository";
 export * from "./repositories/push-repository";
+export * from "./storage/media-cleanup";
 export * from "./mappers/profile-mapper";
 export * from "./mappers/post-mapper";
 export * from "./mappers/messaging-mapper";

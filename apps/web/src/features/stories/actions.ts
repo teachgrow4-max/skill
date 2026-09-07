@@ -3,18 +3,22 @@
 import { revalidatePath } from "next/cache";
 import {
   createStory,
+  deleteStories,
   deleteStory,
   getActiveStoriesForAuthors,
+  getExpiredStories,
   getFollowingIds,
   getProfilesByIds,
   getStoryById,
   getStoryResponses,
   getStoryViewerIds,
   recordStoryView,
+  removeStorageObjectsByUrl,
   submitStoryResponse,
   toAuthorSummary,
 } from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { hydrateStoryGroups } from "./service";
 import { createStorySchema, type CreateStoryInput } from "./schema";
 import type { AuthorSummary, StoryGroup, StoryResponseRow } from "@skilltego/types";
@@ -25,12 +29,35 @@ export interface ActionResult<T = undefined> {
   data?: T;
 }
 
+// Stories carry an expires_at, but nothing ever actually deletes an expired
+// row or its media file — "expired" only ever meant "filtered out of query
+// results". Every story ever posted was piling up in Storage forever. There's
+// no cron/worker in this app, so instead this piggybacks on the one action
+// that's called on essentially every feed load, cleaning up a small batch
+// each time. Uses the service-role client since it needs to remove other
+// users' expired stories, not just the caller's own.
+async function sweepExpiredStories(): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const expired = await getExpiredStories(admin, cutoff, 25);
+    if (expired.length === 0) return;
+
+    await deleteStories(admin, expired.map((story) => story.id));
+    await removeStorageObjectsByUrl(admin, expired.map((story) => story.media_url));
+  } catch (error) {
+    console.error("Expired story sweep failed:", error);
+  }
+}
+
 export async function getStoriesFeedAction(): Promise<StoryGroup[]> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
+
+  await sweepExpiredStories();
 
   const followingIds = await getFollowingIds(supabase, user.id);
   const authorIds = [...new Set([user.id, ...followingIds])];
@@ -84,6 +111,7 @@ export async function deleteStoryAction(storyId: string): Promise<ActionResult> 
   try {
     await deleteStory(supabase, storyId);
     revalidatePath("/feed");
+    await removeStorageObjectsByUrl(supabase, [story.media_url]);
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not delete story." };

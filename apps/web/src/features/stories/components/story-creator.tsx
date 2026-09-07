@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button, Input, Sheet, SheetContent, SheetTitle, Textarea } from "@skilltego/ui";
 import { cn } from "@skilltego/utils";
-import { uploadPostMedia } from "@/lib/supabase-storage";
+import { uploadStoryMedia } from "@/lib/supabase-storage";
 import { createStoryAction } from "../actions";
 import type { CreateStoryInput } from "../schema";
 
@@ -51,7 +51,7 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
     setUploading(true);
     setError(null);
     try {
-      const result = await uploadPostMedia(file);
+      const result = await uploadStoryMedia(file);
       setMedia({ url: result.url, type: result.type === "video" ? "video" : "image" });
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");

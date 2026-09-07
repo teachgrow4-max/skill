@@ -8,6 +8,7 @@ import {
   getProfileById,
   isUsernameAvailable,
   recordFieldChange,
+  removeStorageObjectsByUrl,
   replaceProfileSkills,
   updateProfile,
 } from "@skilltego/database";
@@ -188,6 +189,16 @@ export async function saveProfileAction(
       is_private: values.isPrivate,
       onboarding_completed: options?.completeOnboarding ? true : current.onboarding_completed,
     });
+
+    // Replacing an avatar/cover/resume uploads the new file to a fresh path
+    // and only then overwrites the column — the old file is never referenced
+    // again once this succeeds, so it can be cleaned up now.
+    const staleUrls = [
+      current.avatar_url !== values.avatarUrl ? current.avatar_url : null,
+      current.cover_url !== values.coverUrl ? current.cover_url : null,
+      current.resume_url !== values.resumeUrl ? current.resume_url : null,
+    ];
+    if (staleUrls.some(Boolean)) await removeStorageObjectsByUrl(supabase, staleUrls);
 
     await replaceProfileSkills(
       supabase,

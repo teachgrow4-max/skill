@@ -22,6 +22,7 @@ import {
   getSavedPosts,
   getTrendingPosts,
   likePost,
+  removeStorageObjectsByUrl,
   savePost,
   setPostArchived,
   setPostPinned,
@@ -160,6 +161,11 @@ export async function deletePostAction(postId: string): Promise<ActionResult> {
   try {
     await deletePost(supabase, postId);
     revalidatePath("/feed");
+    // Awaited (not fire-and-forget) since a serverless function can be frozen
+    // right after returning — but internally best-effort: the DB row is
+    // already gone, so a failure here just leaves a storage file behind
+    // rather than blocking the user's delete. An orphan scan catches the rest.
+    await removeStorageObjectsByUrl(supabase, [post.thumbnail_url, ...post.media.map((item) => item.url)]);
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not delete post." };

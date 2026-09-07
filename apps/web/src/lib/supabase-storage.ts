@@ -1,8 +1,12 @@
 import { createClient } from "@/lib/supabase/browser";
 
 export const MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024;
+export const MAX_VIDEO_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
 
-const BUCKET = "post-media";
+// Legacy bucket, kept only for resumes and DM voice notes — everything else
+// moved to a dedicated bucket per content type (see migration 0022) so each
+// can carry its own size limit instead of one uniform cap for everything.
+const LEGACY_BUCKET = "post-media";
 
 export interface StorageUploadResult {
   url: string;
@@ -29,14 +33,16 @@ function extensionFor(file: File): string {
 }
 
 /**
- * Uploads a file to the public `post-media` Supabase Storage bucket under the
- * signed-in user's own folder (required by the bucket's RLS policies). The
- * `prefix` just labels the filename (post/avatar/cover/resume/voice) — every
- * kind of upload shares the same bucket and policies.
+ * Uploads a file to `bucket` under the signed-in user's own folder (required
+ * by every media bucket's owner-scoped RLS policy — see migration 0022).
  */
-async function uploadToStorage(file: File, prefix: string): Promise<{ url: string; path: string }> {
-  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-    throw new Error("File is larger than 25MB.");
+async function uploadToStorage(
+  file: File,
+  bucket: string,
+  maxBytes: number,
+): Promise<{ url: string; path: string }> {
+  if (file.size > maxBytes) {
+    throw new Error(`File is larger than ${Math.round(maxBytes / (1024 * 1024))}MB.`);
   }
 
   const supabase = createClient();
@@ -47,8 +53,8 @@ async function uploadToStorage(file: File, prefix: string): Promise<{ url: strin
     throw new Error("You must be signed in to upload files.");
   }
 
-  const path = `${user.id}/${prefix}-${crypto.randomUUID()}.${extensionFor(file)}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+  const path = `${user.id}/${crypto.randomUUID()}.${extensionFor(file)}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, file, {
     cacheControl: "3600",
     contentType: file.type,
   });
@@ -56,30 +62,39 @@ async function uploadToStorage(file: File, prefix: string): Promise<{ url: strin
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  } = supabase.storage.from(bucket).getPublicUrl(path);
 
   return { url: publicUrl, path };
 }
 
+/** Posts (and reels, which are just video posts) route to a dedicated bucket by media type. */
 export async function uploadPostMedia(file: File): Promise<StorageUploadResult> {
-  const { url, path } = await uploadToStorage(file, "post");
-  return { url, path, type: resolveMediaType(file.type) };
+  const type = resolveMediaType(file.type);
+  const { url, path } =
+    type === "video"
+      ? await uploadToStorage(file, "reels", MAX_VIDEO_UPLOAD_SIZE_BYTES)
+      : await uploadToStorage(file, "posts", MAX_UPLOAD_SIZE_BYTES);
+  return { url, path, type };
 }
 
-export async function uploadProfileImage(
-  file: File,
-  kind: "avatar" | "cover",
-): Promise<StorageUploadResult> {
-  const { url, path } = await uploadToStorage(file, kind);
+export async function uploadStoryMedia(file: File): Promise<StorageUploadResult> {
+  const type = resolveMediaType(file.type);
+  const maxBytes = type === "video" ? MAX_VIDEO_UPLOAD_SIZE_BYTES : MAX_UPLOAD_SIZE_BYTES;
+  const { url, path } = await uploadToStorage(file, "stories", maxBytes);
+  return { url, path, type };
+}
+
+export async function uploadProfileImage(file: File): Promise<StorageUploadResult> {
+  const { url, path } = await uploadToStorage(file, "avatars", MAX_UPLOAD_SIZE_BYTES);
   return { url, path, type: resolveMediaType(file.type) };
 }
 
 export async function uploadResumeFile(file: File): Promise<StorageUploadResult> {
-  const { url, path } = await uploadToStorage(file, "resume");
+  const { url, path } = await uploadToStorage(file, LEGACY_BUCKET, MAX_UPLOAD_SIZE_BYTES);
   return { url, path, type: resolveMediaType(file.type) };
 }
 
 export async function uploadVoiceNote(file: File): Promise<VoiceNoteUploadResult> {
-  const { url, path } = await uploadToStorage(file, "voice");
+  const { url, path } = await uploadToStorage(file, LEGACY_BUCKET, MAX_UPLOAD_SIZE_BYTES);
   return { url, path, type: "audio" };
 }

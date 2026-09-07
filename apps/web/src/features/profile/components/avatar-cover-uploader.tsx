@@ -24,7 +24,7 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
 
     setUploading(true);
     try {
-      const result = await uploadProfileImage(file, shape === "circle" ? "avatar" : "cover");
+      const result = await uploadProfileImage(file);
       onChange(result.url);
     } catch (uploadError) {
       onError(uploadError instanceof Error ? uploadError.message : "Upload failed.");

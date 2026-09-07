@@ -5,14 +5,17 @@ import {
   deletePost,
   getPendingVerificationRequests,
   getPlatformStats,
+  getPostById,
   getRecentPosts,
   isAdmin,
+  removeStorageObjectsByUrl,
   reviewVerificationRequest,
   searchUsers,
   updateProfile,
   type PlatformStats,
 } from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AccountType, PostRow, ProfileRow, VerificationRequestRow } from "@skilltego/types";
 
 export interface ActionResult {
@@ -80,9 +83,18 @@ export async function deletePostAsAdminAction(postId: string): Promise<ActionRes
   const { supabase, authorized } = await requireAdmin();
   if (!authorized) return { success: false, error: "You don't have permission to do that." };
 
+  const post = await getPostById(supabase, postId);
+
   try {
     await deletePost(supabase, postId);
     revalidatePath("/admin/posts");
+    // The acting admin's own session can only delete files under their own
+    // storage folder (RLS is owner-scoped), so this needs the service-role
+    // client to clean up a file that likely belongs to a different author.
+    if (post) {
+      const admin = createAdminClient();
+      await removeStorageObjectsByUrl(admin, [post.thumbnail_url, ...post.media.map((item) => item.url)]);
+    }
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not delete post." };

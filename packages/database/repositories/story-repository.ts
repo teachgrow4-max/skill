@@ -17,6 +17,19 @@ export async function deleteStory(client: Client, id: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Stories past expiry that no one has swept yet — see sweepExpiredStories in actions.ts. */
+export async function getExpiredStories(client: Client, olderThanIso: string, limit: number): Promise<StoryRow[]> {
+  const { data, error } = await client.from("stories").select("*").lt("expires_at", olderThanIso).limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteStories(client: Client, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await client.from("stories").delete().in("id", ids);
+  if (error) throw error;
+}
+
 export async function getActiveStoriesForAuthors(client: Client, authorIds: string[]): Promise<StoryRow[]> {
   if (authorIds.length === 0) return [];
 
