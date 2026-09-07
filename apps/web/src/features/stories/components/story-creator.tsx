@@ -17,6 +17,7 @@ import {
 import { Button, Input, Sheet, SheetContent, SheetTitle, Textarea } from "@skilltego/ui";
 import { cn } from "@skilltego/utils";
 import { uploadStoryMedia } from "@/lib/supabase-storage";
+import { resizeImage } from "@/lib/image-resize";
 import { createStoryAction } from "../actions";
 import type { CreateStoryInput } from "../schema";
 
@@ -51,7 +52,8 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
     setUploading(true);
     setError(null);
     try {
-      const result = await uploadStoryMedia(file);
+      const toUpload = file.type.startsWith("image/") ? await resizeImage(file, 1600) : file;
+      const result = await uploadStoryMedia(toUpload);
       setMedia({ url: result.url, type: result.type === "video" ? "video" : "image" });
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");

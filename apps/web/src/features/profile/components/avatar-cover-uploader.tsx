@@ -5,6 +5,12 @@ import Image from "next/image";
 import { Camera, Loader2 } from "lucide-react";
 import { cn } from "@skilltego/utils";
 import { uploadProfileImage } from "@/lib/supabase-storage";
+import { resizeImage } from "@/lib/image-resize";
+
+const MAX_DIMENSION: Record<AvatarCoverUploaderProps["shape"], number> = {
+  circle: 512,
+  banner: 1200,
+};
 
 interface AvatarCoverUploaderProps {
   label: string;
@@ -24,7 +30,8 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
 
     setUploading(true);
     try {
-      const result = await uploadProfileImage(file);
+      const resized = await resizeImage(file, MAX_DIMENSION[shape]);
+      const result = await uploadProfileImage(resized);
       onChange(result.url);
     } catch (uploadError) {
       onError(uploadError instanceof Error ? uploadError.message : "Upload failed.");

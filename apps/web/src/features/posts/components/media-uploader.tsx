@@ -13,7 +13,10 @@ import {
   getVideoDurationSeconds,
 } from "@/lib/video-compress";
 import { captureVideoPreview, getImageDimensions } from "@/lib/video-thumbnail";
+import { resizeImage } from "@/lib/image-resize";
 import type { PostMediaItem } from "@skilltego/types";
+
+const MAX_POST_IMAGE_DIMENSION = 1920;
 
 interface MediaUploaderProps {
   value: PostMediaItem[];
@@ -68,14 +71,22 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     durationSeconds?: number;
   }
 
-  // Images/PDFs upload as-is (dimensions are just read off, no re-encoding yet).
-  // Videos get a client-generated poster thumbnail and, above COMPRESS_TRIGGER_BYTES,
-  // get transcoded to a fixed 720p/2.5Mbps target instead of uploading the raw
+  // Images get downscaled/recompressed (a raw phone photo has no business
+  // going to storage at full 12MP+ resolution when the feed only ever shows
+  // it at a fraction of that). PDFs upload as-is. Videos get a client-
+  // generated poster thumbnail and, above COMPRESS_TRIGGER_BYTES, get
+  // transcoded to a fixed 720p/2.5Mbps target instead of uploading the raw
   // (often much larger) phone-camera file. A duration cap applies regardless of size.
   async function prepareFile(tempId: string, file: File): Promise<PreparedFile> {
+    if (file.type.startsWith("image/")) {
+      const resized = await resizeImage(file, MAX_POST_IMAGE_DIMENSION);
+      const dimensions = await getImageDimensions(resized).catch(() => null);
+      return { file: resized, width: dimensions?.width, height: dimensions?.height };
+    }
+
     if (!file.type.startsWith("video/")) {
-      const dimensions = await getImageDimensions(file).catch(() => null);
-      return { file, width: dimensions?.width, height: dimensions?.height };
+      // PDF or anything else — upload as-is.
+      return { file };
     }
 
     if (file.size > MAX_COMPRESSIBLE_SOURCE_BYTES) {
