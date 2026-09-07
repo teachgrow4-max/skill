@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/browser";
+import { uploadVideoResumable } from "@/lib/resumable-upload";
 
 export const MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024;
 export const MAX_VIDEO_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
@@ -65,6 +66,46 @@ async function uploadToStorage(
   } = supabase.storage.from(bucket).getPublicUrl(path);
 
   return { url: publicUrl, path };
+}
+
+export interface VideoUploadHandle {
+  result: Promise<StorageUploadResult>;
+  cancel: () => void;
+}
+
+/**
+ * Resumable, cancelable, real-progress video upload — for the reels/stories
+ * bucket specifically, since a multi-MB video over an unstable mobile
+ * connection is where those actually matter (see resumable-upload.ts).
+ * Images/PDFs stay on the plain uploadToStorage path below: after client-side
+ * resizing they're small enough that the extra machinery isn't worth it.
+ */
+export async function uploadVideoWithProgress(
+  file: File,
+  bucket: "reels" | "stories",
+  onProgress?: (sent: number, total: number) => void,
+): Promise<VideoUploadHandle> {
+  if (file.size > MAX_VIDEO_UPLOAD_SIZE_BYTES) {
+    throw new Error(`File is larger than ${Math.round(MAX_VIDEO_UPLOAD_SIZE_BYTES / (1024 * 1024))}MB.`);
+  }
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be signed in to upload files.");
+
+  const path = `${user.id}/${crypto.randomUUID()}.${extensionFor(file)}`;
+  const handle = await uploadVideoResumable(file, bucket, path, onProgress);
+
+  const result = handle.done.then(() => {
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(bucket).getPublicUrl(path);
+    return { url: publicUrl, path, type: "video" as const };
+  });
+
+  return { result, cancel: handle.cancel };
 }
 
 /** Posts (and reels, which are just video posts) route to a dedicated bucket by media type. */

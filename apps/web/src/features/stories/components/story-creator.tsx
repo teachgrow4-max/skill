@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { Button, Input, Sheet, SheetContent, SheetTitle, Textarea } from "@skilltego/ui";
 import { cn } from "@skilltego/utils";
-import { uploadStoryMedia } from "@/lib/supabase-storage";
+import { uploadStoryMedia, uploadVideoWithProgress } from "@/lib/supabase-storage";
+import { UploadCancelledError } from "@/lib/resumable-upload";
 import { resizeImage } from "@/lib/image-resize";
 import { createStoryAction } from "../actions";
 import type { CreateStoryInput } from "../schema";
@@ -33,6 +34,8 @@ const STICKERS: { value: StickerChoice; label: string; icon: LucideIcon }[] = [
 
 export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [uploading, setUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [cancelUpload, setCancelUpload] = React.useState<(() => void) | null>(null);
   const [media, setMedia] = React.useState<{ url: string; type: "image" | "video" } | null>(null);
   const [caption, setCaption] = React.useState("");
   const [sticker, setSticker] = React.useState<StickerChoice>("none");
@@ -50,15 +53,28 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
     if (!file) return;
 
     setUploading(true);
+    setUploadProgress(0);
     setError(null);
     try {
-      const toUpload = file.type.startsWith("image/") ? await resizeImage(file, 1600) : file;
-      const result = await uploadStoryMedia(toUpload);
-      setMedia({ url: result.url, type: result.type === "video" ? "video" : "image" });
+      if (file.type.startsWith("video/")) {
+        const handle = await uploadVideoWithProgress(file, "stories", (sent, total) => {
+          setUploadProgress(total > 0 ? sent / total : 0);
+        });
+        setCancelUpload(() => handle.cancel);
+        const result = await handle.result;
+        setMedia({ url: result.url, type: "video" });
+      } else {
+        const resized = await resizeImage(file, 1600);
+        const result = await uploadStoryMedia(resized);
+        setMedia({ url: result.url, type: "image" });
+      }
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      if (!(uploadError instanceof UploadCancelledError)) {
+        setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      }
     } finally {
       setUploading(false);
+      setCancelUpload(null);
     }
   }
 
@@ -154,7 +170,12 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
               {uploading && (
                 <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" />
-                  Uploading…
+                  {cancelUpload ? `Uploading… ${Math.round(uploadProgress * 100)}%` : "Uploading…"}
+                  {cancelUpload && (
+                    <button type="button" onClick={cancelUpload} className="font-medium text-destructive hover:underline">
+                      Cancel
+                    </button>
+                  )}
                 </div>
               )}
             </div>

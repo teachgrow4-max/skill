@@ -4,7 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import { Camera, FileText, RefreshCw, UploadCloud, Video, X } from "lucide-react";
 import { cn } from "@skilltego/utils";
-import { uploadPostMedia } from "@/lib/supabase-storage";
+import { uploadPostMedia, uploadVideoWithProgress } from "@/lib/supabase-storage";
+import { UploadCancelledError } from "@/lib/resumable-upload";
 import {
   COMPRESS_TRIGGER_BYTES,
   MAX_COMPRESSIBLE_SOURCE_BYTES,
@@ -28,8 +29,10 @@ interface PendingUpload {
   tempId: string;
   file: File;
   previewUrl: string;
-  status: "uploading" | "compressing";
+  status: "compressing" | "uploading" | "failed";
   progress: number;
+  cancel?: () => void;
+  errorMessage?: string;
 }
 
 function formatBytes(bytes: number): string {
@@ -44,8 +47,31 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
   const replaceIndexRef = React.useRef<number | null>(null);
   const [pending, setPending] = React.useState<PendingUpload[]>([]);
   const [meta, setMeta] = React.useState<Record<string, { name: string; size: number }>>({});
-  const [error, setError] = React.useState<string | null>(null);
   const [dragActive, setDragActive] = React.useState(false);
+
+  // onChange commits from multiple concurrently-finishing uploads (a batch, or
+  // a retry landing well after its original batch settled) would otherwise
+  // race: two completions reading the same stale `value` from render time
+  // could each append to it and the second call would silently drop the
+  // first's item. This ref always holds the latest committed array so each
+  // completion appends onto the real current state, not a stale snapshot.
+  const valueRef = React.useRef(value);
+  React.useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  function commitAppend(item: PostMediaItem) {
+    const next = [...valueRef.current, item];
+    valueRef.current = next;
+    onChange(next);
+  }
+
+  function commitReplace(index: number, item: PostMediaItem) {
+    const next = [...valueRef.current];
+    next[index] = item;
+    valueRef.current = next;
+    onChange(next);
+  }
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -63,30 +89,33 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     handleFiles(e.dataTransfer.files);
   }
 
-  interface PreparedFile {
-    file: File;
-    width?: number;
-    height?: number;
-    thumbnailUrl?: string;
-    durationSeconds?: number;
-  }
-
   // Images get downscaled/recompressed (a raw phone photo has no business
   // going to storage at full 12MP+ resolution when the feed only ever shows
-  // it at a fraction of that). PDFs upload as-is. Videos get a client-
-  // generated poster thumbnail and, above COMPRESS_TRIGGER_BYTES, get
-  // transcoded to a fixed 720p/2.5Mbps target instead of uploading the raw
-  // (often much larger) phone-camera file. A duration cap applies regardless of size.
-  async function prepareFile(tempId: string, file: File): Promise<PreparedFile> {
+  // it at a fraction of that) and upload on the simple fast path. PDFs upload
+  // as-is. Videos get a client-generated poster thumbnail, get transcoded
+  // above COMPRESS_TRIGGER_BYTES to a fixed 720p/2.5Mbps target, and upload
+  // via the resumable path — real progress, and a live `cancel` handle is
+  // registered on the pending item as soon as the upload actually starts. A
+  // duration cap applies regardless of size.
+  async function uploadOne(tempId: string, file: File): Promise<PostMediaItem> {
     if (file.type.startsWith("image/")) {
       const resized = await resizeImage(file, MAX_POST_IMAGE_DIMENSION);
       const dimensions = await getImageDimensions(resized).catch(() => null);
-      return { file: resized, width: dimensions?.width, height: dimensions?.height };
+      const result = await uploadPostMedia(resized);
+      setMeta((m) => ({ ...m, [result.path]: { name: file.name, size: resized.size } }));
+      return {
+        url: result.url,
+        type: result.type,
+        publicId: result.path,
+        width: dimensions?.width,
+        height: dimensions?.height,
+      };
     }
 
     if (!file.type.startsWith("video/")) {
-      // PDF or anything else — upload as-is.
-      return { file };
+      const result = await uploadPostMedia(file);
+      setMeta((m) => ({ ...m, [result.path]: { name: file.name, size: file.size } }));
+      return { url: result.url, type: result.type, publicId: result.path };
     }
 
     if (file.size > MAX_COMPRESSIBLE_SOURCE_BYTES) {
@@ -114,11 +143,24 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
       finalFile = await compressVideo(file, (ratio) => {
         setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, progress: ratio } : item)));
       });
-      setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, status: "uploading" } : item)));
     }
 
+    setPending((p) =>
+      p.map((item) => (item.tempId === tempId ? { ...item, status: "uploading", progress: 0 } : item)),
+    );
+    const handle = await uploadVideoWithProgress(finalFile, "reels", (sent, total) => {
+      setPending((p) =>
+        p.map((item) => (item.tempId === tempId ? { ...item, progress: total > 0 ? sent / total : 0 } : item)),
+      );
+    });
+    setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, cancel: handle.cancel } : item)));
+    const result = await handle.result;
+
+    setMeta((m) => ({ ...m, [result.path]: { name: file.name, size: finalFile.size } }));
     return {
-      file: finalFile,
+      url: result.url,
+      type: "video",
+      publicId: result.path,
       width: preview?.width,
       height: preview?.height,
       thumbnailUrl,
@@ -126,9 +168,34 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     };
   }
 
+  // Wraps uploadOne so a single item's failure/cancellation never needs the
+  // caller to handle try/catch: cancelled items just quietly disappear from
+  // `pending`; real failures stay visible with a retry button instead of
+  // forcing the user to re-select the file from scratch.
+  async function runItem(tempId: string, file: File): Promise<PostMediaItem | null> {
+    try {
+      const item = await uploadOne(tempId, file);
+      setPending((p) => p.filter((pendingItem) => pendingItem.tempId !== tempId));
+      return item;
+    } catch (uploadError) {
+      if (uploadError instanceof UploadCancelledError) {
+        setPending((p) => p.filter((pendingItem) => pendingItem.tempId !== tempId));
+        return null;
+      }
+      const message = uploadError instanceof Error ? uploadError.message : "Upload failed.";
+      setPending((p) =>
+        p.map((pendingItem) =>
+          pendingItem.tempId === tempId
+            ? { ...pendingItem, status: "failed", errorMessage: message, cancel: undefined }
+            : pendingItem,
+        ),
+      );
+      return null;
+    }
+  }
+
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    setError(null);
 
     const remaining = maxItems - value.length;
     const toUpload = Array.from(files).slice(0, remaining);
@@ -143,71 +210,49 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     }));
     setPending((p) => [...p, ...withPreview]);
 
-    const results = await Promise.allSettled(
+    // Each item commits independently as soon as it's ready, rather than
+    // waiting for the slowest item in the batch — also what makes retry (which
+    // finishes long after the original batch settled) work the same way.
+    await Promise.all(
       withPreview.map(async (pendingItem) => {
-        const prepared = await prepareFile(pendingItem.tempId, pendingItem.file);
-        return { pendingItem, prepared, result: await uploadPostMedia(prepared.file) };
+        const result = await runItem(pendingItem.tempId, pendingItem.file);
+        URL.revokeObjectURL(pendingItem.previewUrl);
+        if (result) commitAppend(result);
       }),
     );
+  }
 
-    const newItems: PostMediaItem[] = [];
-    const newMeta: Record<string, { name: string; size: number }> = {};
-    let firstError: string | null = null;
+  function retryItem(tempId: string) {
+    const item = pending.find((p) => p.tempId === tempId);
+    if (!item) return;
+    setPending((p) =>
+      p.map((pendingItem) =>
+        pendingItem.tempId === tempId
+          ? { ...pendingItem, status: "uploading", progress: 0, errorMessage: undefined }
+          : pendingItem,
+      ),
+    );
+    runItem(tempId, item.file).then((result) => {
+      if (result) commitAppend(result);
+    });
+  }
 
-    for (const outcome of results) {
-      if (outcome.status === "fulfilled") {
-        const { pendingItem, prepared, result } = outcome.value;
-        newItems.push({
-          url: result.url,
-          type: result.type,
-          publicId: result.path,
-          width: prepared.width,
-          height: prepared.height,
-          thumbnailUrl: prepared.thumbnailUrl,
-          durationSeconds: prepared.durationSeconds,
-        });
-        newMeta[result.path] = { name: pendingItem.file.name, size: prepared.file.size };
-      } else {
-        firstError = outcome.reason instanceof Error ? outcome.reason.message : "Upload failed.";
-      }
-    }
-
-    withPreview.forEach((item) => URL.revokeObjectURL(item.previewUrl));
-    setPending((p) => p.filter((item) => !withPreview.includes(item)));
-    if (newItems.length > 0) {
-      setMeta((m) => ({ ...m, ...newMeta }));
-      onChange([...value, ...newItems]);
-    }
-    if (firstError) setError(firstError);
+  function dismissFailed(tempId: string) {
+    setPending((p) => {
+      const item = p.find((i) => i.tempId === tempId);
+      if (item) URL.revokeObjectURL(item.previewUrl);
+      return p.filter((i) => i.tempId !== tempId);
+    });
   }
 
   async function handleReplace(index: number, file: File) {
-    setError(null);
     const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const previewUrl = URL.createObjectURL(file);
     setPending((p) => [...p, { tempId, file, previewUrl, status: "uploading", progress: 0 }]);
 
-    try {
-      const prepared = await prepareFile(tempId, file);
-      const result = await uploadPostMedia(prepared.file);
-      const updated = [...value];
-      updated[index] = {
-        url: result.url,
-        type: result.type,
-        publicId: result.path,
-        width: prepared.width,
-        height: prepared.height,
-        thumbnailUrl: prepared.thumbnailUrl,
-        durationSeconds: prepared.durationSeconds,
-      };
-      setMeta((m) => ({ ...m, [result.path]: { name: file.name, size: prepared.file.size } }));
-      onChange(updated);
-    } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
-    } finally {
-      setPending((p) => p.filter((item) => item.tempId !== tempId));
-      URL.revokeObjectURL(previewUrl);
-    }
+    const result = await runItem(tempId, file);
+    URL.revokeObjectURL(previewUrl);
+    if (result) commitReplace(index, result);
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -295,17 +340,56 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
                     <Video className="size-8 text-muted-foreground" />
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-black/10">
-                  <div className="gradient-brand h-full w-full animate-pulse" />
-                </div>
+                {item.status !== "failed" && (
+                  <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-black/10">
+                    <div
+                      className="gradient-brand h-full transition-all"
+                      style={{ width: `${Math.round(item.progress * 100)}%` }}
+                    />
+                  </div>
+                )}
+                {item.cancel && (
+                  <button
+                    type="button"
+                    onClick={item.cancel}
+                    aria-label="Cancel upload"
+                    className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
               </div>
               <div className="px-2.5 py-2">
                 <p className="truncate text-xs font-medium">{item.file.name}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {item.status === "compressing"
-                    ? `Optimizing video… ${Math.round(item.progress * 100)}%`
-                    : "Uploading…"}
-                </p>
+                {item.status === "failed" ? (
+                  <div className="grid gap-1">
+                    <p className="truncate text-[11px] text-destructive">{item.errorMessage ?? "Upload failed."}</p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => retryItem(item.tempId)}
+                        className="text-[11px] font-medium text-primary hover:underline"
+                      >
+                        Retry
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => dismissFailed(item.tempId)}
+                        className="text-[11px] font-medium text-muted-foreground hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {item.status === "compressing"
+                      ? `Optimizing video… ${Math.round(item.progress * 100)}%`
+                      : item.file.type.startsWith("video/")
+                        ? `Uploading… ${Math.round(item.progress * 100)}%`
+                        : "Uploading…"}
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -366,8 +450,6 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
         className="hidden"
         onChange={handleInputChange}
       />
-
-      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
