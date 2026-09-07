@@ -4,6 +4,18 @@ import { fetchFile, toBlobURL } from "@ffmpeg/util";
 // Above this, in-browser transcoding is too slow/memory-hungry to be worth attempting.
 export const MAX_COMPRESSIBLE_SOURCE_BYTES = 300 * 1024 * 1024;
 
+// Below this, a raw clip is already small enough that re-encoding it isn't
+// worth the transcode time — most phone cameras shoot well above this.
+export const COMPRESS_TRIGGER_BYTES = 8 * 1024 * 1024;
+
+// Applies regardless of file size — an uncapped duration meant a long clip's
+// worst-case size was unbounded no matter how aggressively it got compressed.
+export const MAX_VIDEO_DURATION_SECONDS = 90;
+
+// Sanity ceiling on the compressed output. 720p @ 2.5Mbps + 128kbps audio for
+// 90s lands around 30MB, so this only ever fires on an ABR overshoot.
+const HARD_OUTPUT_CEILING_BYTES = 45 * 1024 * 1024;
+
 let ffmpegPromise: Promise<FFmpeg> | null = null;
 
 async function loadFFmpeg(): Promise<FFmpeg> {
@@ -24,7 +36,7 @@ async function loadFFmpeg(): Promise<FFmpeg> {
   return ffmpegPromise;
 }
 
-function getVideoDurationSeconds(file: File): Promise<number> {
+export function getVideoDurationSeconds(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
@@ -51,24 +63,14 @@ function compressedName(name: string): string {
 }
 
 /**
- * Re-encodes `file` to fit within `maxBytes`, targeting a bitrate derived from
- * the clip's duration (with headroom for muxing overhead and single-pass ABR
- * overshoot). Runs entirely client-side via ffmpeg.wasm — no server/paid API.
+ * Re-encodes `file` to a fixed 720p / 2.5Mbps target — consistent quality
+ * regardless of clip length, instead of deriving bitrate from a byte budget
+ * (which crushed long clips to mush and wasted headroom on short ones). Runs
+ * entirely client-side via ffmpeg.wasm — no server/paid API.
  */
-export async function compressVideoToLimit(
-  file: File,
-  maxBytes: number,
-  onProgress?: (ratio: number) => void,
-): Promise<File> {
-  const duration = await getVideoDurationSeconds(file);
-  if (!Number.isFinite(duration) || duration <= 0) {
-    throw new Error("Could not read this video's length, so it can't be compressed automatically.");
-  }
-
+export async function compressVideo(file: File, onProgress?: (ratio: number) => void): Promise<File> {
   const ffmpeg = await loadFFmpeg();
-  const audioBitrate = 96_000;
-  const targetTotalBits = maxBytes * 8 * 0.9;
-  const videoBitrate = Math.max(150_000, Math.floor(targetTotalBits / duration) - audioBitrate);
+  const videoBitrate = 2_500_000;
 
   const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const inputName = `in-${jobId}${sourceExtension(file.name)}`;
@@ -88,8 +90,10 @@ export async function compressVideoToLimit(
       // Downscale before encoding so there are fewer pixels to compress — this is
       // usually the biggest speed lever for phone-recorded (1440p/4K) source video,
       // and also gives the target bitrate a much easier job (better quality per bit).
+      // 720p rather than 1080p: mobile short-form video looks essentially identical
+      // on a phone screen at 720p while roughly halving the bitrate needed.
       "-vf",
-      "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease",
+      "scale=w='min(1280,iw)':h='min(720,ih)':force_original_aspect_ratio=decrease",
       "-c:v",
       "libx264",
       "-preset",
@@ -103,7 +107,7 @@ export async function compressVideoToLimit(
       "-c:a",
       "aac",
       "-b:a",
-      "96k",
+      "128k",
       "-movflags",
       "+faststart",
       outputName,
@@ -111,8 +115,8 @@ export async function compressVideoToLimit(
 
     const data = await ffmpeg.readFile(outputName);
     const blob = new Blob([new Uint8Array(data as Uint8Array)], { type: "video/mp4" });
-    if (blob.size > maxBytes) {
-      throw new Error("This video is too long to compress under 25MB — try trimming it first.");
+    if (blob.size > HARD_OUTPUT_CEILING_BYTES) {
+      throw new Error("This video is too large even after compression — try trimming it shorter.");
     }
     return new File([blob], compressedName(file.name), { type: "video/mp4" });
   } finally {

@@ -231,6 +231,8 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
                     videoRefs.current[i] = el;
                   }}
                   src={item.url}
+                  poster={item.thumbnailUrl}
+                  preload="metadata"
                   controls
                   onPlay={() => handleVideoPlay(i)}
                   className="h-full w-full object-cover"

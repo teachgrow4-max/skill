@@ -11,6 +11,8 @@ export const postMediaItemSchema = z.object({
   width: z.number().optional(),
   height: z.number().optional(),
   publicId: z.string().optional(),
+  thumbnailUrl: z.string().url().optional(),
+  durationSeconds: z.number().optional(),
 });
 
 export const postTypeSchema = z.enum([

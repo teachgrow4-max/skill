@@ -138,6 +138,9 @@ export interface PostMediaItem {
   width?: number;
   height?: number;
   publicId?: string;
+  /** Only set for video items — a client-generated poster frame, used for posts.thumbnail_url. */
+  thumbnailUrl?: string;
+  durationSeconds?: number;
 }
 
 export interface PostRow {

@@ -71,6 +71,8 @@ export function ReelPlayer({ post, isLoggedIn, currentUserId, muted, onToggleMut
       <video
         ref={videoRef}
         src={post.media[0]?.url}
+        poster={post.thumbnailUrl ?? undefined}
+        preload="metadata"
         loop
         muted={muted}
         playsInline

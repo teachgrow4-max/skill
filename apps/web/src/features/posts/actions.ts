@@ -131,6 +131,13 @@ export async function createPostAction(input: CreatePostInput): Promise<ActionRe
       tags: values.tags,
       location: values.location || null,
       media: values.media,
+      // A single-video post is a reel — its client-generated poster frame
+      // becomes the post's thumbnail so the feed/grid never has to load the
+      // full video just to show a preview.
+      thumbnail_url:
+        values.media.length === 1 && values.media[0].type === "video"
+          ? (values.media[0].thumbnailUrl ?? null)
+          : null,
       github_url: values.githubUrl || null,
       project_url: values.projectUrl || null,
       status: values.status,

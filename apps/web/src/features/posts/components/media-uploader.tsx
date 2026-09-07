@@ -4,8 +4,15 @@ import * as React from "react";
 import Image from "next/image";
 import { Camera, FileText, RefreshCw, UploadCloud, Video, X } from "lucide-react";
 import { cn } from "@skilltego/utils";
-import { MAX_UPLOAD_SIZE_BYTES, uploadPostMedia } from "@/lib/supabase-storage";
-import { MAX_COMPRESSIBLE_SOURCE_BYTES, compressVideoToLimit } from "@/lib/video-compress";
+import { uploadPostMedia } from "@/lib/supabase-storage";
+import {
+  COMPRESS_TRIGGER_BYTES,
+  MAX_COMPRESSIBLE_SOURCE_BYTES,
+  MAX_VIDEO_DURATION_SECONDS,
+  compressVideo,
+  getVideoDurationSeconds,
+} from "@/lib/video-compress";
+import { captureVideoPreview, getImageDimensions } from "@/lib/video-thumbnail";
 import type { PostMediaItem } from "@skilltego/types";
 
 interface MediaUploaderProps {
@@ -53,22 +60,59 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     handleFiles(e.dataTransfer.files);
   }
 
-  // Oversized videos get transcoded down to the 25MB cap client-side instead of being
-  // rejected outright; everything else (images, PDFs, videos already under the cap)
-  // uploads as-is.
-  async function prepareFile(tempId: string, file: File): Promise<File> {
-    if (!file.type.startsWith("video/") || file.size <= MAX_UPLOAD_SIZE_BYTES) {
-      return file;
+  interface PreparedFile {
+    file: File;
+    width?: number;
+    height?: number;
+    thumbnailUrl?: string;
+    durationSeconds?: number;
+  }
+
+  // Images/PDFs upload as-is (dimensions are just read off, no re-encoding yet).
+  // Videos get a client-generated poster thumbnail and, above COMPRESS_TRIGGER_BYTES,
+  // get transcoded to a fixed 720p/2.5Mbps target instead of uploading the raw
+  // (often much larger) phone-camera file. A duration cap applies regardless of size.
+  async function prepareFile(tempId: string, file: File): Promise<PreparedFile> {
+    if (!file.type.startsWith("video/")) {
+      const dimensions = await getImageDimensions(file).catch(() => null);
+      return { file, width: dimensions?.width, height: dimensions?.height };
     }
+
     if (file.size > MAX_COMPRESSIBLE_SOURCE_BYTES) {
-      throw new Error(`"${file.name}" is too large to compress automatically — try a shorter clip.`);
+      throw new Error(`"${file.name}" is too large to upload — try a shorter clip.`);
     }
-    setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, status: "compressing" } : item)));
-    const compressed = await compressVideoToLimit(file, MAX_UPLOAD_SIZE_BYTES, (ratio) => {
-      setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, progress: ratio } : item)));
-    });
-    setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, status: "uploading" } : item)));
-    return compressed;
+
+    const duration = await getVideoDurationSeconds(file).catch(() => null);
+    if (duration !== null && duration > MAX_VIDEO_DURATION_SECONDS) {
+      throw new Error(
+        `"${file.name}" is ${Math.round(duration)}s — videos can be up to ${MAX_VIDEO_DURATION_SECONDS}s. Trim it and try again.`,
+      );
+    }
+
+    const preview = await captureVideoPreview(file).catch(() => null);
+    let thumbnailUrl: string | undefined;
+    if (preview) {
+      thumbnailUrl = await uploadPostMedia(preview.thumbnail)
+        .then((result) => result.url)
+        .catch(() => undefined); // Non-fatal — the post still works without a thumbnail.
+    }
+
+    let finalFile = file;
+    if (file.size > COMPRESS_TRIGGER_BYTES) {
+      setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, status: "compressing" } : item)));
+      finalFile = await compressVideo(file, (ratio) => {
+        setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, progress: ratio } : item)));
+      });
+      setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, status: "uploading" } : item)));
+    }
+
+    return {
+      file: finalFile,
+      width: preview?.width,
+      height: preview?.height,
+      thumbnailUrl,
+      durationSeconds: duration ?? undefined,
+    };
   }
 
   async function handleFiles(files: FileList | null) {
@@ -90,8 +134,8 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
 
     const results = await Promise.allSettled(
       withPreview.map(async (pendingItem) => {
-        const fileToUpload = await prepareFile(pendingItem.tempId, pendingItem.file);
-        return { pendingItem, fileToUpload, result: await uploadPostMedia(fileToUpload) };
+        const prepared = await prepareFile(pendingItem.tempId, pendingItem.file);
+        return { pendingItem, prepared, result: await uploadPostMedia(prepared.file) };
       }),
     );
 
@@ -101,9 +145,17 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
 
     for (const outcome of results) {
       if (outcome.status === "fulfilled") {
-        const { pendingItem, fileToUpload, result } = outcome.value;
-        newItems.push({ url: result.url, type: result.type, publicId: result.path });
-        newMeta[result.path] = { name: pendingItem.file.name, size: fileToUpload.size };
+        const { pendingItem, prepared, result } = outcome.value;
+        newItems.push({
+          url: result.url,
+          type: result.type,
+          publicId: result.path,
+          width: prepared.width,
+          height: prepared.height,
+          thumbnailUrl: prepared.thumbnailUrl,
+          durationSeconds: prepared.durationSeconds,
+        });
+        newMeta[result.path] = { name: pendingItem.file.name, size: prepared.file.size };
       } else {
         firstError = outcome.reason instanceof Error ? outcome.reason.message : "Upload failed.";
       }
@@ -125,11 +177,19 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     setPending((p) => [...p, { tempId, file, previewUrl, status: "uploading", progress: 0 }]);
 
     try {
-      const fileToUpload = await prepareFile(tempId, file);
-      const result = await uploadPostMedia(fileToUpload);
+      const prepared = await prepareFile(tempId, file);
+      const result = await uploadPostMedia(prepared.file);
       const updated = [...value];
-      updated[index] = { url: result.url, type: result.type, publicId: result.path };
-      setMeta((m) => ({ ...m, [result.path]: { name: file.name, size: fileToUpload.size } }));
+      updated[index] = {
+        url: result.url,
+        type: result.type,
+        publicId: result.path,
+        width: prepared.width,
+        height: prepared.height,
+        thumbnailUrl: prepared.thumbnailUrl,
+        durationSeconds: prepared.durationSeconds,
+      };
+      setMeta((m) => ({ ...m, [result.path]: { name: file.name, size: prepared.file.size } }));
       onChange(updated);
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
@@ -232,7 +292,7 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
                 <p className="truncate text-xs font-medium">{item.file.name}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {item.status === "compressing"
-                    ? `Compressing to fit 25MB… ${Math.round(item.progress * 100)}%`
+                    ? `Optimizing video… ${Math.round(item.progress * 100)}%`
                     : "Uploading…"}
                 </p>
               </div>
@@ -272,8 +332,8 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
               <span className="font-semibold text-primary">browse files</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Images, videos, or PDFs · up to 25MB (larger videos are compressed automatically) · up to{" "}
-              {maxItems} files
+              Images/PDFs up to 25MB · videos up to {MAX_VIDEO_DURATION_SECONDS}s (automatically optimized) ·
+              up to {maxItems} files
             </p>
           </button>
         </>
