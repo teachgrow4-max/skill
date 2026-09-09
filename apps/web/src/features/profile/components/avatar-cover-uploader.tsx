@@ -60,7 +60,12 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
             <Camera className="size-6" />
           </div>
         )}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/45 opacity-0 transition-all duration-300 group-hover:bg-black/60 group-hover:opacity-100 group-focus-visible:opacity-100">
+        {/* Full hover reveal — a nice-to-have on desktop, but hover doesn't
+            exist on touch, so it can never be the ONLY way to discover this
+            is editable (that was the actual mobile "can't change photo" bug:
+            once a photo is set, nothing on a phone ever hinted it was
+            tappable). The corner badge below is always visible instead. */}
+        <div className="absolute inset-0 hidden flex-col items-center justify-center gap-1 bg-black/45 opacity-0 transition-all duration-300 group-hover:flex group-hover:bg-black/60 group-hover:opacity-100 group-focus-visible:flex group-focus-visible:opacity-100">
           {uploading ? (
             <Loader2 className="size-5 animate-spin text-white" />
           ) : (
@@ -70,6 +75,16 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
             {uploading ? "Uploading…" : `Change ${label.toLowerCase()}`}
           </span>
         </div>
+        {value && (
+          <div
+            className={cn(
+              "absolute flex items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm",
+              shape === "circle" ? "bottom-0 right-0 size-8" : "bottom-2 right-2 size-9",
+            )}
+          >
+            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+          </div>
+        )}
       </button>
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
     </div>
