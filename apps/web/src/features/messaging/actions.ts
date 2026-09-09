@@ -59,6 +59,7 @@ export async function startConversationAction(
 export async function createGroupChatAction(
   participantIds: string[],
   title: string,
+  avatarUrl?: string | null,
 ): Promise<ActionResult<{ conversationId: string }>> {
   const supabase = await createClient();
   const {
@@ -69,7 +70,13 @@ export async function createGroupChatAction(
   if (!title.trim()) return { success: false, error: "Give your group a name." };
 
   try {
-    const conversationId = await createGroupConversation(supabase, user.id, participantIds, title.trim());
+    const conversationId = await createGroupConversation(
+      supabase,
+      user.id,
+      participantIds,
+      title.trim(),
+      avatarUrl,
+    );
     return { success: true, data: { conversationId } };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not create group." };

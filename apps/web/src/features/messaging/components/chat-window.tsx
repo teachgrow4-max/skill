@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { FileText, Phone, Send, Video } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, FileText, Phone, Send, Users, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button, Input } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { AuthorSummary, Message } from "@skilltego/types";
@@ -16,6 +17,9 @@ import { VoiceRecorderButton } from "./voice-recorder-button";
 interface ChatWindowProps {
   conversationId: string;
   currentUserId: string;
+  isGroup: boolean;
+  title: string | null;
+  avatarUrl: string | null;
   participants: AuthorSummary[];
   initialMessages: Message[];
 }
@@ -47,9 +51,13 @@ function AttachmentView({ attachment }: { attachment: NonNullable<Message["attac
 export function ChatWindow({
   conversationId,
   currentUserId,
+  isGroup,
+  title,
+  avatarUrl,
   participants,
   initialMessages,
 }: ChatWindowProps) {
+  const router = useRouter();
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [body, setBody] = React.useState("");
   const [sending, setSending] = React.useState(false);
@@ -60,9 +68,10 @@ export function ChatWindow({
     () => participants.filter((p) => p.id !== currentUserId),
     [participants, currentUserId],
   );
-  const callPartner = otherParticipants.length === 1 ? otherParticipants[0] : null;
+  const callPartner = !isGroup && otherParticipants.length === 1 ? otherParticipants[0] : null;
   const call = useWebRTCCall(conversationId, currentUserId);
   const incomingCaller = call.incomingFrom ? participantMap.get(call.incomingFrom) : null;
+  const groupTitle = title ?? "Group chat";
 
   React.useEffect(() => {
     markConversationReadAction(conversationId);
@@ -158,15 +167,46 @@ export function ChatWindow({
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
-      {callPartner && (
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <Link href={`/profile/${callPartner.username}`} className="flex items-center gap-2">
-            <Avatar className="size-8">
-              <AvatarImage src={callPartner.avatarUrl ?? undefined} alt={callPartner.fullName} />
-              <AvatarFallback className="text-xs">{initials(callPartner.fullName)}</AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium">{callPartner.fullName}</span>
-          </Link>
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="Back to messages"
+            className="mr-1 text-muted-foreground hover:text-foreground md:hidden"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+
+          {isGroup ? (
+            <>
+              {avatarUrl ? (
+                <Avatar className="size-8">
+                  <AvatarImage src={avatarUrl} alt={groupTitle} />
+                  <AvatarFallback className="text-xs">{initials(groupTitle)}</AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-muted-foreground">
+                  <Users className="size-4" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{groupTitle}</p>
+                <p className="text-xs text-muted-foreground">{participants.length} members</p>
+              </div>
+            </>
+          ) : callPartner ? (
+            <Link href={`/profile/${callPartner.username}`} className="flex items-center gap-2">
+              <Avatar className="size-8">
+                <AvatarImage src={callPartner.avatarUrl ?? undefined} alt={callPartner.fullName} />
+                <AvatarFallback className="text-xs">{initials(callPartner.fullName)}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium">{callPartner.fullName}</span>
+            </Link>
+          ) : null}
+        </div>
+
+        {callPartner && (
           <div className="flex gap-1">
             <Button
               type="button"
@@ -189,8 +229,8 @@ export function ChatWindow({
               <Video className="size-4" />
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {callPartner && <CallModal call={call} otherUser={incomingCaller ?? callPartner} />}
 

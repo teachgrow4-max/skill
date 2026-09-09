@@ -213,10 +213,11 @@ export async function createGroupConversation(
   creatorId: string,
   participantIds: string[],
   title: string,
+  avatarUrl?: string | null,
 ): Promise<string> {
   const { data: conversation, error: convError } = await client
     .from("conversations")
-    .insert({ created_by: creatorId, is_group: true, title })
+    .insert({ created_by: creatorId, is_group: true, title, avatar_url: avatarUrl ?? null })
     .select("id")
     .single();
   if (convError) throw convError;

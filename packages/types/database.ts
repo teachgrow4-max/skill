@@ -198,6 +198,7 @@ export interface ConversationRow {
   id: string;
   is_group: boolean;
   title: string | null;
+  avatar_url: string | null;
   created_by: string;
   created_at: string;
 }

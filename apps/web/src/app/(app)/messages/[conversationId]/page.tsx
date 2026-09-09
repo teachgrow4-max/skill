@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getConversationParticipantIds, getProfilesByIds, toAuthorSummary } from "@skilltego/database";
+import {
+  getConversationParticipantIds,
+  getConversationsByIds,
+  getProfilesByIds,
+  toAuthorSummary,
+} from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
 import { getMessagesAction } from "@/features/messaging/actions";
 import { ChatWindow } from "@/features/messaging/components/chat-window";
@@ -23,6 +28,9 @@ export default async function ConversationPage({ params }: ConversationPageProps
   const participantIds = await getConversationParticipantIds(supabase, conversationId);
   if (!participantIds.includes(user.id)) notFound();
 
+  const [conversation] = await getConversationsByIds(supabase, [conversationId]);
+  if (!conversation) notFound();
+
   const profiles = await getProfilesByIds(supabase, participantIds);
   const participants = profiles.map(toAuthorSummary);
 
@@ -32,6 +40,9 @@ export default async function ConversationPage({ params }: ConversationPageProps
     <ChatWindow
       conversationId={conversationId}
       currentUserId={user.id}
+      isGroup={conversation.is_group}
+      title={conversation.title}
+      avatarUrl={conversation.avatar_url}
       participants={participants}
       initialMessages={messages}
     />

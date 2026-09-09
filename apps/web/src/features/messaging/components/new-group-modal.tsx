@@ -5,30 +5,28 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Button, Input } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
+import { AvatarCoverUploader } from "@/features/profile/components/avatar-cover-uploader";
 import { searchAction } from "@/features/search/actions";
+import { useDebouncedSearch } from "@/features/search/hooks/use-debounced-search";
 import { createGroupChatAction } from "../actions";
 import type { AuthorSummary } from "@skilltego/types";
+
+const EMPTY_RESULTS: AuthorSummary[] = [];
 
 export function NewGroupModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
-  const [results, setResults] = React.useState<AuthorSummary[]>([]);
   const [selected, setSelected] = React.useState<AuthorSummary[]>([]);
   const [title, setTitle] = React.useState("");
+  const [avatarUrl, setAvatarUrl] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [creating, setCreating] = React.useState(false);
 
-  React.useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      const data = await searchAction(query);
-      setResults(data.profiles);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [query]);
+  const { data: results, error: searchError } = useDebouncedSearch(
+    query,
+    async (q) => (await searchAction(q)).profiles,
+    { delayMs: 300, emptyValue: EMPTY_RESULTS },
+  );
 
   function toggleSelect(profile: AuthorSummary) {
     setSelected((prev) =>
@@ -42,6 +40,7 @@ export function NewGroupModal({ onClose }: { onClose: () => void }) {
     const result = await createGroupChatAction(
       selected.map((p) => p.id),
       title,
+      avatarUrl || null,
     );
     setCreating(false);
 
@@ -62,6 +61,16 @@ export function NewGroupModal({ onClose }: { onClose: () => void }) {
           <button type="button" onClick={onClose} aria-label="Close">
             <X className="size-4" />
           </button>
+        </div>
+
+        <div className="mb-3 flex justify-center">
+          <AvatarCoverUploader
+            label="Group photo"
+            value={avatarUrl}
+            onChange={setAvatarUrl}
+            onError={setError}
+            shape="circle"
+          />
         </div>
 
         <Input
@@ -105,6 +114,7 @@ export function NewGroupModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
+        {searchError && <p className="mt-2 text-xs text-destructive">{searchError}</p>}
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
         <Button

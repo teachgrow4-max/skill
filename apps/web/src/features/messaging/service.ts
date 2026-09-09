@@ -55,6 +55,7 @@ export async function hydrateConversations(
       id: conversation.id,
       isGroup: conversation.is_group,
       title: conversation.title,
+      avatarUrl: conversation.avatar_url,
       participants,
       lastMessage,
       unreadCount,
