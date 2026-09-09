@@ -23,7 +23,7 @@ export function ProfileTabs({ postsTab, reelsTab, savedTab, badgesTab }: Profile
   ];
 
   return (
-    <Tabs value={active} onValueChange={setActive} className="mt-6">
+    <Tabs id="profile-tabs" value={active} onValueChange={setActive} className="mt-6 scroll-mt-20">
       <TabsList>
         {tabs.map((tab) => (
           <TabsTrigger key={tab.value} value={tab.value}>

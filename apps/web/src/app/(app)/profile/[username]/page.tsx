@@ -5,7 +5,6 @@ import {
   getFollowerCount,
   getFollowingCount,
   getProfileByUsername,
-  getProfileEngagementTotals,
   getProfileSkills,
   getPublishedPostCount,
   toProfile,
@@ -23,8 +22,7 @@ import { getMyBadgesAction, getSkillCoinSummaryAction } from "@/features/gamific
 import { BadgeList } from "@/features/gamification/components/badge-list";
 import { SkillCoinsSummaryCard } from "@/features/gamification/components/skill-coins-summary-card";
 import { CreateFirstPostButton } from "@/features/posts/components/create-first-post-button";
-import { ProfileHeader } from "@/features/profile/components/profile-header";
-import { ProfileStatsBar } from "@/features/profile/components/profile-stats-bar";
+import { ProfileFollowSection } from "@/features/profile/components/profile-follow-section";
 import { ProfileTabs } from "@/features/profile/components/profile-tabs";
 import { PostGrid } from "@/features/profile/components/post-grid";
 
@@ -66,16 +64,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const isOwnProfile = user?.id === profileRow.id;
 
-  const [skills, followerCount, followingCount, postCount, engagement, viewerFollowState] = await Promise.all(
-    [
-      getProfileSkills(supabase, profileRow.id),
-      getFollowerCount(supabase, profileRow.id),
-      getFollowingCount(supabase, profileRow.id),
-      getPublishedPostCount(supabase, profileRow.id),
-      getProfileEngagementTotals(supabase, profileRow.id),
-      user ? getFollowStateAction(profileRow.id) : Promise.resolve("none" as const),
-    ],
-  );
+  const [skills, followerCount, followingCount, postCount, viewerFollowState] = await Promise.all([
+    getProfileSkills(supabase, profileRow.id),
+    getFollowerCount(supabase, profileRow.id),
+    getFollowingCount(supabase, profileRow.id),
+    getPublishedPostCount(supabase, profileRow.id),
+    user ? getFollowStateAction(profileRow.id) : Promise.resolve("none" as const),
+  ]);
 
   const profile = toProfile(profileRow, skills);
   const canViewContent = isOwnProfile || !profile.isPrivate || viewerFollowState === "following";
@@ -102,24 +97,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <div>
-      <ProfileHeader
+      <ProfileFollowSection
         profile={profile}
         accountTypeLabel={ACCOUNT_TYPE_LABEL[profile.accountType] ?? profile.accountType}
         isOwnProfile={isOwnProfile}
         isLoggedIn={Boolean(user)}
         viewerFollowState={viewerFollowState}
         changeStatus={changeStatus}
+        canViewContent={canViewContent}
+        postCount={postCount}
+        followerCount={followerCount}
+        followingCount={followingCount}
       />
-
-      {canViewContent && (
-        <ProfileStatsBar
-          postCount={postCount}
-          followerCount={followerCount}
-          followingCount={followingCount}
-          totalLikes={engagement.totalLikes}
-          totalComments={engagement.totalComments}
-        />
-      )}
 
       {!canViewContent && (
         <EmptyState

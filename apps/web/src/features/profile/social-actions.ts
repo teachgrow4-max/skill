@@ -5,6 +5,9 @@ import {
   cancelFollowRequest,
   createFollowRequest,
   followUser,
+  getFollowerIdsPage,
+  getFollowingIds,
+  getFollowingIdsPage,
   getFollowRequestStatus,
   getPendingFollowRequests,
   getProfileById,
@@ -17,6 +20,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { sendPushToUser } from "@/lib/web-push";
 import type { AuthorSummary } from "@skilltego/types";
+
+const FOLLOW_LIST_PAGE_SIZE = 30;
 
 export type FollowState = "following" | "requested" | "none";
 
@@ -155,5 +160,78 @@ export async function respondToFollowRequestAction(
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}
+
+export interface FollowListItem {
+  profile: AuthorSummary;
+  /** The current viewer's relationship to this row's person — never the row person's relationship to the profile being viewed. */
+  viewerFollowState: FollowState;
+}
+
+export interface FollowListPage {
+  items: FollowListItem[];
+  nextCursor: string | null;
+}
+
+async function hydrateFollowList(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ids: string[],
+  viewerId: string | null,
+): Promise<FollowListItem[]> {
+  if (ids.length === 0) return [];
+
+  const [profiles, viewerFollowingIds] = await Promise.all([
+    getProfilesByIds(supabase, ids),
+    viewerId ? getFollowingIds(supabase, viewerId) : Promise.resolve([] as string[]),
+  ]);
+  const profileMap = new Map(profiles.map((p) => [p.id, toAuthorSummary(p)]));
+  const viewerFollowingSet = new Set(viewerFollowingIds);
+
+  return ids
+    .filter((id) => profileMap.has(id))
+    .map((id) => ({
+      profile: profileMap.get(id)!,
+      viewerFollowState: viewerFollowingSet.has(id) ? "following" : "none",
+    }));
+}
+
+export async function getFollowersAction(profileId: string, cursor: string | null): Promise<FollowListPage> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const page = await getFollowerIdsPage(supabase, profileId, cursor, FOLLOW_LIST_PAGE_SIZE);
+  const items = await hydrateFollowList(supabase, page.ids, user?.id ?? null);
+  return { items, nextCursor: page.nextCursor };
+}
+
+export async function getFollowingAction(profileId: string, cursor: string | null): Promise<FollowListPage> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const page = await getFollowingIdsPage(supabase, profileId, cursor, FOLLOW_LIST_PAGE_SIZE);
+  const items = await hydrateFollowList(supabase, page.ids, user?.id ?? null);
+  return { items, nextCursor: page.nextCursor };
+}
+
+export async function removeFollowerAction(followerId: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+
+  try {
+    // unfollowUser deletes where follower_id = arg1, following_id = arg2 — here
+    // that's the follower being removed and the current user (RLS's
+    // follows_delete_target policy permits this because they're following_id).
+    await unfollowUser(supabase, followerId, user.id);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not remove follower." };
   }
 }

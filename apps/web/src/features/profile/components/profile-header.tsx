@@ -29,6 +29,7 @@ interface ProfileHeaderProps {
   isLoggedIn: boolean;
   viewerFollowState: FollowState;
   changeStatus?: ProfileChangeStatus;
+  onFollowStateChange?: (state: FollowState) => void;
 }
 
 export function ProfileHeader({
@@ -38,6 +39,7 @@ export function ProfileHeader({
   isLoggedIn,
   viewerFollowState,
   changeStatus,
+  onFollowStateChange,
 }: ProfileHeaderProps) {
   const [lightbox, setLightbox] = React.useState<{ url: string; alt: string } | null>(null);
 
@@ -108,6 +110,7 @@ export function ProfileHeader({
                 initialState={viewerFollowState}
                 isLoggedIn={isLoggedIn}
                 targetIsPrivate={profile.isPrivate}
+                onFollowStateChange={onFollowStateChange}
               />
             </div>
           )}

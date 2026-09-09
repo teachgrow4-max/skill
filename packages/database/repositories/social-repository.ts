@@ -59,6 +59,57 @@ export async function getFollowingIds(client: Client, followerId: string): Promi
   return data.map((row) => row.following_id);
 }
 
+export interface FollowIdsPage {
+  ids: string[];
+  nextCursor: string | null;
+}
+
+export async function getFollowerIdsPage(
+  client: Client,
+  profileId: string,
+  cursor: string | null,
+  limit: number,
+): Promise<FollowIdsPage> {
+  let query = client
+    .from("follows")
+    .select("follower_id, created_at")
+    .eq("following_id", profileId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (cursor) query = query.lt("created_at", cursor);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return {
+    ids: data.map((row) => row.follower_id),
+    nextCursor: data.length === limit ? data[data.length - 1].created_at : null,
+  };
+}
+
+export async function getFollowingIdsPage(
+  client: Client,
+  profileId: string,
+  cursor: string | null,
+  limit: number,
+): Promise<FollowIdsPage> {
+  let query = client
+    .from("follows")
+    .select("following_id, created_at")
+    .eq("follower_id", profileId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (cursor) query = query.lt("created_at", cursor);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return {
+    ids: data.map((row) => row.following_id),
+    nextCursor: data.length === limit ? data[data.length - 1].created_at : null,
+  };
+}
+
 export async function createFollowRequest(
   client: Client,
   requesterId: string,

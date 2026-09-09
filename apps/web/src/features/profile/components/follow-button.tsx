@@ -11,6 +11,8 @@ interface FollowButtonProps {
   initialState: FollowState;
   isLoggedIn: boolean;
   targetIsPrivate?: boolean;
+  /** Fired after every state transition (optimistic set, then the server-corrected one) so a parent can keep a derived follower count in sync. */
+  onFollowStateChange?: (state: FollowState) => void;
 }
 
 const LABELS: Record<FollowState, string> = {
@@ -25,6 +27,7 @@ export function FollowButton({
   initialState,
   isLoggedIn,
   targetIsPrivate = false,
+  onFollowStateChange,
 }: FollowButtonProps) {
   const router = useRouter();
   const [state, setState] = React.useState<FollowState>(initialState);
@@ -41,13 +44,16 @@ export function FollowButton({
     // result (below) corrects this in the rare case it's wrong.
     const optimistic: FollowState = previous === "none" ? (targetIsPrivate ? "requested" : "following") : "none";
     setState(optimistic);
+    onFollowStateChange?.(optimistic);
 
     const result = await toggleFollowAction(targetProfileId, targetUsername);
 
     if (result.success && result.state) {
       setState(result.state);
+      onFollowStateChange?.(result.state);
     } else {
       setState(previous);
+      onFollowStateChange?.(previous);
     }
   }
 
