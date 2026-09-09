@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  getFollowingIds,
   getLikedPostIds,
   getProfilesByIds,
   getSavedPostIds,
@@ -23,13 +24,15 @@ export async function hydratePosts(
   const authorIds = postRows.map((row) => row.author_id);
   const postIds = postRows.map((row) => row.id);
 
-  const [authors, likedIds, savedIds] = await Promise.all([
+  const [authors, likedIds, savedIds, followingIds] = await Promise.all([
     getProfilesByIds(client, authorIds),
     viewerId ? getLikedPostIds(client, postIds, viewerId) : Promise.resolve(new Set<string>()),
     viewerId ? getSavedPostIds(client, postIds, viewerId) : Promise.resolve(new Set<string>()),
+    viewerId ? getFollowingIds(client, viewerId) : Promise.resolve([]),
   ]);
 
   const authorMap = new Map(authors.map((author) => [author.id, toAuthorSummary(author)]));
+  const followingSet = new Set(followingIds);
 
   return postRows
     .filter((row) => authorMap.has(row.author_id))
@@ -37,6 +40,7 @@ export async function hydratePosts(
       toPost(row, authorMap.get(row.author_id)!, {
         isLiked: likedIds.has(row.id),
         isSaved: savedIds.has(row.id),
+        isFollowingAuthor: followingSet.has(row.author_id),
       }),
     );
 }

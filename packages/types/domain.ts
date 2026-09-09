@@ -139,6 +139,7 @@ export interface Post {
   isPinned: boolean;
   isLiked: boolean;
   isSaved: boolean;
+  isAuthorFollowed: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -177,6 +178,7 @@ export interface Conversation {
   id: string;
   isGroup: boolean;
   title: string | null;
+  avatarUrl: string | null;
   participants: AuthorSummary[];
   lastMessage: Message | null;
   unreadCount: number;

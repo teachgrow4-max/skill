@@ -10,6 +10,8 @@ import {
   Archive,
   ArchiveRestore,
   BadgeCheck,
+  Check,
+  Edit3,
   ExternalLink,
   FileText,
   Github,
@@ -18,14 +20,17 @@ import {
   MoreHorizontal,
   Pin,
   PinOff,
+  Share2,
   Trash2,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage, Badge } from "@skilltego/ui";
+import { Avatar, AvatarFallback, AvatarImage, Badge, Button, Textarea } from "@skilltego/ui";
 import { initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
+import { FollowButton } from "@/features/profile/components/follow-button";
 import { ReportButton } from "@/features/reports/components/report-button";
 import { useActiveVideoStore } from "@/lib/active-video-store";
-import { deletePostAction, toggleArchivePostAction, togglePinPostAction } from "../actions";
+import { deletePostAction, toggleArchivePostAction, togglePinPostAction, updatePostAction } from "../actions";
+import { useSharePost } from "../hooks/use-share-post";
 import { LikeButton, type LikeButtonHandle } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentThread } from "./comment-thread";
@@ -46,11 +51,16 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
   const [isArchived, setIsArchived] = React.useState(post.isArchived);
   const [isPinned, setIsPinned] = React.useState(post.isPinned);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [caption, setCaption] = React.useState(post.caption ?? "");
+  const [displayCaption, setDisplayCaption] = React.useState(post.caption);
+  const [savingEdit, setSavingEdit] = React.useState(false);
   const likeButtonRef = React.useRef<LikeButtonHandle>(null);
   const videoRefs = React.useRef<Record<number, HTMLVideoElement | null>>({});
   const isOwner = currentUserId === post.author.id;
   const setActiveVideo = useActiveVideoStore((s) => s.setActive);
   const activeVideoId = useActiveVideoStore((s) => s.activeId);
+  const { handleShare, linkCopied } = useSharePost(post.id);
 
   const videoId = React.useCallback((index: number) => `${post.id}:${index}`, [post.id]);
 
@@ -110,6 +120,25 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
     }
   }
 
+  function handleStartEdit() {
+    setMenuOpen(false);
+    setCaption(post.caption ?? "");
+    setIsEditing(true);
+  }
+
+  async function handleSaveEdit() {
+    setSavingEdit(true);
+    const result = await updatePostAction(post.id, { caption });
+    setSavingEdit(false);
+    if (result.success) {
+      setDisplayCaption(caption);
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+    } else {
+      setActionError(result.error ?? "Could not update post.");
+    }
+  }
+
   return (
     <article className="glass rounded-xl p-4">
       <div className="flex items-start justify-between">
@@ -130,49 +159,67 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
           </div>
         </Link>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <MoreHorizontal className="size-4" />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-6 z-10 min-w-40 rounded-md border border-border bg-popover p-2 shadow-md">
-              {isOwner ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleTogglePin}
-                    className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
-                  >
-                    {isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
-                    {isPinned ? "Unpin from profile" : "Pin to profile"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleToggleArchive}
-                    className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
-                  >
-                    {isArchived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
-                    {isArchived ? "Unarchive" : "Archive"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Delete
-                  </button>
-                  {actionError && <p className="mt-1 px-2 text-xs text-destructive">{actionError}</p>}
-                </>
-              ) : (
-                <ReportButton targetType="post" targetId={post.id} isLoggedIn={isLoggedIn} />
-              )}
-            </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {!isOwner && (
+            <FollowButton
+              targetProfileId={post.author.id}
+              targetUsername={post.author.username}
+              initialState={post.isAuthorFollowed ? "following" : "none"}
+              isLoggedIn={isLoggedIn}
+            />
           )}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <MoreHorizontal className="size-4" />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-6 z-10 min-w-40 rounded-md border border-border bg-popover p-2 shadow-md">
+                {isOwner ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleStartEdit}
+                      className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
+                    >
+                      <Edit3 className="size-3.5" />
+                      Edit caption
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTogglePin}
+                      className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
+                    >
+                      {isPinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+                      {isPinned ? "Unpin from profile" : "Pin to profile"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleToggleArchive}
+                      className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs hover:bg-accent"
+                    >
+                      {isArchived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
+                      {isArchived ? "Unarchive" : "Archive"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="flex w-full items-center gap-1.5 whitespace-nowrap rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Delete
+                    </button>
+                    {actionError && <p className="mt-1 px-2 text-xs text-destructive">{actionError}</p>}
+                  </>
+                ) : (
+                  <ReportButton targetType="post" targetId={post.id} isLoggedIn={isLoggedIn} />
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -182,7 +229,37 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
         </Badge>
       )}
 
-      {post.caption && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{post.caption}</p>}
+      {isEditing ? (
+        <div className="mt-3 grid gap-2">
+          <Textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            maxLength={3000}
+            rows={3}
+            autoFocus
+          />
+          <div className="flex items-center gap-2">
+            <Button type="button" size="sm" disabled={savingEdit} onClick={handleSaveEdit}>
+              {savingEdit ? "Saving…" : "Save"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={savingEdit}
+              onClick={() => {
+                setIsEditing(false);
+                setCaption(displayCaption ?? "");
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+          {actionError && <p className="text-xs text-destructive">{actionError}</p>}
+        </div>
+      ) : (
+        displayCaption && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{displayCaption}</p>
+      )}
 
       {post.type === "code" && post.codeSnippet && (
         <pre className="mt-3 max-h-80 overflow-auto rounded-lg bg-muted p-3 text-xs">
@@ -298,10 +375,19 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
           <MessageCircle className="size-4" />
           {commentCount > 0 && commentCount}
         </button>
+        <button
+          type="button"
+          onClick={handleShare}
+          aria-label="Share"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          {linkCopied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />}
+        </button>
         <div className="ml-auto">
           <SaveButton postId={post.id} initialIsSaved={post.isSaved} isLoggedIn={isLoggedIn} />
         </div>
       </div>
+      {linkCopied && <p className="mt-1 text-xs text-muted-foreground">Link copied to clipboard</p>}
 
       {showComments && (
         <div className="mt-3">

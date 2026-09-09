@@ -14,7 +14,7 @@ export function toAuthorSummary(row: ProfileRow): AuthorSummary {
 export function toPost(
   row: PostRow,
   author: AuthorSummary,
-  flags: { isLiked: boolean; isSaved: boolean },
+  flags: { isLiked: boolean; isSaved: boolean; isFollowingAuthor: boolean },
 ): Post {
   return {
     id: row.id,
@@ -40,6 +40,7 @@ export function toPost(
     isPinned: row.is_pinned,
     isLiked: flags.isLiked,
     isSaved: flags.isSaved,
+    isAuthorFollowed: flags.isFollowingAuthor,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
