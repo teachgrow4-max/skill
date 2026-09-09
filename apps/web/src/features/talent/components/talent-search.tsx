@@ -4,27 +4,18 @@ import * as React from "react";
 import { Loader2, Search } from "lucide-react";
 import { Input } from "@skilltego/ui";
 import type { ProfileRow } from "@skilltego/types";
+import { useDebouncedSearch } from "@/features/search/hooks/use-debounced-search";
 import { searchTalentAction } from "../actions";
 import { CandidateCard } from "./candidate-card";
 
+const EMPTY_RESULTS: ProfileRow[] = [];
+
 export function TalentSearch() {
   const [query, setQuery] = React.useState("");
-  const [results, setResults] = React.useState<ProfileRow[] | null>(null);
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults(null);
-      return;
-    }
-    setLoading(true);
-    const timeout = setTimeout(async () => {
-      const data = await searchTalentAction(query);
-      setResults(data);
-      setLoading(false);
-    }, 350);
-    return () => clearTimeout(timeout);
-  }, [query]);
+  const { data, loading, error } = useDebouncedSearch(query, searchTalentAction, {
+    emptyValue: EMPTY_RESULTS,
+  });
+  const results = query.trim().length < 2 ? null : data;
 
   return (
     <div className="grid gap-3">
@@ -44,11 +35,13 @@ export function TalentSearch() {
         </div>
       )}
 
-      {!loading && results && results.length === 0 && (
+      {!loading && error && <p className="text-sm text-destructive">{error}</p>}
+
+      {!loading && !error && results && results.length === 0 && (
         <p className="text-sm text-muted-foreground">No matches.</p>
       )}
 
-      {!loading && results && (
+      {!loading && !error && results && (
         <div className="grid gap-2">
           {results.map((candidate) => (
             <CandidateCard key={candidate.id} candidate={candidate} />

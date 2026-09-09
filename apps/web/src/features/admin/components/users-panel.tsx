@@ -6,6 +6,7 @@ import { BadgeCheck, Loader2, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Input } from "@skilltego/ui";
 import { initials } from "@skilltego/utils";
 import type { AccountType, ProfileRow } from "@skilltego/types";
+import { useDebouncedSearch } from "@/features/search/hooks/use-debounced-search";
 import { getAdminUsersAction, setUserVerifiedAction, updateUserAccountTypeAction } from "../actions";
 
 const ACCOUNT_TYPES: AccountType[] = [
@@ -21,17 +22,15 @@ const ACCOUNT_TYPES: AccountType[] = [
 export function UsersPanel({ initialUsers }: { initialUsers: ProfileRow[] }) {
   const [query, setQuery] = React.useState("");
   const [users, setUsers] = React.useState(initialUsers);
-  const [loading, setLoading] = React.useState(false);
+  const { data: searchedUsers, loading, error } = useDebouncedSearch(query, getAdminUsersAction, {
+    delayMs: 300,
+    minLength: 0,
+    emptyValue: initialUsers,
+  });
 
   React.useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(async () => {
-      const data = await getAdminUsersAction(query);
-      setUsers(data);
-      setLoading(false);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [query]);
+    setUsers(searchedUsers);
+  }, [searchedUsers]);
 
   async function handleTypeChange(userId: string, accountType: AccountType) {
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, account_type: accountType } : u)));
@@ -61,7 +60,9 @@ export function UsersPanel({ initialUsers }: { initialUsers: ProfileRow[] }) {
         </div>
       )}
 
-      {!loading && (
+      {!loading && error && <p className="text-sm text-destructive">{error}</p>}
+
+      {!loading && !error && (
         <div className="grid gap-2">
           {users.map((user) => (
             <div key={user.id} className="flex items-center gap-3 rounded-lg border border-border p-3">

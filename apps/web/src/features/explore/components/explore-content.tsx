@@ -2,14 +2,15 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Loader2, Search as SearchIcon } from "lucide-react";
+import { Loader2, Search as SearchIcon, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, Badge, Input } from "@skilltego/ui";
 import { skillCategories } from "@skilltego/config";
-import { initials } from "@skilltego/utils";
+import { cn, initials } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
 import { PostCard } from "@/features/posts/components/post-card";
 import { usePostDeleteSync } from "@/features/posts/hooks/use-post-delete-sync";
-import { searchAction, type SearchResults } from "@/features/search/actions";
+import { searchAction, searchPostsByCategoryAction, type SearchResults } from "@/features/search/actions";
+import { useDebouncedSearch } from "@/features/search/hooks/use-debounced-search";
 
 interface ExploreContentProps {
   trendingPosts: Post[];
@@ -17,12 +18,13 @@ interface ExploreContentProps {
   currentUserId: string | null;
 }
 
+const EMPTY_RESULTS: SearchResults = { profiles: [], posts: [] };
+
 const CATEGORIES = skillCategories.flatMap((category) => category.subcategories);
 
 export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: ExploreContentProps) {
   const [query, setQuery] = React.useState("");
-  const [results, setResults] = React.useState<SearchResults | null>(null);
-  const [loading, setLoading] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<"people" | "posts">("people");
   const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
 
@@ -30,10 +32,36 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
 
   const trimmed = query.trim();
 
+  const {
+    data: results,
+    loading,
+    error,
+  } = useDebouncedSearch(query, searchAction, { emptyValue: EMPTY_RESULTS });
+
+  const {
+    data: categoryPosts,
+    loading: categoryLoading,
+    error: categoryError,
+  } = useDebouncedSearch(selectedCategory ?? "", searchPostsByCategoryAction, {
+    delayMs: 0,
+    minLength: 1,
+    emptyValue: [] as Post[],
+  });
+
+  function selectCategory(category: string) {
+    setQuery("");
+    setSelectedCategory(category);
+  }
+
+  function handleQueryChange(value: string) {
+    setQuery(value);
+    if (value.trim().length > 0) setSelectedCategory(null);
+  }
+
   // Defense in depth: searchAction already excludes the viewer's own account,
   // but never show it here even if that filtering regresses upstream.
   const people = React.useMemo(
-    () => results?.profiles.filter((profile) => profile.id !== currentUserId) ?? [],
+    () => results.profiles.filter((profile) => profile.id !== currentUserId),
     [results, currentUserId],
   );
 
@@ -42,23 +70,13 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
     [trendingPosts, deletedIds],
   );
   const visibleResultPosts = React.useMemo(
-    () => (results?.posts ?? []).filter((post) => !deletedIds.has(post.id)),
+    () => results.posts.filter((post) => !deletedIds.has(post.id)),
     [results, deletedIds],
   );
-
-  React.useEffect(() => {
-    if (trimmed.length < 2) {
-      setResults(null);
-      return;
-    }
-    setLoading(true);
-    const timeout = setTimeout(async () => {
-      const data = await searchAction(trimmed);
-      setResults(data);
-      setLoading(false);
-    }, 350);
-    return () => clearTimeout(timeout);
-  }, [trimmed]);
+  const visibleCategoryPosts = React.useMemo(
+    () => categoryPosts.filter((post) => !deletedIds.has(post.id)),
+    [categoryPosts, deletedIds],
+  );
 
   return (
     <div className="grid gap-6">
@@ -66,19 +84,52 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
         <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleQueryChange(e.target.value)}
           placeholder="Search people, skills, or posts…"
           className="pl-9"
         />
       </div>
 
-      {trimmed.length < 2 ? (
+      {selectedCategory ? (
+        <>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{selectedCategory}</h2>
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(null)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+              Clear
+            </button>
+          </div>
+
+          {categoryLoading && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {categoryError && <p className="text-sm text-destructive">{categoryError}</p>}
+
+          {!categoryLoading && !categoryError && (
+            <div className="grid gap-4">
+              {visibleCategoryPosts.length === 0 && (
+                <p className="text-sm text-muted-foreground">No posts in {selectedCategory} yet.</p>
+              )}
+              {visibleCategoryPosts.map((post) => (
+                <PostCard key={post.id} post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
+              ))}
+            </div>
+          )}
+        </>
+      ) : trimmed.length < 2 ? (
         <>
           <div>
             <h1 className="mb-3 text-lg font-semibold">Browse categories</h1>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((sub) => (
-                <button key={sub} type="button" onClick={() => setQuery(sub)}>
+                <button key={sub} type="button" onClick={() => selectCategory(sub)}>
                   <Badge variant="outline" className="cursor-pointer hover:bg-accent">
                     {sub}
                   </Badge>
@@ -107,11 +158,12 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`flex-1 rounded-full py-2 text-sm font-medium capitalize transition-colors ${
-                  tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent/50"
-                }`}
+                className={cn(
+                  "flex-1 rounded-full py-2 text-sm font-medium capitalize transition-colors",
+                  tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent/50",
+                )}
               >
-                {t} {results && `(${t === "people" ? people.length : visibleResultPosts.length})`}
+                {t} ({t === "people" ? people.length : visibleResultPosts.length})
               </button>
             ))}
           </div>
@@ -122,7 +174,9 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
             </div>
           )}
 
-          {!loading && results && tab === "people" && (
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {!loading && !error && tab === "people" && (
             <div className="grid gap-2">
               {people.length === 0 && (
                 <div className="py-6 text-center">
@@ -152,7 +206,7 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
             </div>
           )}
 
-          {!loading && results && tab === "posts" && (
+          {!loading && !error && tab === "posts" && (
             <div className="grid gap-4">
               {visibleResultPosts.length === 0 && <p className="text-sm text-muted-foreground">No posts found.</p>}
               {visibleResultPosts.map((post) => (

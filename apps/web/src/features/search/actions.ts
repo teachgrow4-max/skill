@@ -1,6 +1,12 @@
 "use server";
 
-import { searchPosts, searchProfiles, searchProfilesBySkill, toAuthorSummary } from "@skilltego/database";
+import {
+  searchPosts,
+  searchPostsByCategory,
+  searchProfiles,
+  searchProfilesBySkill,
+  toAuthorSummary,
+} from "@skilltego/database";
 import { createClient } from "@/lib/supabase/server";
 import { hydratePosts } from "@/features/posts/service";
 import type { AuthorSummary, Post } from "@skilltego/types";
@@ -36,4 +42,14 @@ export async function searchAction(query: string): Promise<SearchResults> {
   const posts = await hydratePosts(supabase, postRows, user?.id ?? null);
 
   return { profiles: [...profileMap.values()], posts };
+}
+
+export async function searchPostsByCategoryAction(category: string): Promise<Post[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const postRows = await searchPostsByCategory(supabase, category);
+  return hydratePosts(supabase, postRows, user?.id ?? null);
 }
