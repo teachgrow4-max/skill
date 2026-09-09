@@ -12,6 +12,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Edit3,
   ExternalLink,
   FileText,
   Github,
@@ -30,18 +31,22 @@ import {
   AvatarFallback,
   AvatarImage,
   Badge,
+  Button,
   Input,
   Sheet,
   SheetClose,
   SheetContent,
   SheetTitle,
   Skeleton,
+  Textarea,
 } from "@skilltego/ui";
 import { cn, initials, formatRelativeTime } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
+import { FollowButton } from "@/features/profile/components/follow-button";
 import { ReportButton } from "@/features/reports/components/report-button";
-import { deletePostAction, toggleArchivePostAction, togglePinPostAction } from "../actions";
+import { deletePostAction, toggleArchivePostAction, togglePinPostAction, updatePostAction } from "../actions";
 import { useCommentThread } from "../hooks/use-comment-thread";
+import { useSharePost } from "../hooks/use-share-post";
 import { LikeButton, type LikeButtonHandle } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentRow } from "./comment-thread";
@@ -125,8 +130,12 @@ function PostPreviewContent({
   const [isArchived, setIsArchived] = React.useState(post.isArchived);
   const [isPinned, setIsPinned] = React.useState(post.isPinned);
   const [showHeartBurst, setShowHeartBurst] = React.useState(false);
-  const [linkCopied, setLinkCopied] = React.useState(false);
+  const { handleShare, linkCopied } = useSharePost(post.id);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [caption, setCaption] = React.useState(post.caption ?? "");
+  const [displayCaption, setDisplayCaption] = React.useState(post.caption);
+  const [savingEdit, setSavingEdit] = React.useState(false);
   const likeButtonRef = React.useRef<LikeButtonHandle>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const touchStartX = React.useRef<number | null>(null);
@@ -190,21 +199,6 @@ function PostPreviewContent({
     touchStartX.current = null;
   }
 
-  async function handleShare() {
-    const url = `${window.location.origin}/profile/${post.author.username}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ url, title: `${post.author.fullName} on Skilltego` });
-      } catch {
-        // user dismissed the native share sheet — nothing to do
-      }
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-    setLinkCopied(true);
-    window.setTimeout(() => setLinkCopied(false), 1500);
-  }
-
   async function handleDelete() {
     setMenuOpen(false);
     if (!confirm("Delete this post? This can't be undone.")) return;
@@ -231,6 +225,24 @@ function PostPreviewContent({
     if (result.success && result.data) {
       setIsPinned(result.data.isPinned);
       router.refresh();
+    } else {
+      setActionError(result.error ?? "Could not update post.");
+    }
+  }
+
+  function handleStartEdit() {
+    setMenuOpen(false);
+    setCaption(post.caption ?? "");
+    setIsEditing(true);
+  }
+
+  async function handleSaveEdit() {
+    setSavingEdit(true);
+    const result = await updatePostAction(post.id, { caption });
+    setSavingEdit(false);
+    if (result.success) {
+      setDisplayCaption(caption);
+      setIsEditing(false);
     } else {
       setActionError(result.error ?? "Could not update post.");
     }
@@ -369,7 +381,15 @@ function PostPreviewContent({
             </div>
           </Link>
 
-          <div className="flex shrink-0 items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {!isOwner && (
+              <FollowButton
+                targetProfileId={post.author.id}
+                targetUsername={post.author.username}
+                initialState={post.isAuthorFollowed ? "following" : "none"}
+                isLoggedIn={isLoggedIn}
+              />
+            )}
             <div className="relative">
               <button
                 type="button"
@@ -383,6 +403,14 @@ function PostPreviewContent({
                 <div className="absolute right-0 top-9 z-20 min-w-44 rounded-xl border border-border bg-popover p-1.5 shadow-lg">
                   {isOwner ? (
                     <>
+                      <button
+                        type="button"
+                        onClick={handleStartEdit}
+                        className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs hover:bg-accent"
+                      >
+                        <Edit3 className="size-3.5" />
+                        Edit caption
+                      </button>
                       <button
                         type="button"
                         onClick={handleTogglePin}
@@ -462,13 +490,43 @@ function PostPreviewContent({
               </a>
             )}
 
-            {post.caption && (
-              <p className="text-sm leading-relaxed whitespace-pre-line">
-                <Link href={`/profile/${post.author.username}`} className="font-semibold hover:underline">
-                  {post.author.username}
-                </Link>{" "}
-                {renderCaption(post.caption)}
-              </p>
+            {isEditing ? (
+              <div className="grid gap-2">
+                <Textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  maxLength={3000}
+                  rows={3}
+                  autoFocus
+                />
+                <div className="flex items-center gap-2">
+                  <Button type="button" size="sm" disabled={savingEdit} onClick={handleSaveEdit}>
+                    {savingEdit ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={savingEdit}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setCaption(displayCaption ?? "");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                {actionError && <p className="text-xs text-destructive">{actionError}</p>}
+              </div>
+            ) : (
+              displayCaption && (
+                <p className="text-sm leading-relaxed whitespace-pre-line">
+                  <Link href={`/profile/${post.author.username}`} className="font-semibold hover:underline">
+                    {post.author.username}
+                  </Link>{" "}
+                  {renderCaption(displayCaption)}
+                </p>
+              )
             )}
 
             {(post.skillCategory || post.tags.length > 0) && (

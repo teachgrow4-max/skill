@@ -1,14 +1,17 @@
 "use client";
 
 import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@skilltego/utils";
-import { getFeedAction, type FeedMode } from "../actions";
+import type { Post } from "@skilltego/types";
+import { getFeedAction, getPostByIdAction, type FeedMode } from "../actions";
 import { usePostDeleteSync } from "../hooks/use-post-delete-sync";
 import { PostCard } from "./post-card";
 import { PostCardSkeleton } from "./post-card-skeleton";
+import { PostPreviewModal } from "./post-preview-modal";
 
 const TABS: { mode: FeedMode; label: string }[] = [
   { mode: "following", label: "Following" },
@@ -23,11 +26,39 @@ interface FeedListProps {
 }
 
 export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sharedPostId = searchParams.get("post");
   const [mode, setMode] = React.useState<FeedMode>(defaultMode ?? (isLoggedIn ? "following" : "latest"));
   const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
+  const [sharedPost, setSharedPost] = React.useState<Post | null>(null);
   const loadMoreRef = React.useRef<HTMLDivElement>(null);
 
   usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
+
+  // Deep link from a share ("Share" on a post/reel copies /feed?post=<id>):
+  // fetch and open just that post, regardless of whether it's in the loaded
+  // feed window.
+  React.useEffect(() => {
+    if (!sharedPostId) {
+      setSharedPost(null);
+      return;
+    }
+    let cancelled = false;
+    getPostByIdAction(sharedPostId).then((post) => {
+      if (!cancelled) setSharedPost(post);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sharedPostId]);
+
+  function closeSharedPost() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("post");
+    const query = params.toString();
+    router.replace(query ? `/feed?${query}` : "/feed");
+  }
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["feed", mode],
@@ -109,6 +140,15 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
       <div ref={loadMoreRef} className="flex justify-center py-4">
         {isFetchingNextPage && <Loader2 className="size-5 animate-spin text-muted-foreground" />}
       </div>
+
+      <PostPreviewModal
+        post={sharedPost}
+        isLoggedIn={isLoggedIn}
+        currentUserId={currentUserId}
+        onOpenChange={(open) => {
+          if (!open) closeSharedPost();
+        }}
+      />
     </div>
   );
 }

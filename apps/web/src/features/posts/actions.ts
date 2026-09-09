@@ -70,6 +70,19 @@ export async function getFeedAction(
   return { posts, nextCursor: page.nextCursor };
 }
 
+export async function getPostByIdAction(postId: string): Promise<Post | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const row = await getPostById(supabase, postId);
+  if (!row || row.status !== "published") return null;
+
+  const [post] = await hydratePosts(supabase, [row], user?.id ?? null);
+  return post ?? null;
+}
+
 export async function getReelsAction(
   cursor: string | null,
 ): Promise<{ posts: Post[]; nextCursor: string | null }> {
@@ -371,6 +384,41 @@ export async function togglePinPostAction(postId: string): Promise<ActionResult<
     await setPostPinned(supabase, postId, !post.is_pinned);
     revalidatePath(`/profile/${user.id}`);
     return { success: true, data: { isPinned: !post.is_pinned } };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Could not update post." };
+  }
+}
+
+export async function updatePostAction(
+  postId: string,
+  input: { caption: string },
+): Promise<ActionResult<{ caption: string | null }>> {
+  const caption = input.caption.trim();
+  if (caption.length > 3000) {
+    return { success: false, error: "Caption must be 3000 characters or fewer." };
+  }
+  if (caption) {
+    const moderation = moderateText(caption);
+    if (!moderation.allowed) {
+      return { success: false, error: moderation.reasons[0] };
+    }
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "You must be logged in." };
+
+  const post = await getPostById(supabase, postId);
+  if (!post || post.author_id !== user.id) {
+    return { success: false, error: "You can only edit your own posts." };
+  }
+
+  try {
+    const updated = await updatePost(supabase, postId, { caption: caption || null });
+    revalidatePath("/feed");
+    return { success: true, data: { caption: updated.caption } };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Could not update post." };
   }
