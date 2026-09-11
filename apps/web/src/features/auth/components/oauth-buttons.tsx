@@ -13,6 +13,21 @@ import { NATIVE_OAUTH_REDIRECT_STORAGE_KEY } from "@/providers/native-oauth-call
 // query param here.
 const NATIVE_OAUTH_SCHEME = "teachgrow.skilltego.com";
 
+// TEMPORARY: on-screen debug trail, same technique as native-oauth-callback.tsx
+// used earlier — this device's WebView console isn't visible via logcat.
+// Remove once the "Continue with Google" stuck-on-Redirecting bug is confirmed fixed.
+function debugLine(text: string) {
+  let el = document.getElementById("__oauth_debug__");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "__oauth_debug__";
+    el.style.cssText =
+      "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#06c;color:#fff;font:11px monospace;padding:6px;white-space:pre-wrap;max-height:40vh;overflow:auto;";
+    document.body.appendChild(el);
+  }
+  el.textContent += `${new Date().toISOString().slice(11, 19)} ${text}\n`;
+}
+
 const PROVIDERS: { id: OAuthProvider; label: string; icon: React.ReactNode }[] = [
   {
     id: "google",
@@ -44,20 +59,31 @@ export function OAuthButtons({ redirectTo = "/feed" }: { redirectTo?: string }) 
   const [loadingProvider, setLoadingProvider] = React.useState<OAuthProvider | null>(null);
 
   async function handleClick(provider: OAuthProvider) {
+    debugLine(`click: ${provider}`);
     setLoadingProvider(provider);
     const supabase = createClient();
     const isNative = Capacitor.isNativePlatform();
+    debugLine(`isNative: ${isNative}`);
     if (isNative) {
       localStorage.setItem(NATIVE_OAUTH_REDIRECT_STORAGE_KEY, redirectTo);
     }
     const callbackUrl = isNative
       ? `${NATIVE_OAUTH_SCHEME}://auth-callback`
       : `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`;
-    const { error } = await signInWithOAuth(supabase, provider, callbackUrl);
+    debugLine(`callbackUrl: ${callbackUrl}`);
+    const { data, error } = await signInWithOAuth(supabase, provider, callbackUrl);
+    debugLine(`error: ${error?.message ?? "none"}`);
+    debugLine(`data.url: ${data?.url ?? "none"}`);
     if (error) {
       setLoadingProvider(null);
+      return;
     }
-    // On success the browser is redirected to the provider — no further action needed.
+    if (data?.url) {
+      debugLine(`navigating...`);
+      window.location.href = data.url;
+    } else {
+      debugLine(`NO URL RETURNED — nothing to navigate to`);
+    }
   }
 
   return (
