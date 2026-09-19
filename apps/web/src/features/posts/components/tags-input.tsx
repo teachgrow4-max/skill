@@ -10,7 +10,12 @@ interface TagsInputProps {
   placeholder?: string;
 }
 
-export function TagsInput({ value, onChange, max = 10, placeholder = "Add a tag and press Enter" }: TagsInputProps) {
+export function TagsInput({
+  value,
+  onChange,
+  max = 10,
+  placeholder = "Add a tag and press Enter",
+}: TagsInputProps) {
   const [draft, setDraft] = React.useState("");
 
   function commit(raw: string) {

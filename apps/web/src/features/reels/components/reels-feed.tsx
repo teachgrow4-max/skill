@@ -77,7 +77,9 @@ export function ReelsFeed({
             currentUserId={currentUserId}
             muted={muted}
             onToggleMute={() => setMuted((m) => !m)}
-            shouldLoadVideo={activeIndex === -1 ? index <= LOAD_WINDOW : Math.abs(index - activeIndex) <= LOAD_WINDOW}
+            shouldLoadVideo={
+              activeIndex === -1 ? index <= LOAD_WINDOW : Math.abs(index - activeIndex) <= LOAD_WINDOW
+            }
           />
         ))}
         <div ref={loadMoreRef} className="flex justify-center py-4">

@@ -108,7 +108,9 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
                 type="button"
                 onClick={() => setTab(t)}
                 className={`flex-1 rounded-full py-2 text-sm font-medium capitalize transition-colors ${
-                  tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent/50"
+                  tab === t
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
                 }`}
               >
                 {t} {results && `(${t === "people" ? people.length : visibleResultPosts.length})`}
@@ -154,7 +156,9 @@ export function ExploreContent({ trendingPosts, isLoggedIn, currentUserId }: Exp
 
           {!loading && results && tab === "posts" && (
             <div className="grid gap-4">
-              {visibleResultPosts.length === 0 && <p className="text-sm text-muted-foreground">No posts found.</p>}
+              {visibleResultPosts.length === 0 && (
+                <p className="text-sm text-muted-foreground">No posts found.</p>
+              )}
               {visibleResultPosts.map((post) => (
                 <PostCard key={post.id} post={post} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />
               ))}

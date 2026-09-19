@@ -29,7 +29,14 @@ export async function AppSidebar() {
     <SidebarFrame>
       <div className="px-4 pb-3 pt-6">
         <Link href="/feed" className="flex items-center gap-2">
-          <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" priority />
+          <Image
+            src="/logo.png"
+            alt={siteConfig.name}
+            width={32}
+            height={32}
+            className="rounded-lg"
+            priority
+          />
           <SidebarLabel className="text-gradient-brand text-lg font-black tracking-tight">
             {siteConfig.name}
           </SidebarLabel>

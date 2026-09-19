@@ -130,7 +130,10 @@ export function ProfileHeader({
             <TrendingUp className="size-3.5 text-primary" />
             Level {profile.level}
           </Badge>
-          <Badge variant="warning" className="rounded-full px-3 py-1.5 shadow-sm transition-transform hover:scale-105">
+          <Badge
+            variant="warning"
+            className="rounded-full px-3 py-1.5 shadow-sm transition-transform hover:scale-105"
+          >
             <Coins className="size-3.5" />
             {profile.skillCoins.toLocaleString()} Skill Coins
           </Badge>

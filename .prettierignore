@@ -6,3 +6,6 @@ dist
 coverage
 package-lock.json
 *.sql
+
+# vendored, minified ffmpeg.wasm loader — copied from node_modules, never hand-formatted
+apps/web/public/ffmpeg

@@ -99,7 +99,10 @@ async function collectReferencedUrls() {
   async function paginate(table, columns, extract) {
     let from = 0;
     for (;;) {
-      const { data, error } = await supabase.from(table).select(columns).range(from, from + DB_PAGE - 1);
+      const { data, error } = await supabase
+        .from(table)
+        .select(columns)
+        .range(from, from + DB_PAGE - 1);
       if (error) throw new Error(`select ${table}: ${error.message}`);
       if (!data || data.length === 0) break;
       for (const row of data) {

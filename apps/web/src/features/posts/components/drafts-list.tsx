@@ -46,9 +46,7 @@ export function DraftsList({ drafts }: { drafts: Post[] }) {
                 </span>
               )}
             </div>
-            <p className="flex-1 truncate text-sm text-muted-foreground">
-              {post.caption || "No caption"}
-            </p>
+            <p className="flex-1 truncate text-sm text-muted-foreground">{post.caption || "No caption"}</p>
             <Button
               type="button"
               variant="outline"

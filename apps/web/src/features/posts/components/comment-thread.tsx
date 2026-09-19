@@ -65,7 +65,13 @@ export function CommentRow({
   );
 }
 
-export function CommentThread({ postId, isLoggedIn, currentUserId, onCountChange, inputId }: CommentThreadProps) {
+export function CommentThread({
+  postId,
+  isLoggedIn,
+  currentUserId,
+  onCountChange,
+  inputId,
+}: CommentThreadProps) {
   const {
     loading,
     roots,

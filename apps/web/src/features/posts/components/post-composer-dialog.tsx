@@ -249,7 +249,9 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
               {type === "project_link" && (
                 <div>
                   <Input placeholder="https://your-project.com" {...register("projectUrl")} />
-                  {errors.projectUrl && <p className="text-xs text-destructive">{errors.projectUrl.message}</p>}
+                  {errors.projectUrl && (
+                    <p className="text-xs text-destructive">{errors.projectUrl.message}</p>
+                  )}
                 </div>
               )}
 
@@ -263,7 +265,12 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
                     <Settings2 className="size-4 text-muted-foreground" />
                     Post settings
                   </span>
-                  <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", moreOpen && "rotate-180")} />
+                  <ChevronDown
+                    className={cn(
+                      "size-4 text-muted-foreground transition-transform",
+                      moreOpen && "rotate-180",
+                    )}
+                  />
                 </button>
 
                 <AnimatePresence initial={false}>

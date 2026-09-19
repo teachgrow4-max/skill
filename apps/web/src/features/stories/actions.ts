@@ -43,8 +43,14 @@ async function sweepExpiredStories(): Promise<void> {
     const expired = await getExpiredStories(admin, cutoff, 25);
     if (expired.length === 0) return;
 
-    await deleteStories(admin, expired.map((story) => story.id));
-    await removeStorageObjectsByUrl(admin, expired.map((story) => story.media_url));
+    await deleteStories(
+      admin,
+      expired.map((story) => story.id),
+    );
+    await removeStorageObjectsByUrl(
+      admin,
+      expired.map((story) => story.media_url),
+    );
   } catch (error) {
     console.error("Expired story sweep failed:", error);
   }

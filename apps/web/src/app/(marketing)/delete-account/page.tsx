@@ -8,7 +8,10 @@ export const metadata: Metadata = { title: "Delete Your Account" };
 export default function DeleteAccountInfoPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20">
-      <Link href="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+      <Link
+        href="/login"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+      >
         <ArrowLeft className="size-4" />
         Back to log in
       </Link>
@@ -27,8 +30,9 @@ export default function DeleteAccountInfoPage() {
               <li>Type your username to confirm and select &ldquo;Permanently delete my account.&rdquo;</li>
             </ol>
             <p>
-              Deletion happens immediately when you confirm — there is no waiting period. If you can&apos;t log
-              in (lost access, forgotten password, or you&apos;ve already uninstalled the app), email us at{" "}
+              Deletion happens immediately when you confirm — there is no waiting period. If you can&apos;t
+              log in (lost access, forgotten password, or you&apos;ve already uninstalled the app), email us
+              at{" "}
               <a href={`mailto:${siteConfig.legalEmail}`} className="text-primary hover:underline">
                 {siteConfig.legalEmail}
               </a>{" "}
@@ -41,17 +45,17 @@ export default function DeleteAccountInfoPage() {
           <h2 className="text-lg font-semibold text-foreground">What gets deleted</h2>
           <p className="mt-2 text-sm">
             Your account, profile (name, bio, skills, resume, social links), posts, stories, reels, comments,
-            messages, follows/followers, saved posts, notifications, and Skill Coins balance are all permanently
-            removed. This cannot be undone.
+            messages, follows/followers, saved posts, notifications, and Skill Coins balance are all
+            permanently removed. This cannot be undone.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold text-foreground">Retention</h2>
           <p className="mt-2 text-sm">
-            We don&apos;t retain a copy of your data after deletion, except where we&apos;re legally required to (for
-            example, records needed to comply with a legal obligation or investigate abuse already reported
-            before your account was deleted).
+            We don&apos;t retain a copy of your data after deletion, except where we&apos;re legally required
+            to (for example, records needed to comply with a legal obligation or investigate abuse already
+            reported before your account was deleted).
           </p>
         </section>
       </div>

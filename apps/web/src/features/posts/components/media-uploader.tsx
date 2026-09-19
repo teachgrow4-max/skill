@@ -139,7 +139,9 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
 
     let finalFile = file;
     if (file.size > COMPRESS_TRIGGER_BYTES) {
-      setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, status: "compressing" } : item)));
+      setPending((p) =>
+        p.map((item) => (item.tempId === tempId ? { ...item, status: "compressing" } : item)),
+      );
       finalFile = await compressVideo(file, (ratio) => {
         setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, progress: ratio } : item)));
       });
@@ -150,7 +152,9 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
     );
     const handle = await uploadVideoWithProgress(finalFile, "reels", (sent, total) => {
       setPending((p) =>
-        p.map((item) => (item.tempId === tempId ? { ...item, progress: total > 0 ? sent / total : 0 } : item)),
+        p.map((item) =>
+          item.tempId === tempId ? { ...item, progress: total > 0 ? sent / total : 0 } : item,
+        ),
       );
     });
     setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, cancel: handle.cancel } : item)));
@@ -330,7 +334,10 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
           })}
 
           {pending.map((item) => (
-            <div key={item.tempId} className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div
+              key={item.tempId}
+              className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            >
               <div className="relative aspect-square bg-muted">
                 {item.file.type.startsWith("image/") ? (
                   // eslint-disable-next-line @next/next/no-img-element -- transient local blob preview, next/image doesn't accept blob: URLs
@@ -363,7 +370,9 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
                 <p className="truncate text-xs font-medium">{item.file.name}</p>
                 {item.status === "failed" ? (
                   <div className="grid gap-1">
-                    <p className="truncate text-[11px] text-destructive">{item.errorMessage ?? "Upload failed."}</p>
+                    <p className="truncate text-[11px] text-destructive">
+                      {item.errorMessage ?? "Upload failed."}
+                    </p>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -415,7 +424,9 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
             onDrop={handleDrop}
             className={cn(
               "flex flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed p-10 text-center transition-all",
-              dragActive ? "scale-[1.01] border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-accent/30",
+              dragActive
+                ? "scale-[1.01] border-primary bg-primary/5"
+                : "border-border hover:border-primary/40 hover:bg-accent/30",
             )}
           >
             <div className="flex size-12 items-center justify-center rounded-full bg-accent text-primary">

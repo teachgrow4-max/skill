@@ -16,7 +16,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <AppSidebar />
           <SidebarAwareMain>
             <AppTopBar />
-            <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-20 pt-4 md:pb-6 md:pt-6">{children}</main>
+            <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-20 pt-4 md:pb-6 md:pt-6">
+              {children}
+            </main>
           </SidebarAwareMain>
           <AppBottomNav />
           <CreatePostFab />

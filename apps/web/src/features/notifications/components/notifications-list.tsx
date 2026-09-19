@@ -44,14 +44,23 @@ export function NotificationsList() {
   }
 
   if (notifications.length === 0) {
-    return <EmptyState title="No notifications yet" description="Likes, comments, and follows will show up here." />;
+    return (
+      <EmptyState
+        title="No notifications yet"
+        description="Likes, comments, and follows will show up here."
+      />
+    );
   }
 
   return (
     <div className="grid gap-2">
       {unreadCount > 0 && (
         <div className="flex justify-end pb-1">
-          <button type="button" onClick={markAllRead} className="text-xs font-medium text-primary hover:underline">
+          <button
+            type="button"
+            onClick={markAllRead}
+            className="text-xs font-medium text-primary hover:underline"
+          >
             Mark all read
           </button>
         </div>

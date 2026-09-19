@@ -5,11 +5,7 @@
  * — a canvas draw only captures a single frame, which would silently kill
  * animation — and for anything already at or under `maxDimension`.
  */
-export async function resizeImage(
-  file: File,
-  maxDimension: number,
-  quality = 0.85,
-): Promise<File> {
+export async function resizeImage(file: File, maxDimension: number, quality = 0.85): Promise<File> {
   if (file.type === "image/gif") return file;
 
   const bitmap = await createImageBitmap(file).catch(() => null);

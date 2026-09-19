@@ -279,7 +279,9 @@ function PostPreviewContent({
           <div className="relative h-full w-full">
             {activeMedia.type === "image" && (
               <>
-                {!loadedSlides[activeSlide] && <Skeleton className="absolute inset-0 rounded-none bg-white/10" />}
+                {!loadedSlides[activeSlide] && (
+                  <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
+                )}
                 <Image
                   src={activeMedia.url}
                   alt=""
@@ -337,7 +339,10 @@ function PostPreviewContent({
                 {media.map((_, i) => (
                   <span
                     key={i}
-                    className={cn("size-1.5 rounded-full transition-colors", i === activeSlide ? "bg-white" : "bg-white/40")}
+                    className={cn(
+                      "size-1.5 rounded-full transition-colors",
+                      i === activeSlide ? "bg-white" : "bg-white/40",
+                    )}
                   />
                 ))}
               </div>
@@ -347,7 +352,12 @@ function PostPreviewContent({
       )}
 
       {/* Right / bottom panel — header + scrollable caption & comments + sticky actions & composer */}
-      <div className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", hasMedia && "lg:w-[380px] lg:shrink-0 lg:border-l lg:border-border")}>
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden",
+          hasMedia && "lg:w-[380px] lg:shrink-0 lg:border-l lg:border-border",
+        )}
+      >
         {/* Sticky header */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
           <Link
@@ -396,7 +406,11 @@ function PostPreviewContent({
                         onClick={handleToggleArchive}
                         className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs hover:bg-accent"
                       >
-                        {isArchived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
+                        {isArchived ? (
+                          <ArchiveRestore className="size-3.5" />
+                        ) : (
+                          <Archive className="size-3.5" />
+                        )}
                         {isArchived ? "Unarchive" : "Archive"}
                       </button>
                       <button

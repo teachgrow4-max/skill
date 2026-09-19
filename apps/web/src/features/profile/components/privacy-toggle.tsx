@@ -26,7 +26,9 @@ export function PrivacyToggle({ initialIsPrivate }: { initialIsPrivate: boolean 
     <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
       <div>
         <p className="text-sm font-medium">Private account</p>
-        <p className="text-xs text-muted-foreground">Only approved followers can see your posts and stories.</p>
+        <p className="text-xs text-muted-foreground">
+          Only approved followers can see your posts and stories.
+        </p>
       </div>
       <Switch checked={isPrivate} disabled={pending} onCheckedChange={handleChange} />
     </div>

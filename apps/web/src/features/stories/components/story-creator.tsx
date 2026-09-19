@@ -172,7 +172,11 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
                   <Loader2 className="size-4 animate-spin" />
                   {cancelUpload ? `Uploading… ${Math.round(uploadProgress * 100)}%` : "Uploading…"}
                   {cancelUpload && (
-                    <button type="button" onClick={cancelUpload} className="font-medium text-destructive hover:underline">
+                    <button
+                      type="button"
+                      onClick={cancelUpload}
+                      className="font-medium text-destructive hover:underline"
+                    >
                       Cancel
                     </button>
                   )}
@@ -185,7 +189,14 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
                 {media.type === "image" ? (
                   <Image src={media.url} alt="" fill sizes="240px" className="object-cover" />
                 ) : (
-                  <video src={media.url} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+                  <video
+                    src={media.url}
+                    className="h-full w-full object-cover"
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                  />
                 )}
                 <button
                   type="button"
@@ -266,7 +277,10 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
 
         <div className="border-t border-border px-5 py-4">
           <Button
-            className={cn("w-full", media && !submitting && "gradient-brand border-0 text-primary-foreground shadow-glow")}
+            className={cn(
+              "w-full",
+              media && !submitting && "gradient-brand border-0 text-primary-foreground shadow-glow",
+            )}
             disabled={!media || submitting}
             onClick={handleSubmit}
           >

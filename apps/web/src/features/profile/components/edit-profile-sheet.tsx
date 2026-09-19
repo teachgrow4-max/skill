@@ -46,7 +46,12 @@ export function EditProfileSheet({ profile, changeStatus }: EditProfileSheetProp
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          <ProfileForm profile={profile} mode="edit" changeStatus={changeStatus} onSaved={() => setOpen(false)} />
+          <ProfileForm
+            profile={profile}
+            mode="edit"
+            changeStatus={changeStatus}
+            onSaved={() => setOpen(false)}
+          />
         </div>
       </SheetContent>
     </Sheet>

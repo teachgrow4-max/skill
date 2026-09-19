@@ -41,7 +41,11 @@ export function StoriesBar({ currentUserId }: { currentUserId: string | null }) 
     <div className="glass flex gap-4 overflow-x-auto rounded-xl p-4">
       <div className="flex shrink-0 flex-col items-center gap-1">
         <div className="relative">
-          <button type="button" onClick={handleMyStoryClick} aria-label={myGroup ? "View your story" : "Create a story"}>
+          <button
+            type="button"
+            onClick={handleMyStoryClick}
+            aria-label={myGroup ? "View your story" : "Create a story"}
+          >
             {myGroup ? (
               <div className={cn("rounded-full p-0.5", myGroup.allViewed ? "bg-border" : "gradient-brand")}>
                 <Avatar className="size-14 border-2 border-background">

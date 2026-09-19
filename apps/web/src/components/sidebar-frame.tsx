@@ -21,7 +21,9 @@ export function SidebarFrame({ children }: { children: React.ReactNode }) {
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="absolute -right-3 top-20 hidden size-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:text-foreground xl:flex"
       >
-        <ChevronLeft className={cn("size-3.5 transition-transform duration-300", collapsed && "rotate-180")} />
+        <ChevronLeft
+          className={cn("size-3.5 transition-transform duration-300", collapsed && "rotate-180")}
+        />
       </button>
     </aside>
   );

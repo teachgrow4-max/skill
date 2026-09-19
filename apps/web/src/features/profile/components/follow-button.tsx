@@ -39,7 +39,8 @@ export function FollowButton({
     // Unfollowing always lands on "none"; following optimistically guesses
     // "requested" vs "following" from the target's privacy — the server
     // result (below) corrects this in the rare case it's wrong.
-    const optimistic: FollowState = previous === "none" ? (targetIsPrivate ? "requested" : "following") : "none";
+    const optimistic: FollowState =
+      previous === "none" ? (targetIsPrivate ? "requested" : "following") : "none";
     setState(optimistic);
 
     const result = await toggleFollowAction(targetProfileId, targetUsername);

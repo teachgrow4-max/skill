@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Controller, useFieldArray, type Control, type UseFormRegister, type FieldErrors } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  type Control,
+  type UseFormRegister,
+  type FieldErrors,
+} from "react-hook-form";
 import { skillCategories } from "@skilltego/config";
 import {
   Button,

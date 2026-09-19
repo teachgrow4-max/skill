@@ -94,11 +94,7 @@ export function NotificationBell({ align = "right" }: NotificationBellProps) {
           <div className="flex items-center justify-between border-b border-border p-3">
             <span className="text-sm font-semibold">Notifications</span>
             {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={markAllRead}
-                className="text-xs text-primary hover:underline"
-              >
+              <button type="button" onClick={markAllRead} className="text-xs text-primary hover:underline">
                 Mark all read
               </button>
             )}

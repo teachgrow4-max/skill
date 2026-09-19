@@ -51,7 +51,10 @@ export default async function LeaderboardPage() {
                 )}
               >
                 <span
-                  className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold shadow-[0_2px_8px_#0000004d]", style.rank)}
+                  className={cn(
+                    "flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold shadow-[0_2px_8px_#0000004d]",
+                    style.rank,
+                  )}
                   style={{ background: style.medallion, color: "#18181b" }}
                 >
                   {entry.rank}
@@ -83,7 +86,9 @@ export default async function LeaderboardPage() {
               href={`/profile/${entry.profile.username}`}
               className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 hover:bg-accent/40"
             >
-              <span className="w-6 text-center text-sm font-semibold text-muted-foreground">{entry.rank}</span>
+              <span className="w-6 text-center text-sm font-semibold text-muted-foreground">
+                {entry.rank}
+              </span>
               <Avatar className="size-10">
                 <AvatarImage src={entry.profile.avatarUrl ?? undefined} alt={entry.profile.fullName} />
                 <AvatarFallback>{initials(entry.profile.fullName)}</AvatarFallback>

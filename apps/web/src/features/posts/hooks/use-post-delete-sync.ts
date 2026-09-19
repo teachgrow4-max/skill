@@ -18,14 +18,10 @@ export function usePostDeleteSync(onDeleted: (id: string) => void) {
     const supabase = createClient();
     const channel = supabase
       .channel(`posts-delete:${instanceId}`)
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "posts" },
-        (payload) => {
-          const deletedId = (payload.old as { id?: string }).id;
-          if (deletedId) onDeletedRef.current(deletedId);
-        },
-      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "posts" }, (payload) => {
+        const deletedId = (payload.old as { id?: string }).id;
+        if (deletedId) onDeletedRef.current(deletedId);
+      })
       .subscribe();
 
     return () => {

@@ -2,16 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  Bookmark,
-  FileText,
-  HelpCircle,
-  Lock,
-  Pencil,
-  Settings,
-  Sparkles,
-  User,
-} from "lucide-react";
+import { Bookmark, FileText, HelpCircle, Lock, Pencil, Settings, Sparkles, User } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,

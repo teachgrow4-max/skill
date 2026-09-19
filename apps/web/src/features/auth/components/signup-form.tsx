@@ -123,13 +123,7 @@ export function SignupForm() {
           <Label htmlFor="email">Email</Label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              className="pl-9"
-              {...register("email")}
-            />
+            <Input id="email" type="email" autoComplete="email" className="pl-9" {...register("email")} />
           </div>
           {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>

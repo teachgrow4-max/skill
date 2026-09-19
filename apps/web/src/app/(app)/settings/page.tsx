@@ -52,7 +52,9 @@ export default function SettingsPage() {
             <Trash2 className="size-4 text-destructive" />
             <div>
               <p className="text-sm font-medium text-destructive">Delete Account</p>
-              <p className="text-xs text-muted-foreground">Permanently delete your account and all your data.</p>
+              <p className="text-xs text-muted-foreground">
+                Permanently delete your account and all your data.
+              </p>
             </div>
           </div>
           <ChevronRight className="size-4 text-muted-foreground" />
