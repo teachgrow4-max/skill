@@ -23,12 +23,16 @@ export function ReelsFeed({
   const [muted, setMuted] = React.useState(true);
   const [deletedIds, setDeletedIds] = React.useState<Set<string>>(new Set());
   const loadMoreRef = React.useRef<HTMLDivElement>(null);
+  // Fixes the shuffled order for this visit: every page request carries the same
+  // seed so scrolling never repeats or skips a reel, and it's part of the query
+  // key so opening the tab again starts a fresh shuffle instead of a cached one.
+  const [seed] = React.useState(() => Math.random().toString(36).slice(2, 10));
 
   usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ["reels"],
-    queryFn: ({ pageParam }) => getReelsAction(pageParam),
+    queryKey: ["reels", seed],
+    queryFn: ({ pageParam }) => getReelsAction(seed, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });

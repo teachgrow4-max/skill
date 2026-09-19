@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, PostRow } from "@skilltego/types";
+import { orderBySeed } from "./reel-order";
 
 type Client = SupabaseClient<Database>;
 
@@ -69,24 +70,42 @@ export async function getLatestPosts(client: Client, cursor: string | null): Pro
   };
 }
 
-export async function getReelsPosts(client: Client, cursor: string | null): Promise<FeedPage> {
-  let query = client
+// Ordering by a hash needs the whole candidate set in hand, so the shuffle only
+// draws from the newest N reels. It's just one uuid per row, and a shuffled
+// feed should be drawing from recent content anyway.
+const REEL_SHUFFLE_POOL = 300;
+
+/**
+ * One page of the reels feed in a shuffled order. `seed` fixes the order for a
+ * whole viewing session (see orderBySeed) and `cursor` is the offset into it,
+ * so scrolling never repeats or skips a reel; a new seed gives a new order.
+ */
+export async function getShuffledReelsPage(
+  client: Client,
+  seed: string,
+  cursor: string | null,
+): Promise<FeedPage> {
+  const offset = cursor ? Math.max(0, Number.parseInt(cursor, 10) || 0) : 0;
+
+  const { data: pool, error } = await client
     .from("posts")
-    .select("*")
+    .select("id")
     .eq("status", "published")
     .eq("type", "video")
     .eq("is_archived", false)
     .order("created_at", { ascending: false })
-    .limit(PAGE_SIZE);
-
-  if (cursor) query = query.lt("created_at", cursor);
-
-  const { data, error } = await query;
+    .limit(REEL_SHUFFLE_POOL);
   if (error) throw error;
 
+  const ordered = orderBySeed(
+    pool.map((row) => row.id),
+    seed,
+  );
+  const posts = await getPostsByIds(client, ordered.slice(offset, offset + PAGE_SIZE));
+
   return {
-    posts: data,
-    nextCursor: data.length === PAGE_SIZE ? data[data.length - 1].created_at : null,
+    posts,
+    nextCursor: offset + PAGE_SIZE < ordered.length ? String(offset + PAGE_SIZE) : null,
   };
 }
 

@@ -18,8 +18,8 @@ import {
   getPostsByAuthor,
   getPostsByIds,
   getProfileById,
-  getReelsPosts,
   getSavedPosts,
+  getShuffledReelsPage,
   getTrendingPosts,
   likePost,
   removeStorageObjectsByUrl,
@@ -71,6 +71,7 @@ export async function getFeedAction(
 }
 
 export async function getReelsAction(
+  seed: string,
   cursor: string | null,
 ): Promise<{ posts: Post[]; nextCursor: string | null }> {
   const supabase = await createClient();
@@ -78,7 +79,7 @@ export async function getReelsAction(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const page = await getReelsPosts(supabase, cursor);
+  const page = await getShuffledReelsPage(supabase, seed.slice(0, 64), cursor);
   const posts = await hydratePosts(supabase, page.posts, user?.id ?? null);
   return { posts, nextCursor: page.nextCursor };
 }
