@@ -9,7 +9,7 @@ export function CategoriesShowcase() {
         <FadeIn className="text-center">
           <h2 className="text-3xl font-bold sm:text-4xl">Skills across every domain</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            From code to choreography — if it&apos;s a skill, it belongs on Skilltego.
+            From code to choreography, if it&apos;s a skill, it belongs on Skilltego.
           </p>
         </FadeIn>
 

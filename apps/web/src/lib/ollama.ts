@@ -5,7 +5,7 @@ const MODEL = "qwen3:4b";
 export class OllamaUnavailableError extends Error {
   constructor() {
     super(
-      "Couldn't reach Ollama. Install it from https://ollama.com, run `ollama pull qwen3:4b`, and make sure it's running.",
+      "AI suggestions need a local AI tool (Ollama) running on this device — it isn't available right now.",
     );
     this.name = "OllamaUnavailableError";
   }

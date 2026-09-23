@@ -1,165 +1,23 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Heart, Lock, MessageCircle, Reply, UserCheck, UserPlus } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage, Button } from "@skilltego/ui";
-import { cn, initials, formatRelativeTime } from "@skilltego/utils";
-import type { Notification } from "@skilltego/types";
+import { Bell } from "lucide-react";
+import { Button } from "@skilltego/ui";
 import { useNotifications } from "@/providers/notifications-provider";
 
-const ICONS = {
-  follow: UserPlus,
-  like: Heart,
-  comment: MessageCircle,
-  reply: Reply,
-  follow_request: Lock,
-  follow_accepted: UserCheck,
-} as const;
-
-const LABELS: Record<Notification["type"], string> = {
-  follow: "started following you",
-  like: "liked your post",
-  comment: "commented on your post",
-  reply: "replied to your comment",
-  follow_request: "requested to follow you",
-  follow_accepted: "accepted your follow request",
-};
-
-function targetHref(notification: Notification): string {
-  if (notification.type === "follow" || notification.type === "follow_accepted") {
-    return `/profile/${notification.actor.username}`;
-  }
-  if (notification.type === "follow_request") return "/follow-requests";
-  return "/feed";
-}
-
-interface NotificationBellProps {
-  /** Which side the button sits near — the panel opens away from that edge so it stays on-screen. */
-  align?: "left" | "right";
-}
-
-export function NotificationBell({ align = "right" }: NotificationBellProps) {
-  const [open, setOpen] = React.useState(false);
-  const { notifications, unreadCount, markAllRead, markRead } = useNotifications();
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  function handleOpen() {
-    setOpen((v) => !v);
-  }
-
-  async function handleClickNotification(notification: Notification) {
-    if (!notification.isRead) {
-      await markRead(notification.id);
-    }
-    setOpen(false);
-  }
+export function NotificationBell() {
+  const { unreadCount } = useNotifications();
 
   return (
-    <div className="relative" ref={containerRef}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={handleOpen}
-        aria-label="Notifications"
-        className="relative"
-      >
+    <Button type="button" variant="ghost" size="icon" asChild aria-label="Notifications" className="relative">
+      <Link href="/notifications">
         <Bell className="size-4" />
         {unreadCount > 0 && (
           <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
-      </Button>
-
-      {open && (
-        <div
-          className={cn(
-            "absolute top-11 z-50 max-h-96 w-80 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg",
-            align === "right" ? "right-0" : "left-0",
-          )}
-        >
-          <div className="flex items-center justify-between border-b border-border p-3">
-            <span className="text-sm font-semibold">Notifications</span>
-            {unreadCount > 0 && (
-              <button type="button" onClick={markAllRead} className="text-xs text-primary hover:underline">
-                Mark all read
-              </button>
-            )}
-          </div>
-
-          {notifications.length === 0 && (
-            <p className="p-4 text-center text-sm text-muted-foreground">No notifications yet.</p>
-          )}
-
-          <AnimatePresence initial={false}>
-            {notifications.map((notification) => {
-              const Icon = ICONS[notification.type];
-              return (
-                <motion.div
-                  key={notification.id}
-                  layout
-                  initial={false}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  style={{ overflow: "hidden" }}
-                >
-                  <Link
-                    href={targetHref(notification)}
-                    onClick={() => handleClickNotification(notification)}
-                    className={cn(
-                      "flex items-start gap-2.5 border-b border-border p-3 text-sm hover:bg-accent/50",
-                      !notification.isRead && "bg-accent/20",
-                    )}
-                  >
-                    <Avatar className="size-8">
-                      <AvatarImage
-                        src={notification.actor.avatarUrl ?? undefined}
-                        alt={notification.actor.fullName}
-                      />
-                      <AvatarFallback className="text-xs">
-                        {initials(notification.actor.fullName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p>
-                        <span className="font-medium">{notification.actor.fullName}</span>{" "}
-                        {LABELS[notification.type]}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {formatRelativeTime(notification.createdAt)}
-                      </p>
-                    </div>
-                    <Icon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-
-          {notifications.length > 0 && (
-            <Link
-              href="/notifications"
-              onClick={() => setOpen(false)}
-              className="block p-3 text-center text-sm font-medium text-primary hover:underline"
-            >
-              See all notifications
-            </Link>
-          )}
-        </div>
-      )}
-    </div>
+      </Link>
+    </Button>
   );
 }

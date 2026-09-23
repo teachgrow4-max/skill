@@ -48,6 +48,12 @@
   --gradient-hero: linear-gradient(135deg, #050505, #3f3f46, #a1a1aa);
   --gradient-secondary: linear-gradient(135deg, #18181b, #3f3f46);
   --gradient-premium: linear-gradient(135deg, #e4e4e7, #d9d9d9);
+  /* Separate from --gradient-brand: that one is dark-to-darker by design for
+     solid button/badge fills, which is fine since the fill provides its own
+     contrast against light text on top. Clipped onto text (.text-gradient-brand)
+     it has no such fill — in dark mode it needs to stay light throughout, or
+     the end of the gradient nearest the dark page background disappears. */
+  --gradient-brand-text: linear-gradient(135deg, #3f3f46, #18181b);
 
   --shadow-glow: 0 10px 40px rgba(0, 0, 0, 0.12);
   --shadow-glow-orange: 0 10px 40px rgba(0, 0, 0, 0.12);
@@ -103,6 +109,7 @@
   --gradient-hero: linear-gradient(135deg, #050505, #2b2b2b, #6b7280);
   --gradient-secondary: linear-gradient(135deg, #0d0d0d, #181818);
   --gradient-premium: linear-gradient(135deg, #3f3f46, #d9d9d9);
+  --gradient-brand-text: linear-gradient(135deg, #f4f4f5, #d9d9d9);
 
   --shadow-glow: 0 10px 40px rgba(0, 0, 0, 0.45);
   --shadow-glow-orange: 0 10px 40px rgba(0, 0, 0, 0.45);
@@ -184,7 +191,7 @@
 }
 
 .text-gradient-brand {
-  background: var(--gradient-brand);
+  background: var(--gradient-brand-text);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

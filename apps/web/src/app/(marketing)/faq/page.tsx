@@ -21,7 +21,7 @@ const FAQS = [
   {
     question: "How do I sign up?",
     answer:
-      "Create an account with email, Google, or GitHub, then build your profile by adding your skills, bio, and location.",
+      "Create an account with email or Google, then build your profile by adding your skills, bio, and location.",
   },
   {
     question: "Can I change my username later?",

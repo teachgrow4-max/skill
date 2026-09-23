@@ -7,7 +7,7 @@ const STEPS = [
     icon: UserPlus,
     title: "Build your skill profile",
     description:
-      "Add the skills you actually have — technical, creative, athletic, or academic — with your proficiency and proof of work.",
+      "Add the skills you actually have (technical, creative, athletic, or academic) with your proficiency and proof of work.",
   },
   {
     icon: Radar,

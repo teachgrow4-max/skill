@@ -29,7 +29,17 @@ interface PostTypeSelectorProps {
 
 export function PostTypeSelector({ activeCard, onSelect }: PostTypeSelectorProps) {
   return (
-    <div className="glass flex gap-1 overflow-x-auto rounded-full p-1 scrollbar-none">
+    <div
+      className="glass flex gap-1 overflow-x-auto rounded-full p-1 scrollbar-none"
+      style={{
+        // A hidden scrollbar leaves no hint that Code/GitHub/Project can be
+        // off-screen to the right — this fade signals "more this way" without
+        // needing to track scroll position just to show/hide it.
+        maskImage: "linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent)",
+        WebkitMaskImage:
+          "linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent)",
+      }}
+    >
       {TYPE_CARDS.map((card) => {
         const isActive = activeCard === card.key;
         return (

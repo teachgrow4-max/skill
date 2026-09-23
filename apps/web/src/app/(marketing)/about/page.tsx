@@ -18,15 +18,15 @@ export default function AboutPage() {
         <p>
           We built {siteConfig.name} for the student who codes better than they test, the athlete whose
           training hours never show up on a transcript, the self-taught designer without a portfolio site, and
-          the teacher whose classroom impact never makes it onto LinkedIn. Whatever you can do — technical,
-          creative, athletic, or academic — {siteConfig.name} gives it a place to be seen.
+          the teacher whose classroom impact never makes it onto LinkedIn. Technical, creative, athletic, or
+          academic: whatever you can do, {siteConfig.name} gives it a place to be seen.
         </p>
         <p>
           Companies, colleges, and mentors use {siteConfig.name} to search by skill instead of pedigree, so
           the people who can actually do the work get found by the people looking for it.
         </p>
         <p>
-          {siteConfig.name} is open to anyone aged 13 and up — students, professionals, artists, athletes,
+          {siteConfig.name} is open to anyone aged 13 and up: students, professionals, artists, athletes,
           teachers, creators, entrepreneurs, freelancers, recruiters, companies, and colleges alike.
         </p>
       </div>

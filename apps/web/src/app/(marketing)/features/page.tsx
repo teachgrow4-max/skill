@@ -7,7 +7,7 @@ const FEATURES = [
   {
     title: "Skill-first profiles",
     description:
-      "List what you can actually do — with proficiency levels, categories, and proof of work — instead of a static résumé.",
+      "List what you can actually do, with proficiency levels, categories, and proof of work, instead of a static résumé.",
   },
   {
     title: "Discovery, not just search",

@@ -1,8 +1,13 @@
+"use client";
+
+import * as React from "react";
 import type { SkillCoinEvent } from "@skilltego/types";
 
 interface CoinHistoryCardProps {
   history: SkillCoinEvent[];
 }
+
+const COLLAPSED_COUNT = 5;
 
 function formatEventDate(iso: string): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(
@@ -11,6 +16,10 @@ function formatEventDate(iso: string): string {
 }
 
 export function CoinHistoryCard({ history }: CoinHistoryCardProps) {
+  const [expanded, setExpanded] = React.useState(false);
+  const visible = expanded ? history : history.slice(0, COLLAPSED_COUNT);
+  const hasMore = history.length > COLLAPSED_COUNT;
+
   return (
     <div className="glass mt-6 rounded-2xl p-6 shadow-sm">
       <h2 className="text-lg font-semibold">Skill Coin History</h2>
@@ -21,7 +30,7 @@ export function CoinHistoryCard({ history }: CoinHistoryCardProps) {
         </p>
       ) : (
         <ul className="mt-4 grid gap-2">
-          {history.map((event, index) => (
+          {visible.map((event, index) => (
             <li
               key={`${event.createdAt}-${index}`}
               className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"
@@ -42,6 +51,16 @@ export function CoinHistoryCard({ history }: CoinHistoryCardProps) {
             </li>
           ))}
         </ul>
+      )}
+
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-3 text-sm font-medium text-primary hover:underline"
+        >
+          {expanded ? "Show less" : `Show all ${history.length}`}
+        </button>
       )}
     </div>
   );
