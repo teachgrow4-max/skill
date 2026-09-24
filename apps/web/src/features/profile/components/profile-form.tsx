@@ -161,14 +161,12 @@ export function ProfileForm({ profile, mode, changeStatus, onSaved }: ProfileFor
           shape="circle"
           value={avatarUrl ?? ""}
           onChange={(url) => setValue("avatarUrl", url, { shouldDirty: true })}
-          onError={setFormError}
         />
         <AvatarCoverUploader
           label="Cover"
           shape="banner"
           value={coverUrl ?? ""}
           onChange={(url) => setValue("coverUrl", url, { shouldDirty: true })}
-          onError={setFormError}
         />
       </div>
 

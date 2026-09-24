@@ -16,25 +16,28 @@ interface AvatarCoverUploaderProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
-  onError: (message: string) => void;
   shape: "circle" | "banner";
 }
 
-export function AvatarCoverUploader({ label, value, onChange, onError, shape }: AvatarCoverUploaderProps) {
+export function AvatarCoverUploader({ label, value, onChange, shape }: AvatarCoverUploaderProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
+  // Shown right under this uploader rather than at the bottom of the (long,
+  // scrollable) form, where a failed upload looked like "nothing happened".
+  const [error, setError] = React.useState<string | null>(null);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
+    setError(null);
     try {
       const resized = await resizeImage(file, MAX_DIMENSION[shape]);
       const result = await uploadProfileImage(resized);
       onChange(result.url);
     } catch (uploadError) {
-      onError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -71,6 +74,7 @@ export function AvatarCoverUploader({ label, value, onChange, onError, shape }: 
           </span>
         </div>
       </button>
+      {error && <p className="text-xs text-destructive">Couldn&apos;t upload {label.toLowerCase()}: {error}</p>}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
     </div>
   );
