@@ -184,7 +184,7 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
             </div>
 
             {/* Body */}
-            <div className="grid flex-1 gap-6 overflow-y-auto px-6 py-6 sm:px-8">
+            <div className="grid flex-1 auto-rows-max gap-6 overflow-y-auto px-6 py-6 sm:px-8">
               <PostTypeSelector
                 activeCard={selectedCard}
                 onSelect={(card) => {
