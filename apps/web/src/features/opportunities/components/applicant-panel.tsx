@@ -12,14 +12,23 @@ const STATUS_OPTIONS: ApplicationStatus[] = ["submitted", "shortlisted", "accept
 
 export function ApplicantPanel({ opportunityId }: { opportunityId: string }) {
   const [applicants, setApplicants] = React.useState<OpportunityApplication[] | null>(null);
+  const [loadFailed, setLoadFailed] = React.useState(false);
 
   React.useEffect(() => {
-    getApplicantsAction(opportunityId).then(setApplicants);
+    getApplicantsAction(opportunityId)
+      .then(setApplicants)
+      .catch(() => setLoadFailed(true));
   }, [opportunityId]);
 
   async function handleStatusChange(applicationId: string, status: ApplicationStatus) {
     setApplicants((prev) => prev?.map((a) => (a.id === applicationId ? { ...a, status } : a)) ?? null);
     await updateApplicationStatusAction(applicationId, status);
+  }
+
+  if (loadFailed) {
+    return (
+      <p className="text-sm text-muted-foreground">Couldn&apos;t load applicants. Refresh to try again.</p>
+    );
   }
 
   if (applicants === null) {

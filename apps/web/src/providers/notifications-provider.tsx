@@ -28,11 +28,14 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [userId, setUserId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    getNotificationsAction().then(({ notifications: data, unreadCount: count, userId: id }) => {
-      setNotifications(data);
-      setUnreadCount(count);
-      setUserId(id);
-    });
+    getNotificationsAction()
+      .then(({ notifications: data, unreadCount: count, userId: id }) => {
+        setNotifications(data);
+        setUnreadCount(count);
+        setUserId(id);
+      })
+      // Runs on every app page; a dropped connection just leaves the bell empty.
+      .catch(() => {});
   }, []);
 
   const handleDeleted = React.useCallback((id: string) => {

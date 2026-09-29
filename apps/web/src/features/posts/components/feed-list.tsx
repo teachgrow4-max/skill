@@ -4,6 +4,7 @@ import * as React from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { Button } from "@skilltego/ui";
 import { cn } from "@skilltego/utils";
 import { getFeedAction, type FeedMode } from "../actions";
 import { usePostDeleteSync } from "../hooks/use-post-delete-sync";
@@ -29,7 +30,16 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
 
   usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    isLoading,
+    isError,
+    refetch,
+  } = useInfiniteQuery({
     queryKey: ["feed", mode],
     queryFn: ({ pageParam }) => getFeedAction(mode, pageParam),
     initialPageParam: null as string | null,
@@ -42,7 +52,9 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+        // After a failed page, wait for the Retry button instead of re-firing
+        // on every scroll.
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
           fetchNextPage();
         }
       },
@@ -51,7 +63,7 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError]);
 
   const posts = (data?.pages.flatMap((page) => page.posts) ?? []).filter((post) => !deletedIds.has(post.id));
 
@@ -83,7 +95,16 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
         </div>
       )}
 
-      {!isLoading && posts.length === 0 && (
+      {isError && posts.length === 0 && (
+        <div className="glass grid justify-items-center gap-3 rounded-xl p-8 text-center text-sm text-muted-foreground">
+          Couldn&apos;t load posts. Check your connection and try again.
+          <Button size="sm" variant="outline" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && !isError && posts.length === 0 && (
         <div className="glass rounded-xl p-8 text-center text-sm text-muted-foreground">
           {mode === "following"
             ? "Follow people to see their posts here, or check the Latest tab."
@@ -95,7 +116,6 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
         {posts.map((post) => (
           <motion.div
             key={post.id}
-            layout
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -108,6 +128,11 @@ export function FeedList({ isLoggedIn, currentUserId, defaultMode }: FeedListPro
 
       <div ref={loadMoreRef} className="flex justify-center py-4">
         {isFetchingNextPage && <Loader2 className="size-5 animate-spin text-muted-foreground" />}
+        {isFetchNextPageError && !isFetchingNextPage && (
+          <Button size="sm" variant="outline" onClick={() => fetchNextPage()}>
+            Couldn&apos;t load more — retry
+          </Button>
+        )}
       </div>
     </div>
   );

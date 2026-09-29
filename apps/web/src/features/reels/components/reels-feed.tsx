@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { Button } from "@skilltego/ui";
 import { getReelsAction } from "@/features/posts/actions";
 import { usePostDeleteSync } from "@/features/posts/hooks/use-post-delete-sync";
 import { useActiveVideoStore } from "@/lib/active-video-store";
@@ -30,7 +31,16 @@ export function ReelsFeed({
 
   usePostDeleteSync((id) => setDeletedIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id))));
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    isLoading,
+    isError,
+    refetch,
+  } = useInfiniteQuery({
     queryKey: ["reels", seed],
     queryFn: ({ pageParam }) => getReelsAction(seed, pageParam),
     initialPageParam: null as string | null,
@@ -42,13 +52,15 @@ export function ReelsFeed({
     if (!el) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+          fetchNextPage();
+        }
       },
       { rootMargin: "800px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError]);
 
   const posts = (data?.pages.flatMap((page) => page.posts) ?? []).filter((post) => !deletedIds.has(post.id));
   const activeVideoId = useActiveVideoStore((s) => s.activeId);
@@ -58,6 +70,17 @@ export function ReelsFeed({
     return (
       <div className="flex h-[calc(100dvh-9rem)] items-center justify-center md:h-[calc(100dvh-3rem)]">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (isError && posts.length === 0) {
+    return (
+      <div className="glass flex h-[calc(100dvh-9rem)] flex-col items-center justify-center gap-3 rounded-2xl p-8 text-center text-sm text-muted-foreground md:h-[calc(100dvh-3rem)]">
+        Couldn&apos;t load reels. Check your connection and try again.
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
       </div>
     );
   }
@@ -88,6 +111,11 @@ export function ReelsFeed({
         ))}
         <div ref={loadMoreRef} className="flex justify-center py-4">
           {isFetchingNextPage && <Loader2 className="size-5 animate-spin text-muted-foreground" />}
+          {isFetchNextPageError && !isFetchingNextPage && (
+            <Button size="sm" variant="outline" onClick={() => fetchNextPage()}>
+              Couldn&apos;t load more — retry
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -65,7 +65,7 @@ export function ChatWindow({
   const incomingCaller = call.incomingFrom ? participantMap.get(call.incomingFrom) : null;
 
   React.useEffect(() => {
-    markConversationReadAction(conversationId);
+    markConversationReadAction(conversationId).catch(() => {});
   }, [conversationId]);
 
   React.useEffect(() => {

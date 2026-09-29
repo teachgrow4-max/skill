@@ -41,7 +41,7 @@ export function StoryViewer({ groups, startIndex, currentUserId, onClose, onDele
   }, [story?.id]);
 
   React.useEffect(() => {
-    if (story && !isOwn) viewStoryAction(story.id);
+    if (story && !isOwn) viewStoryAction(story.id).catch(() => {});
   }, [story, isOwn]);
 
   const advance = React.useCallback(() => {
