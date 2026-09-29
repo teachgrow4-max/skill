@@ -296,7 +296,13 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
               >
                 <div className="relative aspect-square bg-muted">
                   {item.type === "image" ? (
-                    <Image src={item.url} alt="" fill className="object-cover" />
+                    <Image
+                      src={item.url}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 50vw, 220px"
+                      className="object-cover"
+                    />
                   ) : item.type === "video" ? (
                     <div className="flex h-full w-full items-center justify-center">
                       <Video className="size-8 text-muted-foreground" />

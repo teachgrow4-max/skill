@@ -239,7 +239,15 @@ export function PostCard({ post, isLoggedIn, currentUserId }: PostCardProps) {
               className="relative aspect-video overflow-hidden rounded-lg bg-muted"
             >
               {item.type === "image" && (
-                <Image src={item.url} alt="" fill quality={90} className="object-cover" unoptimized={i > 3} />
+                <Image
+                  src={item.url}
+                  alt=""
+                  fill
+                  quality={90}
+                  sizes="(max-width: 704px) 100vw, 672px"
+                  className="object-cover"
+                  unoptimized={i > 3}
+                />
               )}
               {item.type === "video" && (
                 <video

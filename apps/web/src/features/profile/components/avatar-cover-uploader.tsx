@@ -57,7 +57,14 @@ export function AvatarCoverUploader({ label, value, onChange, shape }: AvatarCov
         )}
       >
         {value ? (
-          <Image src={value} alt="" fill quality={90} className="object-cover" />
+          <Image
+            src={value}
+            alt=""
+            fill
+            quality={90}
+            sizes={shape === "circle" ? "96px" : "(max-width: 704px) 100vw, 672px"}
+            className="object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <Camera className="size-6" />
@@ -74,7 +81,11 @@ export function AvatarCoverUploader({ label, value, onChange, shape }: AvatarCov
           </span>
         </div>
       </button>
-      {error && <p className="text-xs text-destructive">Couldn&apos;t upload {label.toLowerCase()}: {error}</p>}
+      {error && (
+        <p className="text-xs text-destructive">
+          Couldn&apos;t upload {label.toLowerCase()}: {error}
+        </p>
+      )}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
     </div>
   );

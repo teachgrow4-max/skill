@@ -51,7 +51,15 @@ export function ProfileHeader({
             aria-label="View cover photo"
             className="absolute inset-0 size-full cursor-zoom-in border-0 bg-transparent p-0"
           >
-            <Image src={profile.coverUrl} alt="" fill quality={90} className="object-cover" priority />
+            <Image
+              src={profile.coverUrl}
+              alt=""
+              fill
+              quality={90}
+              sizes="(max-width: 704px) 100vw, 672px"
+              className="object-cover"
+              priority
+            />
           </button>
         )}
         <div
