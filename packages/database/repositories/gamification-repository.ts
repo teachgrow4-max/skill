@@ -37,62 +37,20 @@ export async function getLeaderboard(client: Client, limit = 50): Promise<Profil
   return data;
 }
 
-function levelForSkillCoins(skillCoins: number): number {
-  return Math.floor(skillCoins / 100) + 1;
-}
-
-const DAILY_LOGIN_REWARD = 2;
-const STREAK_BONUSES: Record<number, number> = { 7: 30, 30: 150 };
-
 export interface DailyActivityResult {
   streak: number;
   coinsAwarded: number;
 }
 
-/** Updates streak/Skill Coins for a daily visit; returns the new streak and coins awarded. Idempotent per calendar day. */
-export async function recordDailyActivity(client: Client, profileId: string): Promise<DailyActivityResult> {
-  const { data: profile, error } = await client
-    .from("profiles")
-    .select("skill_coins, streak_count, last_active_date")
-    .eq("id", profileId)
-    .single();
+/**
+ * Updates streak/Skill Coins for a daily visit; returns the new streak and coins awarded.
+ * Idempotent per calendar day. Runs as a security definer function (migration 0024) —
+ * users can't write their own skill_coins/streak columns directly.
+ */
+export async function recordDailyActivity(client: Client): Promise<DailyActivityResult> {
+  const { data, error } = await client.rpc("record_daily_activity");
   if (error) throw error;
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (profile.last_active_date === today) return { streak: profile.streak_count, coinsAwarded: 0 };
-
-  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-  const newStreak = profile.last_active_date === yesterday ? profile.streak_count + 1 : 1;
-  const streakBonus = STREAK_BONUSES[newStreak] ?? 0;
-  const newSkillCoins = profile.skill_coins + DAILY_LOGIN_REWARD + streakBonus;
-
-  const { error: updateError } = await client
-    .from("profiles")
-    .update({
-      streak_count: newStreak,
-      last_active_date: today,
-      skill_coins: newSkillCoins,
-      level: levelForSkillCoins(newSkillCoins),
-    })
-    .eq("id", profileId);
-  if (updateError) throw updateError;
-
-  const events = [{ profile_id: profileId, amount: DAILY_LOGIN_REWARD, reason: "Daily login" }];
-  if (streakBonus > 0) {
-    events.push({ profile_id: profileId, amount: streakBonus, reason: `${newStreak}-day streak bonus` });
-  }
-  await client.from("skill_coin_events").insert(events);
-
-  if (newStreak >= 7) {
-    const { data: badge } = await client.from("badges").select("id").eq("slug", "week_streak").maybeSingle();
-    if (badge) {
-      await client
-        .from("profile_badges")
-        .upsert({ profile_id: profileId, badge_id: badge.id }, { onConflict: "profile_id,badge_id" });
-    }
-  }
-
-  return { streak: newStreak, coinsAwarded: DAILY_LOGIN_REWARD + streakBonus };
+  return { streak: data.streak, coinsAwarded: data.coins_awarded };
 }
 
 export async function getSkillCoinEvents(

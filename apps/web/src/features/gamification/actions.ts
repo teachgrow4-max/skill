@@ -21,7 +21,14 @@ export async function recordDailyActivityAction(): Promise<{ streak: number; coi
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  return recordDailyActivity(supabase, user.id);
+  // Fire-and-forget from the app shell on every page load — a failure here
+  // must never surface as an unhandled error.
+  try {
+    return await recordDailyActivity(supabase);
+  } catch (error) {
+    console.error("Daily check-in failed:", error);
+    return null;
+  }
 }
 
 export async function getMyBadgesAction(profileId: string): Promise<Badge[]> {

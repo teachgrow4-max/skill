@@ -650,6 +650,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: number;
       };
+      record_daily_activity: {
+        Args: Record<string, never>;
+        Returns: { streak: number; coins_awarded: number };
+      };
     };
     Enums: {
       account_type: AccountType;

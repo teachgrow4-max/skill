@@ -9,9 +9,11 @@ export function DailyCheckIn() {
   const [result, setResult] = React.useState<{ streak: number; coinsAwarded: number } | null>(null);
 
   React.useEffect(() => {
-    recordDailyActivityAction().then((data) => {
-      if (data && data.coinsAwarded > 0) setResult(data);
-    });
+    recordDailyActivityAction()
+      .then((data) => {
+        if (data && data.coinsAwarded > 0) setResult(data);
+      })
+      .catch(() => {});
   }, []);
 
   React.useEffect(() => {
