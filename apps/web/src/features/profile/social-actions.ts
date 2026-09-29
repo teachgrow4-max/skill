@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import {
   cancelFollowRequest,
   createFollowRequest,
@@ -59,18 +60,22 @@ export async function toggleFollowAction(
       return { success: true, state: "none" };
     }
 
-    const target = await getProfileById(supabase, targetProfileId);
-    const follower = await getProfileById(supabase, user.id);
+    const [target, follower] = await Promise.all([
+      getProfileById(supabase, targetProfileId),
+      getProfileById(supabase, user.id),
+    ]);
 
     if (target?.is_private) {
       await createFollowRequest(supabase, user.id, targetProfileId);
       revalidatePath(`/profile/${targetUsername}`);
       if (follower) {
-        await sendPushToUser(supabase, targetProfileId, {
-          title: follower.full_name,
-          body: "Requested to follow you",
-          url: `/follow-requests`,
-        });
+        after(() =>
+          sendPushToUser(targetProfileId, {
+            title: follower.full_name,
+            body: "Requested to follow you",
+            url: `/follow-requests`,
+          }),
+        );
       }
       return { success: true, state: "requested" };
     }
@@ -79,11 +84,13 @@ export async function toggleFollowAction(
     revalidatePath(`/profile/${targetUsername}`);
 
     if (follower) {
-      await sendPushToUser(supabase, targetProfileId, {
-        title: follower.full_name,
-        body: "Started following you",
-        url: `/profile/${follower.username}`,
-      });
+      after(() =>
+        sendPushToUser(targetProfileId, {
+          title: follower.full_name,
+          body: "Started following you",
+          url: `/profile/${follower.username}`,
+        }),
+      );
     }
 
     return { success: true, state: "following" };
@@ -144,11 +151,13 @@ export async function respondToFollowRequestAction(
     if (status === "accepted") {
       const accepter = await getProfileById(supabase, user.id);
       if (accepter) {
-        await sendPushToUser(supabase, requesterId, {
-          title: accepter.full_name,
-          body: "Accepted your follow request",
-          url: `/profile/${accepter.username}`,
-        });
+        after(() =>
+          sendPushToUser(requesterId, {
+            title: accepter.full_name,
+            body: "Accepted your follow request",
+            url: `/profile/${accepter.username}`,
+          }),
+        );
       }
     }
 

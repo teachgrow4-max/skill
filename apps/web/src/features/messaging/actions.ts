@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import {
   createGroupConversation,
   getConversationParticipantIds,
@@ -128,17 +129,19 @@ export async function sendMessageAction(
 
     const [message] = await hydrateMessages(supabase, [row], user.id);
 
-    const participantIds = await getConversationParticipantIds(supabase, conversationId);
-    const recipientIds = participantIds.filter((id) => id !== user.id);
-    await Promise.all(
-      recipientIds.map((recipientId) =>
-        sendPushToUser(supabase, recipientId, {
-          title: message.sender.fullName,
-          body: message.body ?? "Sent an attachment",
-          url: `/messages/${conversationId}`,
-        }),
-      ),
-    );
+    after(async () => {
+      const participantIds = await getConversationParticipantIds(supabase, conversationId);
+      const recipientIds = participantIds.filter((id) => id !== user.id);
+      await Promise.all(
+        recipientIds.map((recipientId) =>
+          sendPushToUser(recipientId, {
+            title: message.sender.fullName,
+            body: message.body ?? "Sent an attachment",
+            url: `/messages/${conversationId}`,
+          }),
+        ),
+      );
+    });
 
     return { success: true, data: { message } };
   } catch (error) {

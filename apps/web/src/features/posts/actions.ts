@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import {
   addComment,
   createPost,
@@ -196,17 +197,19 @@ export async function toggleLikeAction(
     } else {
       await likePost(supabase, postId, user.id);
 
-      const [post, liker] = await Promise.all([
-        getPostById(supabase, postId),
-        getProfileById(supabase, user.id),
-      ]);
-      if (post && liker && post.author_id !== user.id) {
-        await sendPushToUser(supabase, post.author_id, {
-          title: liker.full_name,
-          body: "Liked your post",
-          url: `/feed?post=${postId}`,
-        });
-      }
+      after(async () => {
+        const [post, liker] = await Promise.all([
+          getPostById(supabase, postId),
+          getProfileById(supabase, user.id),
+        ]);
+        if (post && liker && post.author_id !== user.id) {
+          await sendPushToUser(post.author_id, {
+            title: liker.full_name,
+            body: "Liked your post",
+            url: `/feed?post=${postId}`,
+          });
+        }
+      });
     }
     return { success: true, data: { isLiked: !isCurrentlyLiked } };
   } catch (error) {
@@ -273,15 +276,16 @@ export async function addCommentAction(
     const [comment] = await hydrateComments(supabase, [row]);
     revalidatePath(`/feed`);
 
-    const [post, commenter, parentComment] = await Promise.all([
-      getPostById(supabase, postId),
-      getProfileById(supabase, user.id),
-      parsed.data.parentCommentId ? getCommentById(supabase, parsed.data.parentCommentId) : null,
-    ]);
+    after(async () => {
+      const [post, commenter, parentComment] = await Promise.all([
+        getPostById(supabase, postId),
+        getProfileById(supabase, user.id),
+        parsed.data.parentCommentId ? getCommentById(supabase, parsed.data.parentCommentId) : null,
+      ]);
+      if (!post || !commenter) return;
 
-    if (post && commenter) {
       if (post.author_id !== user.id) {
-        await sendPushToUser(supabase, post.author_id, {
+        await sendPushToUser(post.author_id, {
           title: commenter.full_name,
           body: `Commented: ${parsed.data.body.slice(0, 80)}`,
           url: `/feed?post=${postId}`,
@@ -292,13 +296,13 @@ export async function addCommentAction(
         parentComment.author_id !== user.id &&
         parentComment.author_id !== post.author_id
       ) {
-        await sendPushToUser(supabase, parentComment.author_id, {
+        await sendPushToUser(parentComment.author_id, {
           title: commenter.full_name,
           body: `Replied: ${parsed.data.body.slice(0, 80)}`,
           url: `/feed?post=${postId}`,
         });
       }
-    }
+    });
 
     return { success: true, data: { comment } };
   } catch (error) {

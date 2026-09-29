@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import {
   createStory,
   deleteStories,
@@ -63,7 +64,8 @@ export async function getStoriesFeedAction(): Promise<StoryGroup[]> {
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  await sweepExpiredStories();
+  // Runs after the response is sent, so the cleanup never delays the stories bar.
+  after(sweepExpiredStories);
 
   const followingIds = await getFollowingIds(supabase, user.id);
   const authorIds = [...new Set([user.id, ...followingIds])];
