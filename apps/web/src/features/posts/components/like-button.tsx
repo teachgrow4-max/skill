@@ -35,7 +35,7 @@ export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(fu
     if (wasLiked === nextLiked) return;
 
     setIsLiked(nextLiked);
-    setCount((c) => c + (nextLiked ? 1 : -1));
+    setCount((c) => Math.max(0, c + (nextLiked ? 1 : -1)));
     pendingRef.current = true;
 
     const result = await toggleLikeAction(postId, wasLiked);
@@ -43,7 +43,7 @@ export const LikeButton = React.forwardRef<LikeButtonHandle, LikeButtonProps>(fu
 
     if (!result.success) {
       setIsLiked(wasLiked);
-      setCount((c) => c + (nextLiked ? -1 : 1));
+      setCount((c) => Math.max(0, c + (nextLiked ? -1 : 1)));
     }
   }
 
