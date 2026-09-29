@@ -52,6 +52,12 @@ export const viewport: Viewport = {
   themeColor: "#0a0a0a",
 };
 
+// Run server code (Server Components, Server Actions) in Mumbai, next to the
+// Supabase database (ap-south-1). Vercel's default is Washington DC (iad1),
+// which put ~200ms of ocean between the server and every single query.
+// Inherited by every page below this layout.
+export const preferredRegion = "bom1";
+
 export default function RootLayout({
   children,
 }: Readonly<{

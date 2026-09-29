@@ -3,7 +3,16 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, Bookmark, FastForward, Heart, MessageCircle, Pause, Volume2, VolumeX } from "lucide-react";
+import {
+  BadgeCheck,
+  Bookmark,
+  FastForward,
+  Heart,
+  MessageCircle,
+  Pause,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@skilltego/ui";
 import { cn, initials } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
@@ -129,8 +138,7 @@ export function ReelPlayer({
       contentLeft = rect.left + (rect.width - contentWidth) / 2;
     }
     const relX = (e.clientX - contentLeft) / contentWidth;
-    const mode: HoldMode =
-      relX < SPEED_ZONE_FRACTION || relX > 1 - SPEED_ZONE_FRACTION ? "speed" : "pause";
+    const mode: HoldMode = relX < SPEED_ZONE_FRACTION || relX > 1 - SPEED_ZONE_FRACTION ? "speed" : "pause";
     holdStartRef.current = { x: e.clientX, y: e.clientY };
     // Some mobile browsers never fire a click after a long press, so reset
     // here rather than trusting the previous gesture's click to clear it.
@@ -261,7 +269,12 @@ export function ReelPlayer({
         {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
       </button>
 
-      <div className={cn("absolute bottom-4 left-4 right-16 text-white transition-opacity", holdMode && "pointer-events-none opacity-0")}>
+      <div
+        className={cn(
+          "absolute bottom-4 left-4 right-16 text-white transition-opacity",
+          holdMode && "pointer-events-none opacity-0",
+        )}
+      >
         <Link href={`/profile/${post.author.username}`} className="flex items-center gap-2">
           <Avatar className="size-8 border border-white/40">
             <AvatarImage src={post.author.avatarUrl ?? undefined} alt={post.author.fullName} />
@@ -273,7 +286,12 @@ export function ReelPlayer({
         {post.caption && <p className="mt-2 line-clamp-2 text-sm">{post.caption}</p>}
       </div>
 
-      <div className={cn("absolute bottom-4 right-3 flex flex-col items-center gap-4 text-white transition-opacity", holdMode && "pointer-events-none opacity-0")}>
+      <div
+        className={cn(
+          "absolute bottom-4 right-3 flex flex-col items-center gap-4 text-white transition-opacity",
+          holdMode && "pointer-events-none opacity-0",
+        )}
+      >
         <button type="button" onClick={handleLike} className="flex flex-col items-center gap-0.5">
           <Heart className={cn("size-7", isLiked && "fill-current text-destructive")} />
           <span className="text-xs">{likeCount}</span>

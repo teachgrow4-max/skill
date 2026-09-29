@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { Lock, Rocket } from "lucide-react";
 import {
@@ -38,14 +39,20 @@ const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   moderator: "Moderator",
 };
 
+// generateMetadata and the page both need the profile row — cache() makes that
+// one query per request instead of two.
+const loadProfileRow = cache(async (username: string) => {
+  const supabase = await createClient();
+  return getProfileByUsername(supabase, username);
+});
+
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
 }
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { username } = await params;
-  const supabase = await createClient();
-  const profileRow = await getProfileByUsername(supabase, username);
+  const profileRow = await loadProfileRow(username);
 
   if (!profileRow) return { title: "Profile not found" };
 
@@ -59,10 +66,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { username } = await params;
   const supabase = await createClient();
 
-  const profileRow = await getProfileByUsername(supabase, username);
+  const [profileRow, user] = await Promise.all([loadProfileRow(username), getCurrentUser()]);
   if (!profileRow) notFound();
-
-  const user = await getCurrentUser();
 
   const isOwnProfile = user?.id === profileRow.id;
 

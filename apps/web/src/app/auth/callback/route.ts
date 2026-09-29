@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// Same Mumbai region as the rest of the app (see app/layout.tsx) — route
+// handlers don't inherit layout segment config.
+export const preferredRegion = "bom1";
+
 /**
  * Handles the redirect from Supabase after an OAuth flow, magic link, or
  * email confirmation link — exchanges the PKCE `code` for a session cookie.
