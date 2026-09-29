@@ -1,7 +1,7 @@
 /**
  * Minimal, non-exhaustive block list for obvious profanity/slurs. This is a
- * blunt first line of defense — Phase 5 adds an Ollama-backed classifier for
- * nuanced cases (harassment, hate speech in context, etc).
+ * blunt first line of defense; it won't catch nuanced cases (harassment, hate
+ * speech in context, etc).
  */
 const BLOCKED_TERMS = [
   "fuck",

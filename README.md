@@ -9,7 +9,6 @@ India's Skill Discovery Platform — every person has a skill, every skill deser
 - **Database & Auth**: Supabase (PostgreSQL, Auth, Row Level Security, Realtime)
 - **Media**: Cloudinary (avatar/cover/post/resume uploads, unsigned client-side upload)
 - **Analytics**: PostHog (optional — no-ops if unconfigured)
-- **AI**: Ollama + Qwen3 4B, running locally on your machine (free, no API key)
 - **Hosting**: Vercel (free tier)
 - **Testing**: Vitest (unit), Playwright (e2e), ESLint, Prettier
 
@@ -57,7 +56,6 @@ Optional (features degrade gracefully without them):
 
 - **Cloudinary** — avatar/cover/post media/resume uploads. Create an unsigned upload preset.
 - **PostHog** — product analytics. Leave blank to disable tracking.
-- **Ollama** — AI caption/bio/tag suggestions. Install [ollama.com](https://ollama.com), run `ollama pull qwen3:4b`, and it works out of the box against `http://localhost:11434`. These calls happen **client-side, from the visitor's browser** — Ollama runs on each user's own machine, not on the server, so a deployed instance needs `OLLAMA_ORIGINS=https://your-domain` set locally to accept the request.
 
 ### 4. Run the dev server
 
@@ -90,7 +88,7 @@ CI (`.github/workflows/ci.yml`) runs lint, type-check, format-check, unit tests,
 - **Phase 2**: Feed (following/latest/trending, infinite scroll), posts (text/image/carousel/video/pdf/code/GitHub/project links), likes, comments, search.
 - **Phase 3**: Realtime messaging, notifications, rule-based content moderation, reports + moderator queue.
 - **Phase 4**: Company/college/mentor dashboards, job/internship/competition/event/scholarship postings + applications, talent search, candidate bookmarks, mentor session booking + reviews, org verification requests.
-- **Phase 5**: Admin panel (stats, users, posts, verifications), PostHog analytics, Ollama-backed AI suggestions (caption/bio/tags), sitemap/robots, CI, unit + e2e tests.
+- **Phase 5**: Admin panel (stats, users, posts, verifications), PostHog analytics, sitemap/robots, CI, unit + e2e tests.
 - **Phase 6**: Instagram-style visual redesign (dark-by-default, gradient tokens, glassmorphism, skeleton loaders, micro-animations, icon sidebar + mobile bottom nav app shell), 24h Stories (poll/question/quiz/emoji-slider stickers, seen list), Reels (vertical autoplay video feed), and richer DMs (message reactions, voice notes, group chats).
 
-**Deliberately out of scope** for this free-tier build: payment/revenue features, a full CMS/feature-flag system, AI-based NSFW/abuse detection (the moderation package is rule-based; swapping in an Ollama vision/text classifier is a natural extension of `packages/moderation`), and live voice/video calling or HLS adaptive streaming (no free-tier-friendly infrastructure for either at any real scale).
+**Deliberately out of scope** for this free-tier build: payment/revenue features, a full CMS/feature-flag system, AI-based NSFW/abuse detection (the moderation package is rule-based), and live voice/video calling or HLS adaptive streaming (no free-tier-friendly infrastructure for either at any real scale).

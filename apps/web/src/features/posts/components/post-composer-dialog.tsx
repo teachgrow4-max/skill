@@ -30,7 +30,6 @@ import { createPostSchema, type CreatePostInput } from "../schema";
 import { createPostAction } from "../actions";
 import { MediaUploader } from "./media-uploader";
 import { PostTypeSelector, type TypeCardKey } from "./post-type-selector";
-import { ComposerAiPopup } from "./composer-ai-popup";
 import { TagsInput } from "./tags-input";
 import { useAutoResizeTextarea } from "../hooks/use-auto-resize-textarea";
 
@@ -204,11 +203,8 @@ export function PostComposerDialog({ open, onOpenChange }: PostComposerDialogPro
                     placeholder="Write something amazing…"
                     rows={2}
                     maxLength={CAPTION_MAX}
-                    className="min-h-[160px] resize-none overflow-hidden border-0 bg-transparent pb-8 pr-10 shadow-none focus-visible:ring-0"
+                    className="min-h-[160px] resize-none overflow-hidden border-0 bg-transparent pb-8 shadow-none focus-visible:ring-0"
                   />
-                  <div className="absolute bottom-2.5 right-2.5">
-                    <ComposerAiPopup values={values as CreatePostInput} setValue={setValue} />
-                  </div>
                   <span className="pointer-events-none absolute bottom-3 left-4 text-xs text-muted-foreground">
                     {(caption ?? "").length}/{CAPTION_MAX}
                   </span>

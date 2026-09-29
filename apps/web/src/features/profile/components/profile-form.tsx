@@ -19,7 +19,6 @@ import {
 } from "@skilltego/ui";
 import type { Profile } from "@skilltego/types";
 import { uploadResumeFile } from "@/lib/supabase-storage";
-import { AiSuggestButton } from "@/features/ai/components/ai-suggest-button";
 import { CoinToast } from "@/features/gamification/components/coin-toast";
 import { useCoinToast } from "@/features/gamification/hooks/use-coin-toast";
 import { ACCOUNT_TYPE_OPTIONS, profileFormSchema, type ProfileFormValues } from "../schema";
@@ -61,7 +60,6 @@ export function ProfileForm({ profile, mode, changeStatus, onSaved }: ProfileFor
     watch,
     setValue,
     setError,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -241,19 +239,6 @@ export function ProfileForm({ profile, mode, changeStatus, onSaved }: ProfileFor
         <Label htmlFor="bio">Bio</Label>
         <Textarea id="bio" rows={4} placeholder="Tell people what you're great at" {...register("bio")} />
         {errors.bio && <p className="text-xs text-destructive">{errors.bio.message}</p>}
-        <AiSuggestButton
-          label="Suggest a bio"
-          system="You write short, warm, first-person social profile bios (max 3 sentences, under 300 characters) for a skill-showcase platform called Skilltego. No hashtags, no quotes, no markdown — just the bio text."
-          getPrompt={() => {
-            const skills = getValues("skills")
-              .map((s) => s.skillName)
-              .filter(Boolean);
-            return `Write a bio for ${getValues("fullName") || "someone"}, a ${getValues("accountType")}${
-              skills.length > 0 ? ` skilled in ${skills.join(", ")}` : ""
-            }.`;
-          }}
-          onResult={(text) => setValue("bio", text.slice(0, 500), { shouldDirty: true })}
-        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
