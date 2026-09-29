@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, Bookmark, Heart, MessageCircle, Volume2, VolumeX } from "lucide-react";
+import { BadgeCheck, Bookmark, FastForward, Heart, MessageCircle, Pause, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@skilltego/ui";
 import { cn, initials } from "@skilltego/utils";
 import type { Post } from "@skilltego/types";
@@ -20,6 +20,16 @@ interface ReelPlayerProps {
   /** False for reels scrolled far from view — releases the <video> element (and its decoder/buffer) entirely, keeping just the poster. */
   shouldLoadVideo: boolean;
 }
+
+/** How long a press must last before it counts as a hold rather than a tap. */
+const HOLD_DELAY_MS = 250;
+/** Finger drift (px) that cancels a pending hold — the user is scrolling, not holding. */
+const HOLD_MOVE_TOLERANCE_PX = 10;
+/** Fraction of the width on each side where holding speeds up instead of pausing. */
+const SPEED_ZONE_FRACTION = 0.3;
+const HOLD_SPEED = 2;
+
+type HoldMode = "speed" | "pause" | null;
 
 export function ReelPlayer({
   post,
@@ -38,6 +48,12 @@ export function ReelPlayer({
   const [commentCount, setCommentCount] = React.useState(post.commentCount);
   const setActiveVideo = useActiveVideoStore((s) => s.setActive);
   const activeVideoId = useActiveVideoStore((s) => s.activeId);
+  const [holdMode, setHoldMode] = React.useState<HoldMode>(null);
+  const holdTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdStartRef = React.useRef<{ x: number; y: number } | null>(null);
+  const holdModeRef = React.useRef<HoldMode>(null);
+  const suppressClickRef = React.useRef(false);
+  const likePendingRef = React.useRef(false);
 
   // Observes the container (not the <video> itself) so scrolling toward a
   // reel whose video isn't mounted yet still promotes it into view — see the
@@ -75,14 +91,114 @@ export function ReelPlayer({
     }
   }, [activeVideoId, post.id, shouldLoadVideo]);
 
+  // Instagram-style press-and-hold: holding the left/right edge plays at 2x,
+  // holding the middle pauses. Either way, letting go resumes normal playback.
+  // A quick tap still toggles play/pause.
+  function clearHoldTimer() {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }
+
+  function endHold() {
+    clearHoldTimer();
+    holdStartRef.current = null;
+    const mode = holdModeRef.current;
+    holdModeRef.current = null;
+    setHoldMode(null);
+    const video = videoRef.current;
+    if (!video || !mode) return;
+    video.playbackRate = 1;
+    if (mode === "pause" && activeVideoId === post.id) video.play().catch(() => {});
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLVideoElement>) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Zones are measured against the visible picture, not the element: with
+    // object-contain a landscape reel is letterboxed, and the outer 30% of the
+    // element would be almost entirely black bars. Holding on a bar counts as
+    // an edge (relX < 0 or > 1).
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    let contentLeft = rect.left;
+    let contentWidth = rect.width;
+    if (el.videoWidth && el.videoHeight) {
+      const scale = Math.min(rect.width / el.videoWidth, rect.height / el.videoHeight);
+      contentWidth = el.videoWidth * scale;
+      contentLeft = rect.left + (rect.width - contentWidth) / 2;
+    }
+    const relX = (e.clientX - contentLeft) / contentWidth;
+    const mode: HoldMode =
+      relX < SPEED_ZONE_FRACTION || relX > 1 - SPEED_ZONE_FRACTION ? "speed" : "pause";
+    holdStartRef.current = { x: e.clientX, y: e.clientY };
+    // Some mobile browsers never fire a click after a long press, so reset
+    // here rather than trusting the previous gesture's click to clear it.
+    suppressClickRef.current = false;
+    clearHoldTimer();
+    holdTimerRef.current = setTimeout(() => {
+      holdTimerRef.current = null;
+      const video = videoRef.current;
+      if (!video || video.paused) return;
+      holdModeRef.current = mode;
+      setHoldMode(mode);
+      if (mode === "speed") video.playbackRate = HOLD_SPEED;
+      else video.pause();
+    }, HOLD_DELAY_MS);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLVideoElement>) {
+    const start = holdStartRef.current;
+    if (!start || holdModeRef.current) return;
+    if (
+      Math.abs(e.clientX - start.x) > HOLD_MOVE_TOLERANCE_PX ||
+      Math.abs(e.clientY - start.y) > HOLD_MOVE_TOLERANCE_PX
+    ) {
+      clearHoldTimer();
+      holdStartRef.current = null;
+    }
+  }
+
+  function handleClick() {
+    // The click that ends a hold shouldn't also toggle play/pause.
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  }
+
+  function handlePointerUp() {
+    if (holdModeRef.current) suppressClickRef.current = true;
+    endHold();
+  }
+
+  // Scrolling to another reel mid-hold (or unmounting) must not leave this one
+  // stuck at 2x.
+  React.useEffect(() => {
+    if (activeVideoId !== post.id) endHold();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeVideoId, post.id]);
+
+  React.useEffect(() => clearHoldTimer, []);
+
   async function handleLike() {
-    const next = !isLiked;
+    // Ignore taps while a toggle is in flight, or a fast double-tap sends the
+    // same stale "was liked" state twice and the count drifts.
+    if (likePendingRef.current) return;
+    likePendingRef.current = true;
+    const wasLiked = isLiked;
+    const next = !wasLiked;
     setIsLiked(next);
-    setLikeCount((c) => c + (next ? 1 : -1));
-    const result = await toggleLikeAction(post.id, isLiked);
+    setLikeCount((c) => Math.max(0, c + (next ? 1 : -1)));
+    const result = await toggleLikeAction(post.id, wasLiked);
+    likePendingRef.current = false;
     if (!result.success) {
-      setIsLiked(isLiked);
-      setLikeCount((c) => c + (next ? -1 : 1));
+      setIsLiked(wasLiked);
+      setLikeCount((c) => Math.max(0, c + (next ? -1 : 1)));
     }
   }
 
@@ -107,8 +223,14 @@ export function ReelPlayer({
           loop
           muted={muted}
           playsInline
-          className="h-full w-full object-contain"
-          onClick={() => (videoRef.current?.paused ? videoRef.current.play() : videoRef.current?.pause())}
+          className="h-full w-full select-none object-contain [-webkit-touch-callout:none]"
+          onClick={handleClick}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={endHold}
+          onPointerLeave={endHold}
+          onContextMenu={(e) => e.preventDefault()}
         />
       ) : post.thumbnailUrl ? (
         // Scrolled far enough away that the <video> element (and its decoder/
@@ -117,6 +239,17 @@ export function ReelPlayer({
         <Image src={post.thumbnailUrl} alt="" fill className="object-contain" unoptimized />
       ) : (
         <div className="h-full w-full bg-black" />
+      )}
+
+      {holdMode === "speed" && (
+        <div className="pointer-events-none absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-sm font-semibold text-white">
+          {HOLD_SPEED}x <FastForward className="size-4 fill-current" />
+        </div>
+      )}
+      {holdMode === "pause" && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/40 p-4 text-white">
+          <Pause className="size-8 fill-current" />
+        </div>
       )}
 
       <button
@@ -128,7 +261,7 @@ export function ReelPlayer({
         {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
       </button>
 
-      <div className="absolute bottom-4 left-4 right-16 text-white">
+      <div className={cn("absolute bottom-4 left-4 right-16 text-white transition-opacity", holdMode && "pointer-events-none opacity-0")}>
         <Link href={`/profile/${post.author.username}`} className="flex items-center gap-2">
           <Avatar className="size-8 border border-white/40">
             <AvatarImage src={post.author.avatarUrl ?? undefined} alt={post.author.fullName} />
@@ -140,7 +273,7 @@ export function ReelPlayer({
         {post.caption && <p className="mt-2 line-clamp-2 text-sm">{post.caption}</p>}
       </div>
 
-      <div className="absolute bottom-4 right-3 flex flex-col items-center gap-4 text-white">
+      <div className={cn("absolute bottom-4 right-3 flex flex-col items-center gap-4 text-white transition-opacity", holdMode && "pointer-events-none opacity-0")}>
         <button type="button" onClick={handleLike} className="flex flex-col items-center gap-0.5">
           <Heart className={cn("size-7", isLiked && "fill-current text-destructive")} />
           <span className="text-xs">{likeCount}</span>
