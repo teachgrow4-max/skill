@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   BadgeCheck,
   Bookmark,
@@ -19,6 +20,7 @@ import type { Post } from "@skilltego/types";
 import { toggleLikeAction, toggleSaveAction } from "@/features/posts/actions";
 import { CommentThread } from "@/features/posts/components/comment-thread";
 import { useActiveVideoStore } from "@/lib/active-video-store";
+import { DOUBLE_TAP_MS, isDoubleTap, type Tap } from "../lib/double-tap";
 
 interface ReelPlayerProps {
   post: Post;
@@ -37,8 +39,18 @@ const HOLD_MOVE_TOLERANCE_PX = 10;
 /** Fraction of the width on each side where holding speeds up instead of pausing. */
 const SPEED_ZONE_FRACTION = 0.3;
 const HOLD_SPEED = 2;
+/** How long a double-tap heart stays on screen. */
+const HEART_BURST_MS = 800;
 
 type HoldMode = "speed" | "pause" | null;
+
+/** A heart popping up where the user double-tapped, in container coordinates. */
+interface HeartBurst {
+  id: number;
+  x: number;
+  y: number;
+  rotate: number;
+}
 
 export function ReelPlayer({
   post,
@@ -63,6 +75,10 @@ export function ReelPlayer({
   const holdModeRef = React.useRef<HoldMode>(null);
   const suppressClickRef = React.useRef(false);
   const likePendingRef = React.useRef(false);
+  const lastTapRef = React.useRef<Tap | null>(null);
+  const singleTapTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartIdRef = React.useRef(0);
+  const [hearts, setHearts] = React.useState<HeartBurst[]>([]);
 
   // Observes the container (not the <video> itself) so scrolling toward a
   // reel whose video isn't mounted yet still promotes it into view — see the
@@ -167,16 +183,54 @@ export function ReelPlayer({
     }
   }
 
-  function handleClick() {
+  function clearSingleTapTimer() {
+    if (singleTapTimerRef.current) {
+      clearTimeout(singleTapTimerRef.current);
+      singleTapTimerRef.current = null;
+    }
+  }
+
+  function togglePlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  }
+
+  // Instagram-style taps: double-tap likes, a single tap toggles play/pause.
+  // The single tap waits out the double-tap window first, so the first half
+  // of a double tap never pauses the reel.
+  function handleClick(e: React.MouseEvent<HTMLVideoElement>) {
     // The click that ends a hold shouldn't also toggle play/pause.
     if (suppressClickRef.current) {
       suppressClickRef.current = false;
       return;
     }
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) video.play().catch(() => {});
-    else video.pause();
+    const tap = { time: performance.now(), x: e.clientX, y: e.clientY };
+    const previous = lastTapRef.current;
+    lastTapRef.current = tap;
+    clearSingleTapTimer();
+    if (isDoubleTap(previous, tap)) {
+      handleDoubleTap(tap.x, tap.y);
+      return;
+    }
+    singleTapTimerRef.current = setTimeout(() => {
+      singleTapTimerRef.current = null;
+      togglePlayback();
+    }, DOUBLE_TAP_MS);
+  }
+
+  // Like-only, never unlike (same as Instagram): tapping again on a liked reel
+  // just shows another heart.
+  function handleDoubleTap(clientX: number, clientY: number) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const id = ++heartIdRef.current;
+      const rotate = Math.random() * 40 - 20;
+      setHearts((prev) => [...prev, { id, x: clientX - rect.left, y: clientY - rect.top, rotate }]);
+      window.setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), HEART_BURST_MS);
+    }
+    updateLike(true);
   }
 
   function handlePointerUp() {
@@ -185,21 +239,29 @@ export function ReelPlayer({
   }
 
   // Scrolling to another reel mid-hold (or unmounting) must not leave this one
-  // stuck at 2x.
+  // stuck at 2x, or let a pending single tap resume it.
   React.useEffect(() => {
-    if (activeVideoId !== post.id) endHold();
+    if (activeVideoId !== post.id) {
+      endHold();
+      clearSingleTapTimer();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeVideoId, post.id]);
 
-  React.useEffect(() => clearHoldTimer, []);
+  React.useEffect(
+    () => () => {
+      clearHoldTimer();
+      clearSingleTapTimer();
+    },
+    [],
+  );
 
-  async function handleLike() {
+  async function updateLike(next: boolean) {
     // Ignore taps while a toggle is in flight, or a fast double-tap sends the
     // same stale "was liked" state twice and the count drifts.
-    if (likePendingRef.current) return;
+    if (likePendingRef.current || isLiked === next) return;
     likePendingRef.current = true;
     const wasLiked = isLiked;
-    const next = !wasLiked;
     setIsLiked(next);
     setLikeCount((c) => Math.max(0, c + (next ? 1 : -1)));
     const result = await toggleLikeAction(post.id, wasLiked);
@@ -231,7 +293,7 @@ export function ReelPlayer({
           loop
           muted={muted}
           playsInline
-          className="h-full w-full select-none object-contain [-webkit-touch-callout:none]"
+          className="h-full w-full touch-manipulation select-none object-contain [-webkit-touch-callout:none]"
           onClick={handleClick}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -259,6 +321,22 @@ export function ReelPlayer({
           <Pause className="size-8 fill-current" />
         </div>
       )}
+
+      {hearts.map((heart) => (
+        <div
+          key={heart.id}
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
+          style={{ left: heart.x, top: heart.y }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.4, rotate: heart.rotate }}
+            animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.2, 1, 1], y: [0, 0, 0, -48] }}
+            transition={{ duration: HEART_BURST_MS / 1000, times: [0, 0.3, 0.7, 1] }}
+          >
+            <Heart className="size-24 fill-white text-white drop-shadow-lg" />
+          </motion.div>
+        </div>
+      ))}
 
       <button
         type="button"
@@ -292,7 +370,11 @@ export function ReelPlayer({
           holdMode && "pointer-events-none opacity-0",
         )}
       >
-        <button type="button" onClick={handleLike} className="flex flex-col items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => updateLike(!isLiked)}
+          className="flex flex-col items-center gap-0.5"
+        >
           <Heart className={cn("size-7", isLiked && "fill-current text-destructive")} />
           <span className="text-xs">{likeCount}</span>
         </button>
