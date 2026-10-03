@@ -9,7 +9,10 @@ export async function AppTopBar() {
   const profile = await getCurrentProfile();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-xl md:hidden">
+    <header
+      data-app-top-bar
+      className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/80 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur-xl md:hidden"
+    >
       <Link href="/feed" className="text-gradient-brand text-lg font-black tracking-tight">
         {siteConfig.name}
       </Link>

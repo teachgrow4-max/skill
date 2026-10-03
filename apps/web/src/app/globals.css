@@ -16,6 +16,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Rendered heights of the mobile top bar and bottom nav. These fallbacks
+   include the safe-area insets (notch, home indicator, gesture bar);
+   AppChromeMetrics replaces them with the bars' measured heights, which also
+   covers phones with an enlarged system text size. */
+:root {
+  --app-top-bar-height: calc(3.8125rem + env(safe-area-inset-top));
+  --app-bottom-nav-height: calc(4.125rem + env(safe-area-inset-bottom));
+}
+
+/* A full-screen reel: the viewport minus the top bar, main's 1rem top
+   padding, the bottom nav, and a 0.5rem gap so the action buttons never sit
+   flush against (or behind) the nav. Desktop has neither bar. */
+@utility h-reel {
+  height: calc(100dvh - var(--app-top-bar-height) - var(--app-bottom-nav-height) - 1.5rem);
+
+  @media (width >= 48rem) {
+    height: calc(100dvh - 3rem);
+  }
+}
+
 @layer base {
   body {
     background: var(--color-background);

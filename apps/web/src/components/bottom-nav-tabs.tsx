@@ -26,7 +26,10 @@ export function BottomNavTabs({ username, fullName, avatarUrl }: BottomNavTabsPr
     profileHref !== null && (pathname === profileHref || pathname.startsWith(`${profileHref}/`));
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-border bg-background/90 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
+    <nav
+      data-app-bottom-nav
+      className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-border bg-background/90 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden"
+    >
       {TABS.map((tab) => {
         const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
         return (

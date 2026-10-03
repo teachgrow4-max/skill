@@ -68,7 +68,7 @@ export function ReelsFeed({
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100dvh-9rem)] items-center justify-center md:h-[calc(100dvh-3rem)]">
+      <div className="flex h-reel items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -76,7 +76,7 @@ export function ReelsFeed({
 
   if (isError && posts.length === 0) {
     return (
-      <div className="glass flex h-[calc(100dvh-9rem)] flex-col items-center justify-center gap-3 rounded-2xl p-8 text-center text-sm text-muted-foreground md:h-[calc(100dvh-3rem)]">
+      <div className="glass flex h-reel flex-col items-center justify-center gap-3 rounded-2xl p-8 text-center text-sm text-muted-foreground">
         Couldn&apos;t load reels. Check your connection and try again.
         <Button size="sm" variant="outline" onClick={() => refetch()}>
           Retry
@@ -87,14 +87,14 @@ export function ReelsFeed({
 
   if (posts.length === 0) {
     return (
-      <div className="glass flex h-[calc(100dvh-9rem)] items-center justify-center rounded-2xl p-8 text-center text-sm text-muted-foreground md:h-[calc(100dvh-3rem)]">
+      <div className="glass flex h-reel items-center justify-center rounded-2xl p-8 text-center text-sm text-muted-foreground">
         No reels yet. Post a video to be the first!
       </div>
     );
   }
 
   return (
-    <div className="scrollbar-none h-[calc(100dvh-9rem)] snap-y snap-mandatory overflow-y-auto md:h-[calc(100dvh-3rem)]">
+    <div className="scrollbar-none h-reel snap-y snap-mandatory overflow-y-auto">
       <div className="grid gap-3">
         {posts.map((post, index) => (
           <ReelPlayer

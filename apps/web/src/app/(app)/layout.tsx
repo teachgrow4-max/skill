@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopBar } from "@/components/app-top-bar";
 import { AppBottomNav } from "@/components/app-bottom-nav";
+import { AppChromeMetrics } from "@/components/app-chrome-metrics";
 import { SidebarAwareMain } from "@/components/sidebar-aware-main";
 import { SidebarProvider } from "@/providers/sidebar-provider";
 import { NotificationsProvider } from "@/providers/notifications-provider";
@@ -21,6 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </main>
           </SidebarAwareMain>
           <AppBottomNav />
+          <AppChromeMetrics />
           <CreatePostFab />
         </div>
       </NotificationsProvider>
