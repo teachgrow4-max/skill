@@ -19,6 +19,13 @@ import { cn } from "@skilltego/utils";
 import { uploadStoryMedia, uploadVideoWithProgress } from "@/lib/supabase-storage";
 import { UploadCancelledError } from "@/lib/resumable-upload";
 import { resizeImage } from "@/lib/image-resize";
+import {
+  MAX_COMPRESSIBLE_SOURCE_BYTES,
+  MAX_VIDEO_DURATION_SECONDS,
+  getVideoMetadata,
+  optimizeVideoForUpload,
+  shouldCompressVideo,
+} from "@/lib/video-compress";
 import { createStoryAction } from "../actions";
 import type { CreateStoryInput } from "../schema";
 
@@ -35,6 +42,7 @@ const STICKERS: { value: StickerChoice; label: string; icon: LucideIcon }[] = [
 export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [uploading, setUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [compressing, setCompressing] = React.useState(false);
   const [cancelUpload, setCancelUpload] = React.useState<(() => void) | null>(null);
   const [media, setMedia] = React.useState<{ url: string; type: "image" | "video" } | null>(null);
   const [caption, setCaption] = React.useState("");
@@ -57,7 +65,20 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
     setError(null);
     try {
       if (file.type.startsWith("video/")) {
-        const handle = await uploadVideoWithProgress(file, "stories", (sent, total) => {
+        if (file.size > MAX_COMPRESSIBLE_SOURCE_BYTES) {
+          throw new Error("This video is too large to upload — try a shorter clip.");
+        }
+        const metadata = await getVideoMetadata(file).catch(() => null);
+        if (metadata && metadata.durationSeconds > MAX_VIDEO_DURATION_SECONDS) {
+          throw new Error(
+            `This video is ${Math.round(metadata.durationSeconds)}s — stories can be up to ${MAX_VIDEO_DURATION_SECONDS}s. Trim it and try again.`,
+          );
+        }
+        setCompressing(shouldCompressVideo(file, metadata));
+        const optimized = await optimizeVideoForUpload(file, metadata, setUploadProgress);
+        setCompressing(false);
+        setUploadProgress(0);
+        const handle = await uploadVideoWithProgress(optimized, "stories", (sent, total) => {
           setUploadProgress(total > 0 ? sent / total : 0);
         });
         setCancelUpload(() => handle.cancel);
@@ -74,6 +95,7 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
       }
     } finally {
       setUploading(false);
+      setCompressing(false);
       setCancelUpload(null);
     }
   }
@@ -170,7 +192,11 @@ export function StoryCreator({ onClose, onCreated }: { onClose: () => void; onCr
               {uploading && (
                 <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" />
-                  {cancelUpload ? `Uploading… ${Math.round(uploadProgress * 100)}%` : "Uploading…"}
+                  {compressing
+                    ? `Optimizing video… ${Math.round(uploadProgress * 100)}%`
+                    : cancelUpload
+                      ? `Uploading… ${Math.round(uploadProgress * 100)}%`
+                      : "Uploading…"}
                   {cancelUpload && (
                     <button
                       type="button"

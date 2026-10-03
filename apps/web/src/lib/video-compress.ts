@@ -12,8 +12,20 @@ export const COMPRESS_TRIGGER_BYTES = 8 * 1024 * 1024;
 // worst-case size was unbounded no matter how aggressively it got compressed.
 export const MAX_VIDEO_DURATION_SECONDS = 90;
 
-// Sanity ceiling on the compressed output. 720p @ 2.5Mbps + 128kbps audio for
-// 90s lands around 30MB, so this only ever fires on an ABR overshoot.
+// Output frame bounds, orientation-aware: 720p landscape is 1280x720, 720p
+// portrait (every phone-shot reel/story) is 720x1280.
+const MAX_LONG_SIDE = 1280;
+const MAX_SHORT_SIDE = 720;
+
+// A clip under COMPRESS_TRIGGER_BYTES can still be a few seconds of
+// 4K/60fps — anything streaming above this is worth re-encoding regardless.
+const COMPRESS_TRIGGER_BITRATE = 4_000_000;
+
+// Quality-targeted encode (CRF) with a bitrate ceiling. 3.5Mbps for 90s plus
+// 128kbps audio lands around 41MB, so the ceiling below only ever fires on an
+// encoder overshoot.
+const VIDEO_CRF = 21;
+const VIDEO_MAXRATE = 3_500_000;
 const HARD_OUTPUT_CEILING_BYTES = 45 * 1024 * 1024;
 
 let ffmpegPromise: Promise<FFmpeg> | null = null;
@@ -36,7 +48,13 @@ async function loadFFmpeg(): Promise<FFmpeg> {
   return ffmpegPromise;
 }
 
-export function getVideoDurationSeconds(file: File): Promise<number> {
+export interface VideoMetadata {
+  durationSeconds: number;
+  width: number;
+  height: number;
+}
+
+export function getVideoMetadata(file: File): Promise<VideoMetadata> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
@@ -44,13 +62,36 @@ export function getVideoDurationSeconds(file: File): Promise<number> {
     video.src = url;
     video.onloadedmetadata = () => {
       URL.revokeObjectURL(url);
-      resolve(video.duration);
+      resolve({ durationSeconds: video.duration, width: video.videoWidth, height: video.videoHeight });
     };
     video.onerror = () => {
       URL.revokeObjectURL(url);
       reject(new Error("Could not read the video file."));
     };
   });
+}
+
+function exceedsOutputBounds(metadata: VideoMetadata): boolean {
+  const { width, height } = metadata;
+  return Math.max(width, height) > MAX_LONG_SIDE || Math.min(width, height) > MAX_SHORT_SIDE;
+}
+
+/**
+ * Whether a clip should be re-encoded before upload: big files, anything
+ * above 720p (even when short and small), high-bitrate clips, and non-MP4
+ * containers (.mov/.webm), which don't play everywhere.
+ */
+export function shouldCompressVideo(file: File, metadata: VideoMetadata | null): boolean {
+  if (file.size > COMPRESS_TRIGGER_BYTES) return true;
+  if (file.type !== "video/mp4") return true;
+  if (!metadata) return false;
+  if (exceedsOutputBounds(metadata)) return true;
+  const durationSeconds = metadata.durationSeconds;
+  return (
+    Number.isFinite(durationSeconds) &&
+    durationSeconds > 0 &&
+    (file.size * 8) / durationSeconds > COMPRESS_TRIGGER_BITRATE
+  );
 }
 
 function sourceExtension(name: string): string {
@@ -63,14 +104,14 @@ function compressedName(name: string): string {
 }
 
 /**
- * Re-encodes `file` to a fixed 720p / 2.5Mbps target — consistent quality
- * regardless of clip length, instead of deriving bitrate from a byte budget
- * (which crushed long clips to mush and wasted headroom on short ones). Runs
- * entirely client-side via ffmpeg.wasm — no server/paid API.
+ * Re-encodes `file` to H.264 MP4 at up to 720p (either orientation), 30fps,
+ * quality-targeted (CRF) with a bitrate ceiling — simple content (screen
+ * recordings, talking heads) comes out far smaller than a fixed bitrate would
+ * give, and busy content keeps detail up to the cap. Runs entirely
+ * client-side via ffmpeg.wasm — no server/paid API.
  */
 export async function compressVideo(file: File, onProgress?: (ratio: number) => void): Promise<File> {
   const ffmpeg = await loadFFmpeg();
-  const videoBitrate = 2_500_000;
 
   const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const inputName = `in-${jobId}${sourceExtension(file.name)}`;
@@ -87,23 +128,35 @@ export async function compressVideo(file: File, onProgress?: (ratio: number) => 
     await ffmpeg.exec([
       "-i",
       inputName,
-      // Downscale before encoding so there are fewer pixels to compress — this is
-      // usually the biggest speed lever for phone-recorded (1440p/4K) source video,
-      // and also gives the target bitrate a much easier job (better quality per bit).
-      // 720p rather than 1080p: mobile short-form video looks essentially identical
-      // on a phone screen at 720p while roughly halving the bitrate needed.
+      // Downscale before encoding so there are fewer pixels to compress — the
+      // biggest speed lever for phone-recorded (1080p/4K) source. The bounding
+      // box follows the clip's orientation so a portrait 1080x1920 reel becomes
+      // 720x1280, not a squashed 405x720. force_divisible_by=2 because libx264
+      // refuses odd dimensions; lanczos keeps edges and text crisp.
       "-vf",
-      "scale=w='min(1280,iw)':h='min(720,ih)':force_original_aspect_ratio=decrease",
+      `scale=w='if(gte(iw,ih),min(${MAX_LONG_SIDE},iw),min(${MAX_SHORT_SIDE},iw))':h='if(gte(iw,ih),min(${MAX_SHORT_SIDE},ih),min(${MAX_LONG_SIDE},ih))':force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos`,
+      // 60fps phone clips double the encode work and bitrate for little visible gain in a feed.
+      "-fpsmax",
+      "30",
       "-c:v",
       "libx264",
+      // superfast over ultrafast: ultrafast turns off deblocking/CABAC/B-frames,
+      // which is what made output look blocky. In ffmpeg.wasm (single-threaded,
+      // decode-bound) superfast measured ~15% slower than ultrafast; veryfast was
+      // ~50% slower — too much added wait for a 90s clip.
       "-preset",
-      "ultrafast",
-      "-b:v",
-      `${videoBitrate}`,
+      "superfast",
+      "-crf",
+      `${VIDEO_CRF}`,
       "-maxrate",
-      `${videoBitrate}`,
+      `${VIDEO_MAXRATE}`,
       "-bufsize",
-      `${videoBitrate * 2}`,
+      `${VIDEO_MAXRATE * 2}`,
+      "-profile:v",
+      "high",
+      // 10-bit/HDR phone footage otherwise produces files some browsers can't play.
+      "-pix_fmt",
+      "yuv420p",
       "-c:a",
       "aac",
       "-b:a",
@@ -124,4 +177,22 @@ export async function compressVideo(file: File, onProgress?: (ratio: number) => 
     await ffmpeg.deleteFile(inputName).catch(() => {});
     await ffmpeg.deleteFile(outputName).catch(() => {});
   }
+}
+
+/**
+ * Compresses `file` when shouldCompressVideo says so. Keeps the original if
+ * re-encoding came out bigger and the original was already within 720p — an
+ * already-efficient MP4 shouldn't get both larger and re-encoded.
+ */
+export async function optimizeVideoForUpload(
+  file: File,
+  metadata: VideoMetadata | null,
+  onProgress?: (ratio: number) => void,
+): Promise<File> {
+  if (!shouldCompressVideo(file, metadata)) return file;
+  const compressed = await compressVideo(file, onProgress);
+  const originalIsPlayableAsIs =
+    file.type === "video/mp4" && metadata !== null && !exceedsOutputBounds(metadata);
+  if (compressed.size >= file.size && originalIsPlayableAsIs) return file;
+  return compressed;
 }

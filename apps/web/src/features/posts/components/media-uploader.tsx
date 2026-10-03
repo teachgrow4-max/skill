@@ -7,11 +7,11 @@ import { cn } from "@skilltego/utils";
 import { uploadPostMedia, uploadVideoWithProgress } from "@/lib/supabase-storage";
 import { UploadCancelledError } from "@/lib/resumable-upload";
 import {
-  COMPRESS_TRIGGER_BYTES,
   MAX_COMPRESSIBLE_SOURCE_BYTES,
   MAX_VIDEO_DURATION_SECONDS,
-  compressVideo,
-  getVideoDurationSeconds,
+  getVideoMetadata,
+  optimizeVideoForUpload,
+  shouldCompressVideo,
 } from "@/lib/video-compress";
 import { captureVideoPreview, getImageDimensions } from "@/lib/video-thumbnail";
 import { resizeImage } from "@/lib/image-resize";
@@ -93,7 +93,7 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
   // going to storage at full 12MP+ resolution when the feed only ever shows
   // it at a fraction of that) and upload on the simple fast path. PDFs upload
   // as-is. Videos get a client-generated poster thumbnail, get transcoded
-  // above COMPRESS_TRIGGER_BYTES to a fixed 720p/2.5Mbps target, and upload
+  // to 720p H.264 when large/high-res/non-MP4 (see shouldCompressVideo), and upload
   // via the resumable path — real progress, and a live `cancel` handle is
   // registered on the pending item as soon as the upload actually starts. A
   // duration cap applies regardless of size.
@@ -122,7 +122,8 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
       throw new Error(`"${file.name}" is too large to upload — try a shorter clip.`);
     }
 
-    const duration = await getVideoDurationSeconds(file).catch(() => null);
+    const metadata = await getVideoMetadata(file).catch(() => null);
+    const duration = metadata?.durationSeconds ?? null;
     if (duration !== null && duration > MAX_VIDEO_DURATION_SECONDS) {
       throw new Error(
         `"${file.name}" is ${Math.round(duration)}s — videos can be up to ${MAX_VIDEO_DURATION_SECONDS}s. Trim it and try again.`,
@@ -137,15 +138,14 @@ export function MediaUploader({ value, onChange, maxItems = 10 }: MediaUploaderP
         .catch(() => undefined); // Non-fatal — the post still works without a thumbnail.
     }
 
-    let finalFile = file;
-    if (file.size > COMPRESS_TRIGGER_BYTES) {
+    if (shouldCompressVideo(file, metadata)) {
       setPending((p) =>
         p.map((item) => (item.tempId === tempId ? { ...item, status: "compressing" } : item)),
       );
-      finalFile = await compressVideo(file, (ratio) => {
-        setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, progress: ratio } : item)));
-      });
     }
+    const finalFile = await optimizeVideoForUpload(file, metadata, (ratio) => {
+      setPending((p) => p.map((item) => (item.tempId === tempId ? { ...item, progress: ratio } : item)));
+    });
 
     setPending((p) =>
       p.map((item) => (item.tempId === tempId ? { ...item, status: "uploading", progress: 0 } : item)),
